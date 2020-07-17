@@ -8,24 +8,6 @@
 #include <QVector>
 //#include <Windows.h>
 
-class dsAWSStorage : public fsStorage{
-public:
-    dsAWSStorage(const QString& aType = "");
-    bool isValid() override {return m_aws.isValid();}
-protected:
-    std::vector<QString> listFiles(const QString& aDirectory) override;
-    void writeJson(const QString& aPath, const QJsonObject& aData) override;
-    void writeCVMat(const QString& aPath, const cv::Mat& aData) override;
-    void writeByteArray(const QString& aPath, const QByteArray& aData) override;
-    std::vector<QString> getFileList(const QString& aPath) override;
-    QJsonObject readJson(const QString& aPath) override;
-    cv::Mat readCVMat(const QString& aPath) override;
-    QByteArray readByteArray(const QString& aPath) override;
-    void deletePath(const QString& aPath) override;
-private:
-    AWSClient m_aws;
-};
-
 void fsStorage::checkPath(const QString &aPath){
     auto dirs = aPath.split("/");
     QDir dir;
@@ -195,11 +177,29 @@ std::vector<QString> fsStorage::listFiles(const QString& aDirectory){
     return ret;
 }
 
-dsAWSStorage::dsAWSStorage(const QString& aType) : fsStorage(aType){
+class minIOStorage : public fsStorage{
+public:
+    minIOStorage(const QString& aType = "");
+    bool isValid() override {return m_aws.isValid();}
+protected:
+    std::vector<QString> listFiles(const QString& aDirectory) override;
+    void writeJson(const QString& aPath, const QJsonObject& aData) override;
+    void writeCVMat(const QString& aPath, const cv::Mat& aData) override;
+    void writeByteArray(const QString& aPath, const QByteArray& aData) override;
+    std::vector<QString> getFileList(const QString& aPath) override;
+    QJsonObject readJson(const QString& aPath) override;
+    cv::Mat readCVMat(const QString& aPath) override;
+    QByteArray readByteArray(const QString& aPath) override;
+    void deletePath(const QString& aPath) override;
+private:
+    AWSClient m_aws;
+};
+
+minIOStorage::minIOStorage(const QString& aType) : fsStorage(aType){
     m_aws.create_bucket(m_root.toStdString().c_str());
 }
 
-std::vector<QString> dsAWSStorage::getFileList(const QString& aPath){
+std::vector<QString> minIOStorage::getFileList(const QString& aPath){
     std::vector<QString> ret;
     std::vector<std::string> lst;
     m_aws.list_s3_objects(m_root.toStdString().data(), aPath.toStdString().data(), lst);
@@ -215,7 +215,7 @@ std::vector<QString> dsAWSStorage::getFileList(const QString& aPath){
     return ret;
 }
 
-std::vector<QString> dsAWSStorage::listFiles(const QString& aDirectory){
+std::vector<QString> minIOStorage::listFiles(const QString& aDirectory){
     std::vector<std::string> lst;
     m_aws.list_s3_objects(m_root.toStdString().data(), aDirectory.toStdString().data(), lst);
     std::vector<QString> ret;
@@ -227,7 +227,7 @@ std::vector<QString> dsAWSStorage::listFiles(const QString& aDirectory){
     return ret;
 }
 
-void dsAWSStorage::writeJson(const QString& aPath, const QJsonObject& aData){
+void minIOStorage::writeJson(const QString& aPath, const QJsonObject& aData){
     auto stm = Aws::MakeShared<Aws::StringStream>("object");
 
     QJsonDocument doc(aData);
@@ -237,7 +237,7 @@ void dsAWSStorage::writeJson(const QString& aPath, const QJsonObject& aData){
     m_aws.put_s3_string_object(m_root.toStdString().c_str(), aPath.toStdString().c_str(), stm);
 }
 
-void dsAWSStorage::writeCVMat(const QString& aPath, const cv::Mat& aData){
+void minIOStorage::writeCVMat(const QString& aPath, const cv::Mat& aData){
     auto stm = Aws::MakeShared<Aws::StringStream>("object");
     //https://blog.csdn.net/weixin_42112458/article/details/83117305?depth_1-utm_source=distribute.pc_relevant.none-task&utm_source=distribute.pc_relevant.none-task
     auto suffix = aPath.mid(aPath.lastIndexOf("."), aPath.length());
@@ -250,7 +250,7 @@ void dsAWSStorage::writeCVMat(const QString& aPath, const cv::Mat& aData){
     m_aws.put_s3_string_object(m_root.toStdString().c_str(), aPath.toStdString().c_str(), stm);
 }
 
-void dsAWSStorage::writeByteArray(const QString& aPath, const QByteArray& aData){
+void minIOStorage::writeByteArray(const QString& aPath, const QByteArray& aData){
     auto stm = Aws::MakeShared<Aws::StringStream>("object");
 
     auto str = aData.toStdString();
@@ -259,7 +259,7 @@ void dsAWSStorage::writeByteArray(const QString& aPath, const QByteArray& aData)
     m_aws.put_s3_string_object(m_root.toStdString().c_str(), aPath.toStdString().c_str(), stm);
 }
 
-QJsonObject dsAWSStorage::readJson(const QString& aPath){
+QJsonObject minIOStorage::readJson(const QString& aPath){
     QJsonObject ret;
     int sz;
     auto str = m_aws.get_s3_object(m_root.toStdString().c_str(), aPath.toStdString().c_str(), sz);
@@ -271,7 +271,7 @@ QJsonObject dsAWSStorage::readJson(const QString& aPath){
     return ret;
 }
 
-cv::Mat dsAWSStorage::readCVMat(const QString& aPath){
+cv::Mat minIOStorage::readCVMat(const QString& aPath){
     cv::Mat ret;
     int sz;
     auto img = m_aws.get_s3_object(m_root.toStdString().c_str(), aPath.toStdString().c_str(), sz);
@@ -283,7 +283,7 @@ cv::Mat dsAWSStorage::readCVMat(const QString& aPath){
     return ret;
 }
 
-QByteArray dsAWSStorage::readByteArray(const QString& aPath){
+QByteArray minIOStorage::readByteArray(const QString& aPath){
     QByteArray ret;
     int sz;
     auto str = m_aws.get_s3_object(m_root.toStdString().c_str(), aPath.toStdString().c_str(), sz);
@@ -305,7 +305,7 @@ void deleteAWSDirectory(AWSClient& aClient, const QString& aBucket, const QStrin
     }
 }
 
-void dsAWSStorage::deletePath(const QString& aPath){
+void minIOStorage::deletePath(const QString& aPath){
     deleteAWSDirectory(m_aws, m_root, aPath);
 }
 
@@ -316,7 +316,7 @@ void dsAWSStorage::deletePath(const QString& aPath){
     if (debug_cfg.value("localfs").toBool()){
         static fsStorage data_stg;
     }else{
-        static dsAWSStorage data_stg;
+        static minIOStorage data_stg;
         if (!data_stg.isValid()){
             std::cout << "Storage is initialized failed!" << std::endl;
             aInput->callback(nullptr);
@@ -335,28 +335,29 @@ void dsAWSStorage::deletePath(const QString& aPath){
     return aInput;
 }, 0);*/
 
-static fsStorage local_storage;
+#define FUNCT(aType, aRoot, aFunc) \
+    pipeline::add<aType>([aRoot](stream<aType>* aInput){aFunc})
 
-void testStorage(){
+void testStorage(const QString aRoot = ""){
     using namespace rea;
     auto tag = Json("tag", "testStorage");
-    pipeline::find("writeJson")
-        ->next(local<stgJson>("readJson"), tag)
-        ->next(FUNC(stgJson,
+    pipeline::find(aRoot + "writeJson")
+        ->next(local<stgJson>(aRoot + "readJson"), tag)
+        ->next(FUNCT(stgJson, aRoot,
             auto js = aInput->data().getData();
             assert(js.value("hello") == "world2");
-            aInput->out<stgCVMat>(stgCVMat(cv::Mat(10, 10, CV_8UC1, cv::Scalar(0)), "testMat.png"), "writeCVMat");
+            aInput->out<stgCVMat>(stgCVMat(cv::Mat(10, 10, CV_8UC1, cv::Scalar(0)), "testMat.png"), aRoot + "writeCVMat");
         ))
-        ->next(local<stgCVMat>("writeCVMat"))
-        ->next(local<stgCVMat>("readCVMat"))
-        ->next(FUNC(stgCVMat,
+        ->next(local<stgCVMat>(aRoot + "writeCVMat"))
+        ->next(local<stgCVMat>(aRoot + "readCVMat"))
+        ->next(FUNCT(stgCVMat, aRoot,
             auto dt = aInput->data().getData();
             assert(dt.cols == 10 && dt.rows == 10);
-            aInput->out<stgByteArray>(stgByteArray(QJsonDocument(Json("hello", "world")).toJson(), "testFS.json"), "writeByteArray");
+            aInput->out<stgByteArray>(stgByteArray(QJsonDocument(Json("hello", "world")).toJson(), "testFS.json"), aRoot + "writeByteArray");
         ))
-        ->next(local<stgByteArray>("writeByteArray"))
-        ->next(local<stgByteArray>("readByteArray"))
-        ->next(FUNC(stgByteArray,
+        ->next(local<stgByteArray>(aRoot + "writeByteArray"))
+        ->next(local<stgByteArray>(aRoot + "readByteArray"))
+        ->next(FUNCT(stgByteArray, aRoot,
             auto dt = aInput->data().getData();
             auto cfg = QJsonDocument::fromJson(dt).object();
             assert(cfg.value("hello") == "world");
@@ -364,24 +365,24 @@ void testStorage(){
             std::vector<stgByteArray> dts;
             dts.push_back(stgByteArray(dt, "testFS.json"));
             stgVector<stgByteArray> stm(dts, "testDir");
-            aInput->out<stgVector<stgByteArray>>(stm, "writeDir");
+            aInput->out<stgVector<stgByteArray>>(stm, aRoot + "writeDir");
         ))
-        ->next(local<stgVector<stgByteArray>>("writeDir"))
-        ->next(local<stgVector<stgByteArray>>("readDir"))
-        ->next(FUNC(stgVector<stgByteArray>,
+        ->next(local<stgVector<stgByteArray>>(aRoot + "writeDir"))
+        ->next(local<stgVector<stgByteArray>>(aRoot + "readDir"))
+        ->next(FUNCT(stgVector<stgByteArray>, aRoot,
             auto dt = aInput->data().getData();
             assert(QDir().exists(aInput->data() + "/" + dt.at(0)));
-            aInput->out<stgVector<QString>>(stgVector<QString>(std::vector<QString>(), aInput->data()), "listFiles");
+            aInput->out<stgVector<QString>>(stgVector<QString>(std::vector<QString>(), aInput->data()), aRoot + "listFiles");
         ))
-        ->next(local<stgVector<QString>>("listFiles"))
-        ->next(FUNC(stgVector<QString>,
+        ->next(local<stgVector<QString>>(aRoot + "listFiles"))
+        ->next(FUNCT(stgVector<QString>, aRoot,
             auto dt = aInput->data().getData();
             assert(dt.size() == 3);
-            aInput->out<QString>("testDir", "deletePath");
-            aInput->out<QString>("testFS.json", "deletePath");
-            aInput->out<QString>("testMat.png", "deletePath");
+            aInput->out<QString>("testDir", aRoot + "deletePath");
+            aInput->out<QString>("testFS.json", aRoot + "deletePath");
+            aInput->out<QString>("testMat.png", aRoot + "deletePath");
         ))
-        ->next(local<QString>("deletePath"))
+        ->next(local<QString>(aRoot + "deletePath"))
         ->next(buffer<QString>(3))
         ->next(FUNC(std::vector<QString>,
             auto pths = aInput->data();
@@ -392,10 +393,13 @@ void testStorage(){
         ))
         ->next("testSuccess");
 
-    pipeline::run<stgJson>("writeJson", stgJson(rea::Json("hello", "world2"), "testFS.json"), tag);
+    pipeline::run<stgJson>(aRoot + "writeJson", stgJson(rea::Json("hello", "world2"), "testFS.json"), tag);
 }
 
 static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
+    static fsStorage local_storage;
     testStorage();
+    //static minIOStorage minio_storage("testMinIO");
+    //testStorage("testMinIO");
     aInput->out();
 }, QJsonObject(), "unitTest");

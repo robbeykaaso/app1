@@ -35,6 +35,8 @@ add_executable(${PROJECT_NAME}
     "aws_s3.cpp"
     "storage.h"
     "storage.cpp"
+    "imageboard.h"
+    "imageboard.cpp"
     "qml.qrc"
     #"resource/logo.rc"
     )

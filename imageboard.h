@@ -1,0 +1,6 @@
+#ifndef REAL_FRAMEWORK_IMAGEBOARD_H_
+#define REAL_FRAMEWORK_IMAGEBOARD_H_
+
+
+
+#endif
