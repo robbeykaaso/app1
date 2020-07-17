@@ -1,0 +1,62 @@
+stages:
+  - build1
+#  - build2
+#  - build3
+
+alpha2.0-installer0:
+  stage: build1
+  script:
+    - chcp 65001
+    - echo "hello"
+#    - cmake --version
+    - mkdir build3
+    - cd build3
+    - cmake .. -DCMAKE_BUILD_TYPE=Release -A x64 -DCMAKE_PREFIX_PATH=G:/QT/5.12.2/msvc2015_64;D:\awss3c++\aws-sdk-cpp\buildtest2\install\lib\cmake;D:\awss3c++\aws-sdk-cpp\buildtest2\install
+    - msbuild ALL_BUILD.vcxproj /p:Configuration=Release
+    - mkdir "Release/minIO"
+    - mkdir "Release/plugin"
+    - xcopy D:\build-deepinspection-Desktop_Qt_5_12_2_MSVC2015_64bit-Release\minIO\* Release\minIO /e /y
+    - xcopy D:\build-deepinspection-Desktop_Qt_5_12_2_MSVC2015_64bit-Release\plugin\* Release\plugin /e /y
+    - cd ../packtools
+    - WIN_QUICKPACKAGE.exe
+    - cd ../build3
+    - xcopy Release\* ..\qtinstall\mypackages\content\data\ /e /y
+#    - xcopy ..\packtools\* ..\qtinstall\mypackages\content2\data\ /e /y
+    - D:/qt-installer/bin/binarycreator -c ../qtinstall/config/config.xml -p ../qtinstall/mypackages DeepInspectionInstaller.exe -v 
+#    - depends.exe /c /ot:Release/depends /f:1 /pm:1 /pf:1 /sm:15 Release/DeepInspection.exe || echo ignore
+#    - echo hello
+#  allow_failure: true
+  tags:
+    - auto_release
+  artifacts:
+    name: "deepAnnoExe-v2-Install-Windows"
+    paths:
+      - build3/DeepInspectionInstaller.exe
+    expire_in: 1 week
+    when: on_success
+
+#alpha2.0-installer:
+#  stage: build2
+#  script:
+#    - copy D:\deepinspection\build\DeepInspectionInstaller.exe DeepInspectionInstaller.exe
+#  tags:
+#    - auto_release
+#  artifacts:
+#    name: "deepAnnoExe-v2-Install-Windows"
+#    paths:
+#      - DeepInspectionInstaller.exe
+#    expire_in: 1 week
+#    when: on_success
+
+#alpha2.0-binary:
+#  stage: build3
+#  script:
+#    - copy D:\deepinspection\build\DeepInspectionBinary.zip DeepInspectionBinary.zip
+#  tags:
+#    - auto_release
+#  artifacts:
+#    name: "deepAnnoExe-v2-Binary-Windows"
+#    paths:
+#      - DeepInspectionBinary.zip
+#    expire_in: 1 week
+#    when: on_success

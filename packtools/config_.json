@@ -1,0 +1,8 @@
+{ 
+    "source": "..",
+    "app": "../build3/Release/DeepInspection.exe",
+    "depends": "G:/dependency_walker/depends.exe",
+    "filter": ["windows"],
+    "qmladdition": ["D:/mydll3", "D:/mydll2"],
+    "addition": ["../build3/Release/plugin"]
+}
