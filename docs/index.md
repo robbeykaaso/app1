@@ -1,5 +1,11 @@
 # Abstract
-An image labels and management tool for deeplearning
+an app assembles some common tools based on Rea
+
+# Dependency
+* *c++*  
+* *QT/QT Quick*  
+* *AWSSDK/minIO*  
+* *OpenCV*
 
 # Download
-[installer](https://git.deepsight.ai/DeepLearningGroup/DeepInspectionClient/-/jobs/artifacts/master/download?job=alpha2.0-installer0)
+[get code](https://github.com/robbeykaaso/app1)

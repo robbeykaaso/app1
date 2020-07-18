@@ -11,7 +11,7 @@
 #include <QJsonObject>
 #include <QDir>
 #include <QHostAddress>
-//
+
 void AWSClient::tryStartMinIO(bool aFirstTry){
    /* dst::streamManager::instance()->emitSignal("checkMinIO", STMJSON(QJsonObject(), [this, aFirstTry](void* aStatus){
                                                    auto sts = reinterpret_cast<QJsonObject*>(aStatus);
@@ -26,17 +26,26 @@ void AWSClient::tryStartMinIO(bool aFirstTry){
                                                            std::this_thread::sleep_for(std::chrono::microseconds(1000));
                                                        }
                                                }));*/
+   auto cmd = "\"" + QDir::currentPath() + "/minIO/storage_start.bat\"";
+   //system("start /b minio.exe server storage");
+   system(cmd.toStdString().c_str());
+   while (!m_valid){
+       std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+   }
 }
 
-AWSClient::AWSClient(){
+void AWSClient::initialize(std::function<bool(void)> aStartService){
+    m_valid = aStartService();
     QDir dir("minIO");
     m_local_storage = dir.exists();
 
     QJsonObject cfg;
     if (m_local_storage){
-        tryStartMinIO(true);
-        if (!m_valid)
+        //tryStartMinIO(true);
+        if (!m_valid){
+            std::cout << "minIO start failed!" << std::endl;
             return;
+        }
 
         /*QString cfg_pth = "storage/.minio.sys/config/config.json";
         while (!dir.exists(cfg_pth))
@@ -50,7 +59,6 @@ AWSClient::AWSClient(){
         m_access_key = "deepsight"; //credential.value("accessKey").toString();
         //minio_cfg.close();
     }else{
-        m_valid = true;
         QString s3_ip_port = "http://192.168.1.122:9000";
         QString s3_access_key = "YKFERVMC3AK54Y1X150B";
         QString s3_secret_key = "4y0PzVzrvyiE6RzssCbrgO7HCxPIDRrK2pO1qJ5C";
@@ -76,6 +84,10 @@ AWSClient::AWSClient(){
         Aws::Client::AWSAuthV4Signer::PayloadSigningPolicy::Always, false);
 }
 
+AWSClient::AWSClient(){
+
+}
+
 AWSClient::~AWSClient(){
     Aws::SDKOptions options;
     Aws::ShutdownAPI(options);
@@ -88,6 +100,8 @@ AWSClient::~AWSClient(){
 
 bool AWSClient::create_bucket(const Aws::String &bucket_name,
                    const Aws::S3::Model::BucketLocationConstraint &region) {
+    if (!m_valid)
+        return false;
     // Set up the request
     Aws::S3::Model::CreateBucketRequest request;
     request.SetBucket(bucket_name);
@@ -114,7 +128,8 @@ bool AWSClient::create_bucket(const Aws::String &bucket_name,
 
 bool AWSClient::delete_bucket(const Aws::String &bucket_name)
 {
-
+    if (!m_valid)
+        return false;
   /*  auto outcome0 = client_->ListBuckets();
 
     if (outcome0.IsSuccess())
@@ -159,6 +174,8 @@ bool AWSClient::delete_bucket(const Aws::String &bucket_name)
 bool AWSClient::put_s3_string_object(const Aws::String& s3_bucket_name, const Aws::String& s3_object_name,
                    const std::shared_ptr<Aws::IOStream> stream)
 {
+    if (!m_valid)
+        return false;
     Aws::S3::Model::PutObjectRequest object_request;
 
     object_request.SetBucket(s3_bucket_name);
@@ -179,6 +196,8 @@ bool AWSClient::put_s3_string_object(const Aws::String& s3_bucket_name, const Aw
 
 char* AWSClient::get_s3_object(const Aws::String &bucket_name, const Aws::String &key_name, int& size)
 {
+    if (!m_valid)
+        return nullptr;
     Aws::S3::Model::GetObjectRequest object_request;
     object_request.WithBucket(bucket_name).WithKey(key_name);
     //object_request.SetKey(key_name);
@@ -210,7 +229,9 @@ char* AWSClient::get_s3_object(const Aws::String &bucket_name, const Aws::String
     }
 }
 
-bool AWSClient::delete_s3_object(const Aws::String &bucket_name, const Aws::String &key_name){    
+bool AWSClient::delete_s3_object(const Aws::String &bucket_name, const Aws::String &key_name){
+    if (!m_valid)
+        return false;
     Aws::S3::Model::DeleteObjectRequest object_request;
     object_request.WithBucket(bucket_name).WithKey(key_name);
 
@@ -231,6 +252,8 @@ bool AWSClient::delete_s3_object(const Aws::String &bucket_name, const Aws::Stri
 }
 
 bool AWSClient::list_s3_objects(const Aws::String &bucket_name, const Aws::String &perfix, std::vector<std::string> &list){
+    if (!m_valid)
+        return false;
     Aws::S3::Model::ListObjectsRequest object_request;
     object_request.WithBucket(bucket_name).WithPrefix(perfix);
     auto list_object_outcome = client_->ListObjects(object_request);

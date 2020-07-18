@@ -31,10 +31,11 @@ find_package(REA)
 
 add_executable(${PROJECT_NAME}
     "main.cpp" #WIN32: to disable the console window
-    "aws_s3.h"
-    "aws_s3.cpp"
-    "storage.h"
-    "storage.cpp"
+    "storage/aws_s3.h"
+    "storage/aws_s3.cpp"
+    "storage/storage.h"
+    "storage/storage.cpp"
+    "storage/awsStorage.cpp"
     "imageboard.h"
     "imageboard.cpp"
     "qml.qrc"

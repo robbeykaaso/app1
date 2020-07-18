@@ -11,6 +11,7 @@ class AWSClient{
 public:
     AWSClient();
     ~AWSClient();
+    void initialize(std::function<bool(void)> aStartService);
     bool create_bucket(const Aws::String &bucket_name,
                        const Aws::S3::Model::BucketLocationConstraint &region =
                            Aws::S3::Model::BucketLocationConstraint::us_east_1);

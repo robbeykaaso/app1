@@ -1,6 +1,12 @@
-site_name: My Docs
+site_name: Rea::App1
 nav:
     - Home: index.md
     - Abstract: abstract.md
+    - API: 
+        - storage: 
+            - stgData: storage/stgData.md
+            - fsStorage: storage/fsStorage.md
+            - awsStorage: storage/awsStorage.md
+            - minIO: storage/minIO.md
     - About: about.md
 theme: readthedocs

@@ -39,7 +39,7 @@ protected:
     virtual void deletePath(const QString& aPath);
     virtual std::vector<QString> getFileList(const QString& aPath);
 private:
-    QString stgRoot(const QString& aPath);
+    virtual QString stgRoot(const QString& aPath);
     void checkPath(const QString &aPath);
 protected:
     QString m_root;
