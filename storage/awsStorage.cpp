@@ -280,9 +280,6 @@ void awsStorage::deletePath(const QString& aPath){
     return aInput;
 }, 0);*/
 
-#define FUNCT(aType, aRoot, aFunc) \
-    pipeline::add<aType>([aRoot](stream<aType>* aInput){aFunc})
-
 void testStorage(const QString& aRoot = ""){ //for fs: aRoot == ""; for minIO: aRoot != ""
     using namespace rea;
     auto tag = Json("tag", "testStorage");

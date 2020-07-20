@@ -8,5 +8,9 @@ nav:
             - fsStorage: storage/fsStorage.md
             - awsStorage: storage/awsStorage.md
             - minIO: storage/minIO.md
+        - tcpSocket:
+            - protocal: com/protocal.md
+            - server: com/server.md
+            - client: com/client.md
     - About: about.md
 theme: readthedocs
