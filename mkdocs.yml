@@ -10,7 +10,7 @@ nav:
             - minIO: storage/minIO.md
         - tcpSocket:
             - protocal: com/protocal.md
-            - server: com/server.md
-            - client: com/client.md
+            - normalServer: com/normalServer.md
+            - normalClient: com/normalClient.md
     - About: about.md
 theme: readthedocs

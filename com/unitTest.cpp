@@ -25,7 +25,7 @@ void testSocket(){
     ->next(FUNC(QJsonObject,
                 auto dt = aInput->data();
                 assert(dt.value("key") == "world");
-                aInput->out<QString>("Pass: testClient ", "testSuccess");
+                aInput->out<QString>("Pass: testSocket ", "testSuccess");
                 ), rea::Json("tag", protocal_test))
     ->next("testSuccess");
 
