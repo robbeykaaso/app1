@@ -20,7 +20,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void hoverMoveEvent(QHoverEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
-    QSGNode* m_trans_node = nullptr;
+    QSGTransformNode* m_trans_node = nullptr;
     QQueue<qsgModel> m_models;
 private:
     void setName(const QString& aName){

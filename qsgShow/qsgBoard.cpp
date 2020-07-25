@@ -38,7 +38,7 @@ QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* noded
             m_models.pop_front();
     }
     if (m_models.size() == 1)
-        m_models.front().show(*m_trans_node);
+        m_models.front().show(m_trans_node);
     return ret;
 }
 
@@ -65,3 +65,8 @@ void qsgBoard::hoverMoveEvent(QHoverEvent *event){
 void qsgBoard::wheelEvent(QWheelEvent *event){
 
 }
+
+static rea::regPip<QQmlApplicationEngine*> reg_imageboard([](rea::stream<QQmlApplicationEngine*>* aInput){
+    qmlRegisterType<qsgBoard>("QSGBoard", 1, 0, "QSGBoard");
+    aInput->out();
+}, QJsonObject(), "regQML");
