@@ -48,17 +48,21 @@ protected:
     double m_bound[4]; //leftbottomrighttop
     pointList m_points;
     QSGGeometryNode* m_node = nullptr;
+};
+
+class polyArcObject : public shapeObject{
 
 };
 
 class qsgModel : public QJsonObject{
 public:
-    qsgModel() : QJsonObject(){
+    qsgModel(const QJsonObject& aConfig) : QJsonObject(aConfig){
 
     }
     void clearQSGObjects();
     void show(QSGNode& aTransform);
 private:
+    void deserialize();
     std::vector<std::shared_ptr<qsgObject>> m_objects;
 };
 

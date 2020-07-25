@@ -9,8 +9,10 @@ nav:
             - awsStorage: storage/awsStorage.md
             - minIO: storage/minIO.md
         - tcpSocket:
-            - protocal: com/protocal.md
-            - normalServer: com/normalServer.md
-            - normalClient: com/normalClient.md
+            - protocal: socket/protocal.md
+            - normalServer: socket/normalServer.md
+            - normalClient: socket/normalClient.md
+        - serial:
+            - modbusMaster: serial/modbusMaster.md
     - About: about.md
 theme: readthedocs

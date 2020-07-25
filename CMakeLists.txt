@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/build")
 
 #message("include: ${PROJECT_SOURCE_DIR}")
-find_package(Qt5 COMPONENTS Widgets Core Quick Sql REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Core Quick Sql SerialPort SerialBus REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(AWSSDK REQUIRED COMPONENTS core s3)
 set(REA_DIR ${CMAKE_CURRENT_LIST_DIR}/../frm/cmake)
@@ -37,12 +37,14 @@ add_executable(${PROJECT_NAME}
     "storage/storage.cpp"
     "storage/awsStorage.cpp"
     "storage/mysql.cpp"
-    "com/protocal.h"
-    "com/server.h"
-    "com/server.cpp"
-    "com/client.h"
-    "com/client.cpp"
-    "com/unitTest.cpp"
+    "socket/protocal.h"
+    "socket/server.h"
+    "socket/server.cpp"
+    "socket/client.h"
+    "socket/client.cpp"
+    "socket/unitTest.cpp"
+    "serial/modbusMaster.h"
+    "serial/modbusMaster.cpp"
     "qsgShow/qsgBoard.h"
     "qsgShow/qsgBoard.cpp"
     "qsgShow/qsgModel.h"
@@ -52,7 +54,7 @@ add_executable(${PROJECT_NAME}
     )
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 #message(${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Quick Qt5::Widgets Qt5::Sql ${OpenCV_LIBS} ${AWSSDK_LINK_LIBRARIES} ${REA_LIBS})# ${VTK_LIBRARIES})# ${PYTHON_LIBRARIES})#  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Quick Qt5::Widgets Qt5::Sql Qt5::SerialPort Qt5::SerialBus ${OpenCV_LIBS} ${AWSSDK_LINK_LIBRARIES} ${REA_LIBS})# ${VTK_LIBRARIES})# ${PYTHON_LIBRARIES})#  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
 #include_directories("${deepinspectapptemplate_ROOT}/deepinspectControl")
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${REA_INCLUDE_DIRS})

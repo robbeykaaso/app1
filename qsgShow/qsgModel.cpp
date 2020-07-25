@@ -30,3 +30,7 @@ void qsgModel::show(QSGNode& aTransform){
     for (auto i : m_objects)
         aTransform.appendChildNode(i->getQSGNode());
 }
+
+void qsgModel::deserialize(){
+
+}
