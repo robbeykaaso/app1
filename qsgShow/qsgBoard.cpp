@@ -137,7 +137,7 @@ QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* noded
             m_models.pop_front();
     }
     if (!m_refreshed && m_models.size() == 1){
-        m_models.front()->show(m_trans_node);
+        m_models.front()->show(m_trans_node, window());
         m_refreshed = true;
     }
 

@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QSGNode>
 #include <QQuickWindow>
+#include <QSGSimpleTextureNode>
 
 class qsgPoint2D{
 public:
@@ -19,11 +20,11 @@ public:
     qsgObject(const QJsonObject& aConfig) : QJsonObject(aConfig){
 
     }
-    virtual QSGNode* createQSGNode(QQuickWindow* aWindow){
-        m_window = aWindow;
+    virtual QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr){
+        if (aWindow)
+            m_window = aWindow;
         return nullptr;
     }
-    virtual QSGNode* getQSGNode() = 0;
     virtual void QSGNodeRemoved() {
         auto nd = getQSGNode();
         if (nd)
@@ -34,8 +35,17 @@ private:
 };
 
 class imageObject : public qsgObject{
+public:
+    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr) override {
+        qsgObject::getQSGNode(aWindow);
+        return m_node;
+    }
+    void QSGNodeRemoved() override {
+        qsgObject::QSGNodeRemoved();
+        m_node = nullptr;
+    }
 private:
-
+    QSGSimpleTextureNode* m_node;
 };
 
 class shapeObject : public qsgObject{
@@ -46,7 +56,8 @@ public:
     virtual QRect getBoundBox() {return QRect(m_bound[0], m_bound[1], m_bound[2] - m_bound[0], m_bound[3] - m_bound[1]);}
     //virtual void transform(const QJsonObject& aTransform);
     virtual bool canBePickedUp(int aX, int aY);
-    QSGNode* getQSGNode() override {
+    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr) override {
+        qsgObject::getQSGNode(aWindow);
         return m_node;
     }
     void QSGNodeRemoved() override {
@@ -70,14 +81,14 @@ protected:
 class polyObject : public shapeObject{
 public:
     polyObject(const QJsonObject& aConfig);
-    QSGNode* getQSGNode() override;
+    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr) override;
 private:
 };
 
 class ellipseObject : public shapeObject{
 public:
     ellipseObject(const QJsonObject& aConfig);
-    QSGNode* getQSGNode() override;
+    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr) override;
 private:
     class l_qsgPoint3D : public qsgPoint2D{
     public:
@@ -95,9 +106,9 @@ private:
 class qsgModel : public QJsonObject{
 public:
     qsgModel(){}
-    qsgModel(const QJsonObject& aConfig);
+    qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages);
     void clearQSGObjects();
-    void show(QSGTransformNode* aTransform);
+    void show(QSGTransformNode* aTransform, QQuickWindow* aWindow);
     void zoom(int aStep, const QPointF& aCenter, double aRatio = 0);
     void move(const QPointF& aDistance);
 
@@ -106,8 +117,9 @@ public:
     QTransform getTransform(bool aDeserialize = false);
 private:
     void setTransform();
-    std::vector<std::shared_ptr<qsgObject>> m_objects;
+    QHash<QString, std::shared_ptr<qsgObject>> m_objects;
     QTransform m_trans;
+    QMap<QString, QImage> m_images;
 };
 
 #endif

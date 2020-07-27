@@ -64,7 +64,7 @@ polyObject::polyObject(const QJsonObject& aConfig) : shapeObject(aConfig){
 
 }
 
-QSGNode* polyObject::getQSGNode() {
+QSGNode* polyObject::getQSGNode(QQuickWindow* aWindow) {
     if (!m_node){
         auto pts = getPoints();
         for (int i = 0; i < pts.size(); i += 2)
@@ -73,7 +73,7 @@ QSGNode* polyObject::getQSGNode() {
         setQSGGemoetry();
         setColor();
     }
-    return m_node;
+    return shapeObject::getQSGNode(aWindow);
 }
 
 ellipseObject::ellipseObject(const QJsonObject& aConfig) : shapeObject(aConfig){
@@ -92,7 +92,7 @@ std::shared_ptr<ellipseObject::l_qsgPoint3D> ellipseObject::evalPoint(const qsgP
                       aParam);
 }
 
-QSGNode* ellipseObject::getQSGNode(){
+QSGNode* ellipseObject::getQSGNode(QQuickWindow* aWindow){
     if (!m_node){
         static const double PI = 3.14159265;
 
@@ -147,7 +147,7 @@ QSGNode* ellipseObject::getQSGNode(){
         setQSGGemoetry();
         setColor();
     }
-    return m_node;
+    return shapeObject::getQSGNode(aWindow);
 }
 
 qsgPoint2D ellipseObject::getRadius(){
@@ -173,11 +173,12 @@ void qsgModel::clearQSGObjects(){
         i->QSGNodeRemoved();
 }
 
-void qsgModel::show(QSGTransformNode* aTransform){
+void qsgModel::show(QSGTransformNode* aTransform, QQuickWindow* aWindow){
     for (auto i : m_objects){
-        auto nd = i->getQSGNode();
-        if (nd)
+        auto nd = i->getQSGNode(aWindow);
+        if (nd){
             aTransform->appendChildNode(nd);
+        }
     }
 }
 
@@ -248,25 +249,30 @@ int qsgModel::getHeight() {
     return value("height").toInt();
 }
 
-qsgModel::qsgModel(const QJsonObject& aConfig) : QJsonObject(aConfig){
-    auto shps = value("objects").toArray();
+qsgModel::qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages) : QJsonObject(aConfig){
+    auto shps = value("objects").toObject();
 
     auto add_qsg_obj = rea::pipeline::add<std::shared_ptr<qsgObject>>([this](rea::stream<std::shared_ptr<qsgObject>>* aInput){
-        m_objects.push_back(aInput->data());
+        auto dt = aInput->data();
+        m_objects.insert(dt->value("id").toString(), dt);
+        dt->remove("id");
     });
-    for (auto i : shps){
-        auto obj = i.toObject();
+    for (auto i : shps.keys()){
+        auto obj = shps.value(i).toObject();
         auto cmd = "create_qsgobject_" + obj.value("type").toString();
         auto tag = rea::Json("tag", add_qsg_obj->actName());
         rea::pipeline::find(cmd)->next(add_qsg_obj, tag);
-        rea::pipeline::run<QJsonObject>(cmd, obj, tag);
+        rea::pipeline::run<QJsonObject>(cmd, rea::Json(obj, "id", i), tag);
     }
 
     getTransform(true);
+
+    m_images = aImages;
 }
 
 static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
     rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
-        aInput->out<std::shared_ptr<qsgModel>>(std::make_shared<qsgModel>(aInput->data()), "updateQSGModel_testbrd");
+        QMap<QString, QImage> imgs;
+        aInput->out<std::shared_ptr<qsgModel>>(std::make_shared<qsgModel>(aInput->data(), imgs), "updateQSGModel_testbrd");
     }, rea::Json("name", "testQSGShow"))->next("updateQSGModel_testbrd");
 }, QJsonObject(), "unitTest");
