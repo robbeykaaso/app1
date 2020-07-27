@@ -26,10 +26,16 @@ ApplicationWindow {
                 onClicked: {
                     Pipeline2.run("testQSGShow",
                                   {objects: [{type: "poly",
-                                                points: [0, 0, 200, 200, 200, 0, 0, 0],
-                                                color: "green",
-                                                width: 10
-                                          }]
+                                              points: [50, 50, 200, 200, 200, 50, 50, 50],
+                                              color: "red",
+                                              width: 5
+                                             },
+                                             {type: "ellipse",
+                                              center: [400, 400],
+                                              radius: [300, 200],
+                                              color: "blue",
+                                              width: 5
+                                             }]
                                   })
                 }
             }
@@ -43,6 +49,7 @@ ApplicationWindow {
     }
     contentData: QSGBoard{
         name: "testbrd"
+        plugins: [{type: "transform"}]
         anchors.fill: parent
     }
 }

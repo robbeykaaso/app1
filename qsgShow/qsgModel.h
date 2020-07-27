@@ -23,9 +23,9 @@ public:
         m_window = aWindow;
         return nullptr;
     }
-    virtual QSGNode* getQSGNode(QSGTransformNode* aTransform) = 0;
+    virtual QSGNode* getQSGNode() = 0;
     virtual void QSGNodeRemoved() {
-        auto nd = getQSGNode(nullptr);
+        auto nd = getQSGNode();
         if (nd)
             nd->parent()->removeChildNode(nd);
     }
@@ -46,7 +46,7 @@ public:
     virtual QRect getBoundBox() {return QRect(m_bound[0], m_bound[1], m_bound[2] - m_bound[0], m_bound[3] - m_bound[1]);}
     //virtual void transform(const QJsonObject& aTransform);
     virtual bool canBePickedUp(int aX, int aY);
-    QSGNode* getQSGNode(QSGTransformNode* aTransform) override {
+    QSGNode* getQSGNode() override {
         return m_node;
     }
     void QSGNodeRemoved() override {
@@ -56,6 +56,8 @@ public:
 protected:
     using pointList = std::vector<qsgPoint2D>;
     virtual void calcBoundBox(float* aBoundBox, const pointList& aPoints);
+    void setQSGGemoetry();
+    void setColor();
     double m_bound[4]; //leftbottomrighttop
     pointList m_points;
     QSGGeometryNode* m_node = nullptr;
@@ -68,22 +70,26 @@ protected:
 class polyObject : public shapeObject{
 public:
     polyObject(const QJsonObject& aConfig);
-    QSGNode* getQSGNode(QSGTransformNode* aTransform);
+    QSGNode* getQSGNode() override;
 private:
 };
 
 class ellipseObject : public shapeObject{
 public:
     ellipseObject(const QJsonObject& aConfig);
-};
-
-class ICreateQSGObject : public QJsonObject{
-public:
-    ICreateQSGObject(const QJsonObject& aConfig) : QJsonObject(aConfig){}
-    void setObject(std::shared_ptr<qsgObject> aObject) {m_object = aObject;}
-    std::shared_ptr<qsgObject> getObject() {return m_object;}
+    QSGNode* getQSGNode() override;
 private:
-    std::shared_ptr<qsgObject> m_object = nullptr;
+    class l_qsgPoint3D : public qsgPoint2D{
+    public:
+        l_qsgPoint3D(float aX, float aY, float aZ) : qsgPoint2D(aX, aY), z(aZ){}
+        float z;
+        std::shared_ptr<l_qsgPoint3D> nxt = nullptr;
+    };
+
+    std::shared_ptr<l_qsgPoint3D> evalPoint(const qsgPoint2D& aCenter, const qsgPoint2D& aRadius, double aParam);
+    qsgPoint2D getRadius();
+    qsgPoint2D getCenter();
+    double getAngle();
 };
 
 class qsgModel : public QJsonObject{
@@ -92,8 +98,16 @@ public:
     qsgModel(const QJsonObject& aConfig);
     void clearQSGObjects();
     void show(QSGTransformNode* aTransform);
+    void zoom(int aStep, const QPointF& aCenter, double aRatio = 0);
+    void move(const QPointF& aDistance);
+
+    int getWidth();
+    int getHeight();
+    QTransform getTransform(bool aDeserialize = false);
 private:
+    void setTransform();
     std::vector<std::shared_ptr<qsgObject>> m_objects;
+    QTransform m_trans;
 };
 
 #endif
