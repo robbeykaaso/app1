@@ -25,6 +25,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void hoverMoveEvent(QHoverEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
+    QSGClipNode* m_clip_node = nullptr;
     QSGTransformNode* m_trans_node = nullptr;
     QQueue<std::shared_ptr<qsgModel>> m_models;
 private:

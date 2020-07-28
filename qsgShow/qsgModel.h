@@ -7,12 +7,11 @@
 #include <QQuickWindow>
 #include <QSGSimpleTextureNode>
 
-class qsgPoint2D{
-public:
-    qsgPoint2D(float aX, float aY) : x(aX), y(aY){}
-    float x;
-    float y;
-};
+using pointList = std::vector<QPointF>;
+
+QRectF calcBoundBox(const pointList& aPoints);
+
+class qsgModel;
 
 class qsgObject : public QJsonObject{
 public:
@@ -20,32 +19,42 @@ public:
     qsgObject(const QJsonObject& aConfig) : QJsonObject(aConfig){
 
     }
-    virtual QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr){
+    virtual QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr){
         if (aWindow)
             m_window = aWindow;
+        if (aParent)
+            m_parent = aParent;
         return nullptr;
     }
-    virtual void QSGNodeRemoved() {
+    virtual void addQSGNode(QSGNode* aParent = nullptr) {
         auto nd = getQSGNode();
-        if (nd)
-            nd->parent()->removeChildNode(nd);
+        if (nd){
+            if (aParent)
+                aParent->appendChildNode(nd);
+            else
+                nd->parent()->removeChildNode(nd);
+        }
     }
-private:
+    virtual void transformChanged() {}
+protected:
     QQuickWindow* m_window;
+    qsgModel* m_parent;
 };
 
 class imageObject : public qsgObject{
 public:
-    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr) override {
-        qsgObject::getQSGNode(aWindow);
-        return m_node;
+    imageObject(const QJsonObject& aConfig) : qsgObject(aConfig){
+
     }
-    void QSGNodeRemoved() override {
-        qsgObject::QSGNodeRemoved();
-        m_node = nullptr;
+    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr) override;
+    void addQSGNode(QSGNode* aParent = nullptr) override {
+        qsgObject::addQSGNode(aParent);
+        if (!aParent)
+            m_node = nullptr;
     }
 private:
-    QSGSimpleTextureNode* m_node;
+    QString getPath();
+    QSGSimpleTextureNode* m_node = nullptr;
 };
 
 class shapeObject : public qsgObject{
@@ -53,53 +62,53 @@ public:
     shapeObject(const QJsonObject& aConfig) : qsgObject(aConfig){
 
     }
-    virtual QRect getBoundBox() {return QRect(m_bound[0], m_bound[1], m_bound[2] - m_bound[0], m_bound[3] - m_bound[1]);}
+    QRectF getBoundBox() {return m_bound;}
     //virtual void transform(const QJsonObject& aTransform);
     virtual bool canBePickedUp(int aX, int aY);
-    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr) override {
-        qsgObject::getQSGNode(aWindow);
-        return m_node;
-    }
-    void QSGNodeRemoved() override {
-        qsgObject::QSGNodeRemoved();
-        m_node = nullptr;
-    }
+    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr) override;
+    void addQSGNode(QSGNode* aParent = nullptr) override;
+    void transformChanged() override;
 protected:
-    using pointList = std::vector<qsgPoint2D>;
-    virtual void calcBoundBox(float* aBoundBox, const pointList& aPoints);
     void setQSGGemoetry();
     void setColor();
-    double m_bound[4]; //leftbottomrighttop
+    QRectF m_bound = QRectF(0, 0, 0, 0); //leftbottomrighttop
     pointList m_points;
     QSGGeometryNode* m_node = nullptr;
+    std::vector<QSGGeometryNode*> m_arrows;
+    QSGSimpleTextureNode* m_text = nullptr;
+private:
+    void doSetQSGGeometry(const pointList& aPointList, QSGGeometryNode* aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies = nullptr);
+    void updateTextValue(const QJsonObject& aTextConfig);
+    void updateTextLocation(const QJsonObject& aTextConfig, const QSGTransformNode* aTransform = nullptr);
 protected:
     QJsonArray getPoints();
     int getWidth();
     QColor getColor();
+    QString getText();
 };
 
 class polyObject : public shapeObject{
 public:
     polyObject(const QJsonObject& aConfig);
-    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr) override;
+    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr) override;
 private:
 };
 
 class ellipseObject : public shapeObject{
 public:
     ellipseObject(const QJsonObject& aConfig);
-    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr) override;
+    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr) override;
 private:
-    class l_qsgPoint3D : public qsgPoint2D{
+    class l_qsgPoint3D : public QPointF{
     public:
-        l_qsgPoint3D(float aX, float aY, float aZ) : qsgPoint2D(aX, aY), z(aZ){}
+        l_qsgPoint3D(float aX, float aY, float aZ) : QPointF(aX, aY), z(aZ){}
         float z;
         std::shared_ptr<l_qsgPoint3D> nxt = nullptr;
     };
 
-    std::shared_ptr<l_qsgPoint3D> evalPoint(const qsgPoint2D& aCenter, const qsgPoint2D& aRadius, double aParam);
-    qsgPoint2D getRadius();
-    qsgPoint2D getCenter();
+    std::shared_ptr<l_qsgPoint3D> evalPoint(const QPointF& aCenter, const QPointF& aRadius, double aParam);
+    QPointF getRadius();
+    QPointF getCenter();
     double getAngle();
 };
 
@@ -108,18 +117,28 @@ public:
     qsgModel(){}
     qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages);
     void clearQSGObjects();
-    void show(QSGTransformNode* aTransform, QQuickWindow* aWindow);
+    void show(QSGNode* aTransform, QQuickWindow* aWindow);
     void zoom(int aStep, const QPointF& aCenter, double aRatio = 0);
     void move(const QPointF& aDistance);
+    void transformChanged();
 
     int getWidth();
     int getHeight();
     QTransform getTransform(bool aDeserialize = false);
 private:
+    bool getShowArrow();
+    int getFaceOpacity();
+    QJsonObject getTextConfig();
+    bool getTextVisible(const QJsonObject& aConfig);
+    QPoint getTextSize(const QJsonObject& aConfig);
+    QString getTextLocation(const QJsonObject& aConfig);
     void setTransform();
-    QHash<QString, std::shared_ptr<qsgObject>> m_objects;
+    QMap<QString, std::shared_ptr<qsgObject>> m_objects;
     QTransform m_trans;
+private:
     QMap<QString, QImage> m_images;
+    friend shapeObject;
+    friend imageObject;
 };
 
 #endif

@@ -42,6 +42,8 @@ void qsgPluginTransform::updatePaintNode(QSGNode* aBackground){
     auto trans_node = reinterpret_cast<QSGTransformNode*>(aBackground);
     trans_node->setMatrix(QMatrix4x4(m_trans));
     trans_node->markDirty(QSGNode::DirtyMatrix);
+    if (m_qsgmodel)
+        m_qsgmodel->transformChanged();
 }
 
 void qsgPluginTransform::calcTransform(){
@@ -80,7 +82,10 @@ static rea::regPip<QJsonObject, rea::pipePartial> create_ellipse([](rea::stream<
 }, rea::Json("name", "create_qsgboardplugin_transform"));
 
 void qsgBoard::beforeDestroy(){
-
+    if (m_models.size() > 0){
+        auto lst = m_models.front();
+        lst->clearQSGObjects();
+    }
 }
 
 qsgBoard::qsgBoard(QQuickItem *parent) : QQuickItem(parent)
@@ -124,11 +129,16 @@ void qsgBoard::installPlugins(const QJsonArray& aPlugins){
 QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* nodedata){
     auto ret = aOldNode;
     if (ret == nullptr){
-        auto trans_node = new QSGTransformNode();
-        trans_node->setMatrix(QMatrix4x4(QTransform()));
-        trans_node->setFlag(QSGNode::OwnedByParent);
-        ret = trans_node;
-        m_trans_node = trans_node;
+        m_clip_node = new QSGClipNode();
+        m_clip_node->setFlag(QSGNode::OwnedByParent);
+        m_clip_node->setClipRect(boundingRect());
+        m_clip_node->setIsRectangular(true);
+        ret = m_clip_node;
+
+        m_trans_node = new QSGTransformNode();
+        m_trans_node->setMatrix(QMatrix4x4(QTransform()));
+        m_trans_node->setFlag(QSGNode::OwnedByParent);
+        ret->appendChildNode(m_trans_node);
     }
     if (m_models.size() > 1){
         auto lst = m_models.front();
@@ -142,7 +152,7 @@ QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* noded
     }
 
     for (auto i : m_updates)
-        i->updatePaintNode(ret);
+        i->updatePaintNode(m_trans_node);
     m_updates.clear();
     return ret;
 }
