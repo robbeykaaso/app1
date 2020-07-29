@@ -12,28 +12,6 @@ bool shapeObject::canBePickedUp(int aX, int aY){
     return aX >= bnd.left() && aX <= bnd.right() && aY >= bnd.top() && aY <= bnd.bottom();
 }
 
-void shapeObject::doSetQSGGeometry(const pointList& aPointList, QSGGeometryNode* aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies){
-    auto sz = aIndecies ? aIndecies->size() : aPointList.size();
-    QSGGeometry *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), int(sz));
-    auto vertices = geometry->vertexDataAsPoint2D();
-    if (aIndecies)
-        for (auto i = 0; i < aIndecies->size(); ++i){
-            auto idx = aIndecies->at(i);
-            vertices[i].set(aPointList[idx].x(), aPointList[idx].y());
-        }
-    else
-        for (auto i = 0; i < aPointList.size(); ++i)
-            vertices[i].set(aPointList[i].x(), aPointList[i].y());
-    geometry->setLineWidth(getWidth());
-    /*if (getConfig()->value("fill").toBool() && aPointList.size() > 2)
-        geometry->setDrawingMode(GL_POLYGON);
-    else*/
-    geometry->setDrawingMode(aMode);
-    aNode->setGeometry(geometry);
-    aNode->setFlag(QSGNode::OwnsGeometry);
-    aNode->markDirty(QSGNode::DirtyGeometry);
-};
-
 QSGNode* shapeObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent) {
     qsgObject::getQSGNode(aWindow, aParent);
 
@@ -49,7 +27,7 @@ QSGNode* shapeObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent) {
             }
             polygon.push_back(poly);
             std::vector<uint32_t> indices = mapbox::earcut(polygon);
-            doSetQSGGeometry(m_points, face, QSGGeometry::DrawTriangles, &indices);
+            setQSGGemoetry(m_points, *face, QSGGeometry::DrawTriangles, &indices);
 
             QSGFlatColorMaterial *material = new QSGFlatColorMaterial();
 
@@ -119,12 +97,19 @@ void shapeObject::addQSGNode(QSGNode* aParent) {
             updateTextLocation(txt_cfg);
             aParent->parent()->appendChildNode(m_text);
         }
+        if (m_parent->getShowArrow() && m_arrows.size() == 0){
+            auto arrow = new QSGGeometryNode();
+            //setQSGGemoetry()
+        }
     }else{
         m_node = nullptr;
         if (m_text){
             m_text->parent()->removeChildNode(m_text);
             m_text = nullptr;
         }
+        for (auto i : m_arrows)
+            i->parent()->removeChildNode(i);
+        m_arrows.clear();
     }
 }
 
@@ -151,15 +136,33 @@ QRectF calcBoundBox(const pointList &aPoints){
     return ret;
 }
 
-void shapeObject::setQSGGemoetry(){
-    doSetQSGGeometry(m_points, m_node, QSGGeometry::DrawLineStrip);
+void shapeObject::setQSGGemoetry(const pointList& aPointList, QSGGeometryNode& aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies){
+    auto sz = aIndecies ? aIndecies->size() : aPointList.size();
+    QSGGeometry *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), int(sz));
+    auto vertices = geometry->vertexDataAsPoint2D();
+    if (aIndecies)
+        for (auto i = 0; i < aIndecies->size(); ++i){
+            auto idx = aIndecies->at(i);
+            vertices[i].set(aPointList[idx].x(), aPointList[idx].y());
+        }
+    else
+        for (auto i = 0; i < aPointList.size(); ++i)
+            vertices[i].set(aPointList[i].x(), aPointList[i].y());
+    geometry->setLineWidth(getWidth());
+    /*if (getConfig()->value("fill").toBool() && aPointList.size() > 2)
+        geometry->setDrawingMode(GL_POLYGON);
+    else*/
+    geometry->setDrawingMode(aMode);
+    aNode.setGeometry(geometry);
+    aNode.setFlag(QSGNode::OwnsGeometry);
+    aNode.markDirty(QSGNode::DirtyGeometry);
 }
 
-void shapeObject::setColor(){
+void shapeObject::setColor(QSGGeometryNode& aNode){
     QSGFlatColorMaterial *material = new QSGFlatColorMaterial();
     material->setColor(getColor());
-    m_node->setMaterial(material);
-    m_node->setFlag(QSGNode::OwnsMaterial);
+    aNode.setMaterial(material);
+    aNode.setFlag(QSGNode::OwnsMaterial);
 }
 
 QJsonArray shapeObject::getPoints(){
@@ -216,8 +219,8 @@ QSGNode* polyObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent) {
             m_points.push_back(QPointF(pts[i].toDouble(), pts[i + 1].toDouble()));
         m_bound = calcBoundBox(m_points);
         m_node = new QSGGeometryNode();
-        setQSGGemoetry();
-        setColor();
+        setQSGGemoetry(m_points, *m_node, QSGGeometry::DrawLineStrip);
+        setColor(*m_node);
     }
     return shapeObject::getQSGNode(aWindow, aParent);
 }
@@ -291,8 +294,8 @@ QSGNode* ellipseObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent){
         m_points.push_back(m_points.at(0));*/
 
         m_node = new QSGGeometryNode();
-        setQSGGemoetry();
-        setColor();
+        setQSGGemoetry(m_points, *m_node, QSGGeometry::DrawLineStrip);
+        setColor(*m_node);
     }
     return shapeObject::getQSGNode(aWindow, aParent);
 }
@@ -459,7 +462,8 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                              "arrow", true,
                              "face", 200,
                              "text", rea::Json("visible", false,
-                                               "size", rea::JArray(100, 50)),
+                                               "size", rea::JArray(100, 50),
+                                               "location", "bottom"),
                              "objects", rea::Json(
                                             "img_2", rea::Json(
                                                          "type", "image",

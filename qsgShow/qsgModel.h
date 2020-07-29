@@ -69,15 +69,14 @@ public:
     void addQSGNode(QSGNode* aParent = nullptr) override;
     void transformChanged() override;
 protected:
-    void setQSGGemoetry();
-    void setColor();
+    void setQSGGemoetry(const pointList& aPointList, QSGGeometryNode& aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies = nullptr);
+    void setColor(QSGGeometryNode& aNode);
     QRectF m_bound = QRectF(0, 0, 0, 0); //leftbottomrighttop
     pointList m_points;
     QSGGeometryNode* m_node = nullptr;
     std::vector<QSGGeometryNode*> m_arrows;
     QSGSimpleTextureNode* m_text = nullptr;
 private:
-    void doSetQSGGeometry(const pointList& aPointList, QSGGeometryNode* aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies = nullptr);
     void updateTextValue(const QJsonObject& aTextConfig);
     void updateTextLocation(const QJsonObject& aTextConfig, const QSGTransformNode* aTransform = nullptr);
 protected:
