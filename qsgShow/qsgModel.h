@@ -71,6 +71,8 @@ public:
 protected:
     void setQSGGemoetry(const pointList& aPointList, QSGGeometryNode& aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies = nullptr);
     void setColor(QSGGeometryNode& aNode);
+    void tryAppendArrowNodes(int aCount);
+    void calcArrow(const QPointF& aStart, const QPointF& aEnd, QSGGeometryNode& aNode);
     QRectF m_bound = QRectF(0, 0, 0, 0); //leftbottomrighttop
     pointList m_points;
     QSGGeometryNode* m_node = nullptr;
@@ -84,12 +86,18 @@ protected:
     int getWidth();
     QColor getColor();
     QString getText();
+    int getFaceOpacity();
+    QJsonObject getTextConfig();
+    QJsonObject getArrowConfig();
+    bool getShowArrow(const QJsonObject& aConfig);
 };
 
 class polyObject : public shapeObject{
 public:
     polyObject(const QJsonObject& aConfig);
     QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr) override;
+    void addQSGNode(QSGNode* aParent = nullptr) override;
+    void transformChanged() override;
 private:
 };
 
@@ -97,6 +105,8 @@ class ellipseObject : public shapeObject{
 public:
     ellipseObject(const QJsonObject& aConfig);
     QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr) override;
+    void addQSGNode(QSGNode* aParent = nullptr) override;
+    void transformChanged() override;
 private:
     class l_qsgPoint3D : public QPointF{
     public:
@@ -106,6 +116,7 @@ private:
     };
 
     std::shared_ptr<l_qsgPoint3D> evalPoint(const QPointF& aCenter, const QPointF& aRadius, double aParam);
+    bool getCCW();
     QPointF getRadius();
     QPointF getCenter();
     double getAngle();
@@ -125,7 +136,8 @@ public:
     int getHeight();
     QTransform getTransform(bool aDeserialize = false);
 private:
-    bool getShowArrow();
+    QJsonObject getArrowConfig();
+    bool getShowArrow(const QJsonObject& aConfig);
     int getFaceOpacity();
     QJsonObject getTextConfig();
     bool getTextVisible(const QJsonObject& aConfig);

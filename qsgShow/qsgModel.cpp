@@ -12,38 +12,34 @@ bool shapeObject::canBePickedUp(int aX, int aY){
     return aX >= bnd.left() && aX <= bnd.right() && aY >= bnd.top() && aY <= bnd.bottom();
 }
 
-QSGNode* shapeObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent) {
+QSGNode* shapeObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent){
     qsgObject::getQSGNode(aWindow, aParent);
-
-    auto fc = m_parent->getFaceOpacity();
-    if (fc < 256){
-        if (m_node->childCount() == 0){
-            auto face = new QSGGeometryNode();
-
-            std::vector<std::vector<std::array<qreal, 2>>> polygon;
-            std::vector<std::array<qreal, 2>> poly;
-            for (auto i : m_points){
-                poly.push_back({i.x(), i.y()});
-            }
-            polygon.push_back(poly);
-            std::vector<uint32_t> indices = mapbox::earcut(polygon);
-            setQSGGemoetry(m_points, *face, QSGGeometry::DrawTriangles, &indices);
-
-            QSGFlatColorMaterial *material = new QSGFlatColorMaterial();
-
-            auto clr0 = getColor();
-            auto clr = QColor(clr0.red(), clr0.green(), clr0.blue(), fc);
-            material->setColor(clr);
-
-            face->setMaterial(material);
-            face->setFlag(QSGNode::OwnedByParent);
-            face->setFlag(QSGNode::OwnsMaterial);
-            m_node->appendChildNode(face);
-        }
-    }else
-        if (m_node->childCount() > 0)
-            m_node->removeAllChildNodes();
     return m_node;
+}
+
+int shapeObject::getFaceOpacity(){
+    if (contains("face"))
+        return value("face").toInt();
+    else
+        return m_parent->getFaceOpacity();
+}
+
+QJsonObject shapeObject::getTextConfig(){
+    if (contains("text"))
+        return value("text").toObject();
+    else
+        return m_parent->getTextConfig();
+}
+
+QJsonObject shapeObject::getArrowConfig(){
+    if (contains("arrow"))
+        return value("arrow").toObject();
+    else
+        return m_parent->getArrowConfig();
+}
+
+bool shapeObject::getShowArrow(const QJsonObject& aConfig){
+    return m_parent->getShowArrow(aConfig);
 }
 
 void shapeObject::updateTextValue(const QJsonObject& aTextConfig){
@@ -89,7 +85,7 @@ void shapeObject::updateTextLocation(const QJsonObject& aTextConfig, const QSGTr
 void shapeObject::addQSGNode(QSGNode* aParent) {
     qsgObject::addQSGNode(aParent);
     if (aParent){
-        auto txt_cfg = m_parent->getTextConfig();
+        auto txt_cfg = getTextConfig();
         if (m_parent->getTextVisible(txt_cfg) && !m_text){
             m_text = new QSGSimpleTextureNode();// window()->createImageNode();
             m_text->setFlag(QSGNode::OwnsMaterial);
@@ -97,11 +93,33 @@ void shapeObject::addQSGNode(QSGNode* aParent) {
             updateTextLocation(txt_cfg);
             aParent->parent()->appendChildNode(m_text);
         }
-        if (m_parent->getShowArrow() && m_arrows.size() == 0){
-            auto arrow = new QSGGeometryNode();
-            //setQSGGemoetry()
+        auto fc = getFaceOpacity();
+        if (m_node && fc > 0 && m_node->childCount() == 0){
+            auto face = new QSGGeometryNode();
+
+            std::vector<std::vector<std::array<qreal, 2>>> polygon;
+            std::vector<std::array<qreal, 2>> poly;
+            for (auto i : m_points){
+                poly.push_back({i.x(), i.y()});
+            }
+            polygon.push_back(poly);
+            std::vector<uint32_t> indices = mapbox::earcut(polygon);
+            setQSGGemoetry(m_points, *face, QSGGeometry::DrawTriangles, &indices);
+
+            QSGFlatColorMaterial *material = new QSGFlatColorMaterial();
+
+            auto clr0 = getColor();
+            auto clr = QColor(clr0.red(), clr0.green(), clr0.blue(), fc);
+            material->setColor(clr);
+
+            face->setMaterial(material);
+            face->setFlag(QSGNode::OwnedByParent);
+            face->setFlag(QSGNode::OwnsMaterial);
+            m_node->appendChildNode(face);
         }
     }else{
+        if (m_node)
+            m_node->removeAllChildNodes();
         m_node = nullptr;
         if (m_text){
             m_text->parent()->removeChildNode(m_text);
@@ -116,7 +134,7 @@ void shapeObject::addQSGNode(QSGNode* aParent) {
 void shapeObject::transformChanged(){
     if (m_text && m_node){
         auto trans = reinterpret_cast<QSGTransformNode*>(m_node->parent());
-        updateTextLocation(m_parent->getTextConfig(), trans);
+        updateTextLocation(getTextConfig(), trans);
     }
 }
 
@@ -165,6 +183,22 @@ void shapeObject::setColor(QSGGeometryNode& aNode){
     aNode.setFlag(QSGNode::OwnsMaterial);
 }
 
+void shapeObject::tryAppendArrowNodes(int aCount){
+    if (m_node){
+        auto prt = m_node->parent()->parent();
+        if (getShowArrow(getArrowConfig()) && m_arrows.size() == 0){
+            for (int i = 0; i < aCount; ++i){
+                auto arrow = new QSGGeometryNode();
+                pointList pts;
+                setQSGGemoetry(pts, *arrow, QSGGeometry::DrawLineStrip);
+                setColor(*arrow);
+                prt->appendChildNode(arrow);
+                m_arrows.push_back(arrow);
+            }
+        }
+    }
+}
+
 QJsonArray shapeObject::getPoints(){
     return value("points").toArray();
 }
@@ -178,7 +212,18 @@ QColor shapeObject::getColor(){
 }
 
 QString shapeObject::getText(){
-    return value("text").toString();
+    return value("caption").toString();
+}
+
+void shapeObject::calcArrow(const QPointF& aStart, const QPointF& aEnd, QSGGeometryNode& aNode){
+    const float si = 0.5, co = 0.866;
+    auto dir = aStart - aEnd;
+    dir = dir / sqrt(QPointF::dotProduct(dir, dir)) * 15;
+    pointList pts;
+    pts.push_back(QPointF(dir.x() * co + dir.y() * si, - dir.x() * si + dir.y() * co) + aEnd);
+    pts.push_back(aEnd);
+    pts.push_back(QPointF(dir.x() * co - dir.y() * si, dir.x() * si + dir.y() * co) + aEnd);
+    setQSGGemoetry(pts, aNode, QSGGeometry::DrawLineStrip);
 }
 
 QSGNode* imageObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent){
@@ -225,9 +270,46 @@ QSGNode* polyObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent) {
     return shapeObject::getQSGNode(aWindow, aParent);
 }
 
+void polyObject::addQSGNode(QSGNode* aParent){
+    shapeObject::addQSGNode(aParent);
+    tryAppendArrowNodes(m_points.size() - 1);
+}
+
+void polyObject::transformChanged(){
+    shapeObject::transformChanged();
+    if (m_node && m_arrows.size() > 1){
+        auto trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
+        auto st = trans.map(m_points[0]);
+        for (size_t i = 1; i < m_points.size(); ++i){
+            auto ed = trans.map(m_points[i]);
+            calcArrow(st, ed, *m_arrows[i - 1]);
+            st = ed;
+        }
+    }
+}
+
 static rea::regPip<QJsonObject, rea::pipePartial> create_poly([](rea::stream<QJsonObject>* aInput){
     aInput->out<std::shared_ptr<qsgObject>>(std::make_shared<polyObject>(aInput->data()));
 }, rea::Json("name", "create_qsgobject_poly"));
+
+void ellipseObject::transformChanged(){
+    shapeObject::transformChanged();
+    if (m_arrows.size() > 0 && m_node){
+        auto w_trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
+        auto r = getRadius();
+        auto ct = getCenter();
+        auto del = getCCW() ?  - 1 : 1;
+        pointList pts = {QPointF(ct.x() - r.x(), ct.y()), QPointF(ct.x(), ct.rx() + r.y()),
+                         QPointF(ct.x() + r.x(), ct.y()), QPointF(ct.x(), ct.rx() - r.y()),
+                         QPointF(ct.x() - r.x(), ct.y() + del), QPointF(ct.x() + del, ct.rx() + r.y()),
+                         QPointF(ct.x() + r.x(), ct.y() - del), QPointF(ct.x() - del, ct.rx() - r.y())};
+        QTransform trans;
+        auto ang = getAngle();
+        trans.rotate(ang);
+        for (auto i = 0; i < 4; ++i)
+            calcArrow(w_trans.map(trans.map(pts[i + 4] - ct) + ct), w_trans.map(trans.map(pts[i] - ct) + ct), *m_arrows[i]);
+    }
+}
 
 ellipseObject::ellipseObject(const QJsonObject& aConfig) : shapeObject(aConfig){
 
@@ -243,6 +325,11 @@ std::shared_ptr<ellipseObject::l_qsgPoint3D> ellipseObject::evalPoint(const QPoi
     return std::make_shared<l_qsgPoint3D>(aCenter.x() + (aRadius.x() * std::cos(aParam)),
                                           aCenter.y() + (aRadius.y() * std::sin(aParam)),
                       aParam);
+}
+
+void ellipseObject::addQSGNode(QSGNode* aParent){
+    shapeObject::addQSGNode(aParent);
+    tryAppendArrowNodes(4);
 }
 
 QSGNode* ellipseObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent){
@@ -305,6 +392,10 @@ QPointF ellipseObject::getRadius(){
     return QPointF(r[0].toDouble(), r[1].toDouble());
 }
 
+bool ellipseObject::getCCW(){
+    return value("ccw").toBool();
+}
+
 QPointF ellipseObject::getCenter(){
     auto r = value("center").toArray();
     return QPointF(r[0].toDouble(), r[1].toDouble());
@@ -353,8 +444,12 @@ void qsgModel::zoom(int aStep, const QPointF& aCenter, double aRatio){
     setTransform();
 }
 
-bool qsgModel::getShowArrow(){
-    return value("arrow").toBool();
+QJsonObject qsgModel::getArrowConfig(){
+    return value("arrow").toObject();
+}
+
+bool qsgModel::getShowArrow(const QJsonObject& aConfig){
+    return aConfig.value("visible").toBool();
 }
 
 int qsgModel::getFaceOpacity(){
@@ -459,7 +554,9 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
 
         auto cfg = rea::Json("width", 600,
                              "height", 600,
-                             "arrow", true,
+                             "arrow", rea::Json("visible", false,
+                                                "pole", true,
+                                                "invert", false),
                              "face", 200,
                              "text", rea::Json("visible", false,
                                                "size", rea::JArray(100, 50),
@@ -474,7 +571,10 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                                                          "points", rea::JArray(50, 50, 200, 200, 200, 50, 50, 50),
                                                          "color", "red",
                                                          "width", 3,
-                                                         "text", "poly"
+                                                         "caption", "poly",
+                                                         "face", 50,
+                                                         "text", rea::Json("visible", true,
+                                                                           "size", rea::JArray(100, 50))
                                                          ),
                                             "shp_1", rea::Json(
                                                          "type", "ellipse",
@@ -482,7 +582,9 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                                                          "radius", rea::JArray(300, 200),
                                                          "color", "blue",
                                                          "width", 5,
-                                                         "text", "ellipse"
+                                                         "ccw", true,
+                                                         "angle", 30,
+                                                         "caption", "ellipse"
                                                          )
                                                 ));
 

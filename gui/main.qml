@@ -102,10 +102,7 @@ ApplicationWindow {
                 checkable: true
                 shortcut: "Ctrl+V"
                 onTriggered: {
-                    if (view_cfg["face"] > 100)
-                        view_cfg["face"] -= 200
-                    else
-                        view_cfg["face"] += 200
+                    view_cfg["face"] = 100 - view_cfg["face"]
                     Pipeline2.run("testQSGShow", view_cfg)
                 }
             }
@@ -114,7 +111,7 @@ ApplicationWindow {
                 checkable: true
                 shortcut: "Ctrl+A"
                 onTriggered: {
-                    view_cfg["arrow"] = !view_cfg["arrow"]
+                    view_cfg["arrow"]["visible"] = !view_cfg["arrow"]["visible"]
                     Pipeline2.run("testQSGShow", view_cfg)
                 }
             }
@@ -130,8 +127,10 @@ ApplicationWindow {
         }
         Component.onCompleted: {
             view_cfg = {
-                face: 300,
-                arrow: false,
+                face: 0,
+                arrow: {
+                    visible: false
+                },
                 text: {
                     visible: false,
                     location: "bottom"
@@ -139,12 +138,13 @@ ApplicationWindow {
             }
         }
     }
-    contentData: QSGBoard{
-        name: "testbrd"
-        plugins: [{type: "transform"}]
-        anchors.fill: parent
-        Component.onDestruction: {
-            beforeDestroy()
+    contentData:
+        QSGBoard{
+            name: "testbrd"
+            plugins: [{type: "transform"}]
+            anchors.fill: parent
+            Component.onDestruction: {
+                beforeDestroy()
+            }
         }
-    }
 }
