@@ -35,6 +35,7 @@ private:
     QString m_name;
     QMap<QString, std::shared_ptr<qsgBoardPlugin>> m_plugins;
     QQueue<qsgBoardPlugin*> m_updates;
+    QQueue<IUpdateQSGAttr> m_updates2;
     bool m_refreshed = false;
     friend qsgBoardPlugin;
 };

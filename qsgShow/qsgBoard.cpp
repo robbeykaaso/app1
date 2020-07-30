@@ -109,6 +109,13 @@ void qsgBoard::setName(const QString& aName){
         m_refreshed = false;
         update();
     }, rea::Json("name", "updateQSGModel_" + m_name));
+
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        if (m_models.size() > 0){
+            m_updates2.push_back(m_models.front()->updateQSGAttr(aInput->data()));
+            update();
+        }
+    }, rea::Json("name", "updateQSGAttr_" + m_name));
 }
 
 void qsgBoard::installPlugins(const QJsonArray& aPlugins){
@@ -154,6 +161,11 @@ QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* noded
     for (auto i : m_updates)
         i->updatePaintNode(m_trans_node);
     m_updates.clear();
+
+    for (auto i : m_updates2)
+        i();
+    m_updates2.clear();
+
     return ret;
 }
 

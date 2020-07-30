@@ -33,7 +33,7 @@ ApplicationWindow {
             }*/
         }
         Menu{
-            title: qsTr("view")
+            title: qsTr("repaint")
 
             delegate: MenuItem {
                 id: menuItem
@@ -125,15 +125,71 @@ ApplicationWindow {
                 }
             }
         }
+        Menu{
+            title: qsTr("modify")
+            MenuItem{
+                checkable: true
+                text: qsTr("wholeArrowVisible")
+                onClicked:{
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["arrow", "visible"], val: checked})
+                }
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("wholeFaceOpacity")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["face"], val: checked ? 200 : 0})
+                }
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("wholeTextVisible")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["text", "visible"], val: checked})
+                }
+            }
+            MenuSeparator{
+
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("polyArrowVisible")
+                onClicked:{
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["arrow", "visible"], val: checked})
+                }
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("polyFaceOpacity")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["face"], val: checked ? 200 : 0})
+                }
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("polyTextVisible")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["text", "visible"], val: checked})
+                }
+            }
+        }
+
         Component.onCompleted: {
             view_cfg = {
                 face: 0,
                 arrow: {
-                    visible: false
+                    visible: false,
+                    pole: true
                 },
                 text: {
                     visible: false,
-                    location: "bottom"
+                    location: "middle"
                 }
             }
         }
