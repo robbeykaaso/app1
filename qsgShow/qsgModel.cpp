@@ -8,17 +8,12 @@
 #include <QSGVertexColorMaterial>
 #include <QPainter>
 
-IUpdateQSGAttr qsgObject::updateQSGAttr(const QJsonObject& aModification){
-    auto mdy = m_parent->overwriteAttr(*this, aModification.value("key").toArray(), aModification.value("val"));
-    return doUpdateQSGAttr(mdy);
-}
-
 bool shapeObject::canBePickedUp(int aX, int aY){
     auto bnd = getBoundBox();
     return aX >= bnd.left() && aX <= bnd.right() && aY >= bnd.top() && aY <= bnd.bottom();
 }
 
-IUpdateQSGAttr shapeObject::doUpdateQSGAttr(const QString& aModification){
+IUpdateQSGAttr shapeObject::updateQSGAttr(const QString& aModification){
     if (aModification == "face_"){
         return [this](){checkFaceOpacity();};
     }else if (aModification == "text_visible_")
@@ -172,29 +167,32 @@ void shapeObject::setQSGColor(QSGGeometryNode& aNode, const QColor& aColor){
     aNode.markDirty(QSGNode::DirtyMaterial);
 }
 
+void shapeObject::updateArrowCount(int aCount){
+    for (int i  = m_arrows.size() - 1; i >= aCount; --i){
+        auto arr = m_arrows[i];
+        arr->parent()->removeChildNode(arr);
+        m_arrows.pop_back();
+        delete arr;
+    }
+    auto prt = m_node->parent()->parent();
+    for (int i = m_arrows.size(); i < aCount; ++i){
+        auto arrow = new QSGGeometryNode();
+        pointList pts;
+        setQSGGemoetry(pts, *arrow, QSGGeometry::DrawLineStrip);
+        setQSGColor(*arrow, getColor());
+        prt->appendChildNode(arrow);
+        m_arrows.push_back(arrow);
+    }
+}
+
 void shapeObject::checkArrowVisible(int aCount){
     if (m_node){
-        auto prt = m_node->parent()->parent();
         if (getArrowVisible(getArrowConfig())) {
-            if (m_arrows.size() == 0){
-                for (int i = 0; i < aCount; ++i){
-                    auto arrow = new QSGGeometryNode();
-                    pointList pts;
-                    setQSGGemoetry(pts, *arrow, QSGGeometry::DrawLineStrip);
-                    setQSGColor(*arrow, getColor());
-                    prt->appendChildNode(arrow);
-                    m_arrows.push_back(arrow);
-                }
-                if (m_arrows.size() > 0)
-                    updateArrowLocation();
-            }
-        }else{
-            if (m_arrows.size() > 0){
-                for (auto i : m_arrows)
-                    i->parent()->removeChildNode(i);
-                m_arrows.clear();
-            }
-        }
+            updateArrowCount(aCount);
+            if (m_arrows.size() > 0)
+                updateArrowLocation();
+        }else
+            updateArrowCount(0);
     }
 }
 
@@ -281,17 +279,31 @@ double shapeObject::getAngle(){
 QSGNode* imageObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode){
     qsgObject::getQSGNode(aWindow, aParent, aTransformNode);
     if (!m_node){
-        QImage img = imagePool::readCache(getPath());
-        if (img.width() > 0 && img.height() > 0){
-            m_node = new QSGSimpleTextureNode();
-            m_node->setTexture(m_window->createTextureFromImage(img));
-            m_node->setRect(img.rect());
-            m_node->markDirty(QSGNode::DirtyMaterial);
-        }
-
+        m_node = new QSGSimpleTextureNode();
+        updateImagePath();
         aTransformNode->appendChildNode(m_node);
     }
     return m_node;
+}
+
+void imageObject::updateImagePath(){
+    QImage img = imagePool::readCache(getPath());
+    if (img.width() == 0 || img.height() == 0){
+        img = QImage(10, 10, QImage::Format_ARGB32);
+        img.fill(QColor("transparent"));
+    }
+    m_node->setTexture(m_window->createTextureFromImage(img));
+    m_node->setRect(img.rect());
+    m_node->markDirty(QSGNode::DirtyMaterial);
+}
+
+IUpdateQSGAttr imageObject::updateQSGAttr(const QString& aModification){
+    if (aModification == "path_")
+        return [this](){
+            updateImagePath();
+        };
+    else
+        return qsgObject::updateQSGAttr(aModification);
 }
 
 QString imageObject::getPath(){
@@ -328,10 +340,7 @@ QSGNode* polyObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNod
         aTransformNode->appendChildNode(m_node);
     }
     auto ret = shapeObject::getQSGNode(aWindow, aParent, aTransformNode);
-    if (getPoleArrow(getArrowConfig()))
-        checkArrowVisible((m_points.size() - 1) * 2);
-    else
-        checkArrowVisible(m_points.size() - 1);
+    checkArrowPole();
     return ret;
 }
 
@@ -354,21 +363,29 @@ void polyObject::transformChanged(){
         updateArrowLocation();
 }
 
-IUpdateQSGAttr polyObject::doUpdateQSGAttr(const QString& aModification){
+IUpdateQSGAttr polyObject::updateQSGAttr(const QString& aModification){
     if (aModification == "arrow_visible_")
         return [this](){
-            if (getPoleArrow(getArrowConfig()))
-                checkArrowVisible((m_points.size() - 1) * 2);
-            else
-                checkArrowVisible(m_points.size() - 1);
+            checkArrowPole();
+        };
+    else if (aModification == "arrow_pole_")
+        return [this](){
+            checkArrowPole();
         };
     else
-        return shapeObject::doUpdateQSGAttr(aModification);
+        return shapeObject::updateQSGAttr(aModification);
 }
 
 static rea::regPip<QJsonObject, rea::pipePartial> create_poly([](rea::stream<QJsonObject>* aInput){
     aInput->out<std::shared_ptr<qsgObject>>(std::make_shared<polyObject>(aInput->data()));
 }, rea::Json("name", "create_qsgobject_poly"));
+
+void polyObject::checkArrowPole(){
+    if (getPoleArrow(getArrowConfig()))
+        checkArrowVisible((m_points.size() - 1) * 2);
+    else
+        checkArrowVisible(m_points.size() - 1);
+}
 
 void ellipseObject::updateArrowLocation(){
     auto w_trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
@@ -392,13 +409,13 @@ void ellipseObject::transformChanged(){
         updateArrowLocation();
 }
 
-IUpdateQSGAttr ellipseObject::doUpdateQSGAttr(const QString& aModification){
+IUpdateQSGAttr ellipseObject::updateQSGAttr(const QString& aModification){
     if (aModification == "arrow_visible_")
         return [this](){
             checkArrowVisible(4);
         };
     else
-        return shapeObject::doUpdateQSGAttr(aModification);
+        return shapeObject::updateQSGAttr(aModification);
 }
 
 ellipseObject::ellipseObject(const QJsonObject& aConfig) : shapeObject(aConfig){
@@ -513,8 +530,12 @@ void qsgModel::show(QSGTransformNode* aTransform, QQuickWindow* aWindow, const Q
 IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
     if (aModification.contains("obj")){
         auto obj = aModification.value("obj").toString();
-        if (m_objects.contains(obj))
-            return m_objects.value(obj)->updateQSGAttr(aModification);
+        if (m_objects.contains(obj)){
+            auto nd = m_objects.value(obj);
+            auto mdy = overwriteAttr(*nd, aModification.value("key").toArray(), aModification.value("val"));
+            if (mdy != "")
+                return nd->updateQSGAttr(mdy);
+        }
     }else{
         auto kys = aModification.value("key").toArray();
         if (kys.size() > 0){
@@ -532,13 +553,15 @@ IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
                     WCS2SCS();
                 };
             }else{
-                return [this, aModification](){
-                    for (auto i : m_objects){
-                        auto up = i->updateQSGAttr(aModification);
-                        if (up)
-                            up();
-                    }
-                };
+                auto mdy = overwriteAttr(*this, aModification.value("key").toArray(), aModification.value("val"));
+                if (mdy != "")
+                    return [this, mdy](){
+                        for (auto i : m_objects){
+                            auto up = i->updateQSGAttr(mdy);
+                            if (up)
+                                up();
+                        }
+                    };
             }
         }
     }
@@ -600,21 +623,30 @@ QString qsgModel::overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, c
         return "";
     else if (aKeys.size() == 1){
         auto ret = aKeys[0].toString();
-        aObject.insert(ret, aValue);
-        return ret + "_";
+        if (aObject.value(ret) == aValue)
+            return "";
+        else{
+            aObject.insert(ret, aValue);
+            return ret + "_";
+        }
     }
     QString ret = "";
     std::vector<QJsonObject> objs;
+    auto org = aObject;
     for (int i = 0; i < aKeys.size(); ++i){
         auto key = aKeys[i].toString();
         ret += key + "_";
-        if (i == aKeys.size() - 1)
+        if (i == aKeys.size() - 1){
+            if (org.value(key) == aValue)
+                return "";
             objs.back().insert(key, aValue);
+        }
         else{
             if (i == 0)
                 objs.push_back(aObject.value(key).toObject());
             else
                 objs.push_back(objs.back().value(key).toObject());
+            org = org.value(key).toObject();
         }
     }
     for (int i = objs.size() - 1; i > 0; --i){

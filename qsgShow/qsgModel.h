@@ -33,10 +33,9 @@ public:
         if (nd)
             nd->parent()->removeChildNode(nd);
     }
-    IUpdateQSGAttr updateQSGAttr(const QJsonObject& aModification);
     virtual void transformChanged() {}
+    virtual IUpdateQSGAttr updateQSGAttr(const QString& aModification){return nullptr;}
 protected:
-    virtual IUpdateQSGAttr doUpdateQSGAttr(const QString& aModification){return nullptr;}
     QQuickWindow* m_window;
     qsgModel* m_parent;
 };
@@ -51,7 +50,9 @@ public:
         qsgObject::removeQSGNode();
         m_node = nullptr;
     }
+    IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 private:
+    void updateImagePath();
     QString getPath();
     QSGSimpleTextureNode* m_node = nullptr;
 };
@@ -66,8 +67,8 @@ public:
     QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
     void removeQSGNode() override;
     void transformChanged() override;
+    IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
-    IUpdateQSGAttr doUpdateQSGAttr(const QString& aModification) override;
     void setQSGGemoetry(const pointList& aPointList, QSGGeometryNode& aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies = nullptr);
     void setQSGColor(QSGGeometryNode& aNode, const QColor& aColor);
     void checkArrowVisible(int aCount);
@@ -84,6 +85,7 @@ private:
     void setQSGFace(QSGGeometryNode& aNode, int aOpacity);
     void updateTextValue(const QJsonObject& aTextConfig);
     void updateTextLocation(const QJsonObject& aTextConfig);
+    void updateArrowCount(int aCount);
 protected:
     QJsonArray getPoints();
     int getWidth();
@@ -102,9 +104,10 @@ public:
     polyObject(const QJsonObject& aConfig);
     QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
     void transformChanged() override;
+    IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
-    IUpdateQSGAttr doUpdateQSGAttr(const QString& aModification) override;
     void updateArrowLocation() override;
+    void checkArrowPole();
 private:
 };
 
@@ -113,8 +116,8 @@ public:
     ellipseObject(const QJsonObject& aConfig);
     QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
     void transformChanged() override;
+    IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
-    IUpdateQSGAttr doUpdateQSGAttr(const QString& aModification) override;
     void updateArrowLocation() override;
 private:
     class l_qsgPoint3D : public QPointF{

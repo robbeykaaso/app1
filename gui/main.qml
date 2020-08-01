@@ -137,6 +137,14 @@ ApplicationWindow {
             }
             MenuItem{
                 checkable: true
+                text: qsTr("wholeArrowPole")
+                onClicked:{
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["arrow", "pole"], val: checked})
+                }
+            }
+            MenuItem{
+                checkable: true
                 text: qsTr("wholeFaceOpacity")
                 onClicked: {
                     checked != checked
@@ -164,6 +172,14 @@ ApplicationWindow {
             }
             MenuItem{
                 checkable: true
+                text: qsTr("polyArrowPole")
+                onClicked:{
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["arrow", "pole"], val: checked})
+                }
+            }
+            MenuItem{
+                checkable: true
                 text: qsTr("polyFaceOpacity")
                 onClicked: {
                     checked != checked
@@ -176,6 +192,14 @@ ApplicationWindow {
                 onClicked: {
                     checked != checked
                     Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["text", "visible"], val: checked})
+                }
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("imagePath")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "img_2", key: ["path"], val: checked ? "F:/3M/B4DT/DF Mark/V1-1.bmp" : "F:/3M/B4DT/DF Mark/V1-2.bmp"})
                 }
             }
         }
