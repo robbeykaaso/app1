@@ -133,11 +133,11 @@ private:
 class qsgModel : public QJsonObject{
 public:
     qsgModel(){}
-    qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages);
+    qsgModel(const QJsonObject& aConfig);
     ~qsgModel();
 
     void clearQSGObjects();
-    void show(QSGTransformNode* aTransform, QQuickWindow* aWindow);
+    void show(QSGTransformNode* aTransform, QQuickWindow* aWindow, const QPointF& aSize);
     IUpdateQSGAttr updateQSGAttr(const QJsonObject& aModification);
 private:
     QString overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, const QJsonValue&& aValue);
@@ -159,9 +159,9 @@ private:
     void setTransform();
     QMap<QString, std::shared_ptr<qsgObject>> m_objects;
     QTransform m_trans;
+    QPointF m_size;
 private:
     rea::pipe0* objectCreator(const QString& aName);
-    QMap<QString, QImage> m_images;
     QHash<QString, rea::pipe0*> m_creators;
     QQuickWindow* m_window = nullptr;
     QSGTransformNode* m_trans_node = nullptr;

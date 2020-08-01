@@ -54,6 +54,11 @@ void qsgBoard::setName(const QString& aName){
     }, rea::Json("name", "updateQSGModel_" + m_name));
 
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        m_models.push_back(std::make_shared<qsgModel>(aInput->data()));
+        update();
+    }, rea::Json("name", "replaceQSGModel_" + m_name));
+
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
         if (m_models.size() > 0){
             m_updates.push_back(m_models.front()->updateQSGAttr(aInput->data()));
             update();
@@ -96,8 +101,9 @@ QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* noded
         while (m_models.size() > 1)
             m_models.pop_front();
     }
-    if (m_models.size() == 1)
-        m_models.front()->show(m_trans_node, window());
+    if (m_models.size() == 1){
+        m_models.front()->show(m_trans_node, window(), QPointF(width(), height()));
+    }
 
     for (auto i : m_updates)
         if (i)

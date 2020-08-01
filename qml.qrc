@@ -3,5 +3,7 @@
         <file>main.cpp</file>
         <file>qtquickcontrols2.conf</file>
         <file>gui/main.qml</file>
+        <file>gui/LogPanel.ui.qml</file>
+        <file>gui/Log2.qml</file>
     </qresource>
 </RCC>

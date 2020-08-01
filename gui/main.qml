@@ -180,6 +180,21 @@ ApplicationWindow {
             }
         }
 
+        Menu{
+            title: qsTr("gui")
+            MenuItem{
+                text: qsTr("log")
+                onClicked:{
+                    Pipeline2.run("addLogRecord", {type: "train", level: "info", msg: "train_info"})
+                    Pipeline2.run("addLogRecord", {type: "train", level: "warning", msg: "train_warning"})
+                    Pipeline2.run("addLogRecord", {type: "train", level: "error", msg: "train_error"})
+                    Pipeline2.run("addLogRecord", {type: "system", level: "info", msg: "system_info"})
+                    Pipeline2.run("addLogRecord", {type: "system", level: "warning", msg: "system_warning"})
+                    Pipeline2.run("addLogRecord", {type: "system", level: "error", msg: "system_error"})
+                }
+            }
+        }
+
         Component.onCompleted: {
             view_cfg = {
                 face: 0,
@@ -195,12 +210,22 @@ ApplicationWindow {
         }
     }
     contentData:
-        QSGBoard{
-            name: "testbrd"
-            plugins: [{type: "transform"}]
-            anchors.fill: parent
-            Component.onDestruction: {
-                beforeDestroy()
+        Column{
+        anchors.fill: parent
+            QSGBoard{
+                id: testbrd
+                name: "testbrd"
+                plugins: [{type: "transform"}]
+                width: parent.width
+                height: parent.height * 0.7
+                Component.onDestruction: {
+                    beforeDestroy()
+                }
+            }
+
+            Log2{
+                width: parent.width
+                height: parent.height * 0.3
             }
         }
 }

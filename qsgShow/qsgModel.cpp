@@ -1,4 +1,5 @@
 #include "qsgModel.h"
+#include "imagePool.h"
 #include "tess.h"
 #include <array>
 #include <queue>
@@ -280,12 +281,7 @@ double shapeObject::getAngle(){
 QSGNode* imageObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode){
     qsgObject::getQSGNode(aWindow, aParent, aTransformNode);
     if (!m_node){
-        QImage img;
-        auto pth = getPath();
-        if (m_parent->m_images.contains(pth))
-            img = m_parent->m_images.value(pth);
-        else
-            img = QImage(pth);
+        QImage img = imagePool::readCache(getPath());
         if (img.width() > 0 && img.height() > 0){
             m_node = new QSGSimpleTextureNode();
             m_node->setTexture(m_window->createTextureFromImage(img));
@@ -503,8 +499,9 @@ void qsgModel::clearQSGObjects(){
         i->removeQSGNode();
 }
 
-void qsgModel::show(QSGTransformNode* aTransform, QQuickWindow* aWindow){
+void qsgModel::show(QSGTransformNode* aTransform, QQuickWindow* aWindow, const QPointF& aSize){
     if (!m_window){
+        m_size = aSize;
         m_window = aWindow;
         m_trans_node = aTransform;
         for (auto i : m_objects)
@@ -570,29 +567,26 @@ void qsgModel::zoom(int aStep, const QPointF& aCenter, double aRatio){
 }
 
 void qsgModel::WCS2SCS(){
-    if (!m_window)
-        return;
     auto width = getWidth(),
          height = getHeight();
     if (width == 0)
-        width = int(m_window->width());
+        width = int(m_size.x());
     if (height == 0)
-        height = int(m_window->height());
-
+        height = int(m_size.y());
     QTransform trans0;
-    trans0.scale(m_window->width() * 1.0 / width, m_window->height() * 1.0 / height);
+    trans0.scale(m_size.x() * 1.0 / width, m_size.y() * 1.0 / height);
     // return aTransform;
     auto ratio =  width * 1.0 / height;
     QTransform trans;
-    if (ratio > m_window->width() * 1.0 / m_window->height()){
-        auto ry = m_window->width() / ratio / m_window->height();
+    if (ratio > m_size.x() * 1.0 / m_size.y()){
+        auto ry = m_size.x() / ratio / m_size.y();
         trans = trans.scale(1, ry);
-        trans = trans.translate(0, (m_window->height() - m_window->width() / ratio) * 0.5 / ry);
+        trans = trans.translate(0, (m_size.y() - m_size.x() / ratio) * 0.5 / ry);
         //m_image->setRect(QRect(0, (m_ui_height - m_ui_width / ratio) * 0.5, m_ui_width, m_ui_width / ratio));
     }else{
-        auto rx = (m_window->height() * ratio) / m_window->width();
+        auto rx = (m_size.y() * ratio) / m_size.x();
         trans = trans.scale(rx, 1);
-        trans = trans.translate((m_window->width() - m_window->height() * ratio) * 0.5 / rx, 0);
+        trans = trans.translate((m_size.x() - m_size.y() * ratio) * 0.5 / rx, 0);
         //m_image->setRect(QRect((m_ui_width - m_ui_height * ratio) * 0.5, 0, m_ui_height * ratio, m_ui_height));
     }
     m_trans_node->setMatrix(QMatrix4x4(trans0 * trans * getTransform()));
@@ -715,7 +709,7 @@ rea::pipe0* qsgModel::objectCreator(const QString& aName){
     return m_creators.value(aName);
 }
 
-qsgModel::qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages) : QJsonObject(aConfig){
+qsgModel::qsgModel(const QJsonObject& aConfig) : QJsonObject(aConfig){
     auto shps = value("objects").toObject();
 
     auto add_qsg_obj = rea::pipeline::add<std::shared_ptr<qsgObject>>([this](rea::stream<std::shared_ptr<qsgObject>>* aInput){
@@ -731,8 +725,6 @@ qsgModel::qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages) : 
     }
 
     getTransform(true);
-
-    m_images = aImages;
 }
 
 qsgModel::~qsgModel(){
@@ -742,12 +734,12 @@ qsgModel::~qsgModel(){
 
 static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
     rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
-        QMap<QString, QImage> imgs;
+        static int count = 0;
         auto pth = "F:/3M/B4DT/DF Mark/V1-1.bmp";
-        imgs.insert(pth, QImage(pth));
-
-        auto cfg = rea::Json("width", 600,
-                             "height", 600,
+        QImage img(pth);
+        imagePool::cacheImage(pth, img);
+        auto cfg = rea::Json("width", img.width() ? img.width() : 600,
+                             "height", img.height() ? img.height() : 600,
                              "arrow", rea::Json("visible", false,
                                                 "pole", true),
                              "face", 200,
@@ -786,6 +778,10 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
         for (auto i : view.keys())
             cfg.insert(i, view.value(i));
 
-        aInput->out<std::shared_ptr<qsgModel>>(std::make_shared<qsgModel>(cfg, imgs), "updateQSGModel_testbrd");
-    }, rea::Json("name", "testQSGShow"))->next("updateQSGModel_testbrd");
+        if (count)
+            aInput->out<QJsonObject>(cfg, "replaceQSGModel_testbrd");
+        else
+            aInput->out<std::shared_ptr<qsgModel>>(std::make_shared<qsgModel>(cfg), "updateQSGModel_testbrd");
+        ++count;
+    }, rea::Json("name", "testQSGShow"))->nextB(0, "replaceQSGModel_testbrd", QJsonObject())->next("updateQSGModel_testbrd");
 }, QJsonObject(), "unitTest");

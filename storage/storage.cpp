@@ -36,6 +36,12 @@ void fsStorage::writeCVMat(const QString& aPath, const cv::Mat& aData){
     cv::imwrite(pth.toStdString().data(), aData);
 }
 
+void fsStorage::writeQImage(const QString& aPath, const QImage& aData){
+    auto pth = stgRoot(aPath);
+    checkPath(pth);
+    aData.save(pth);
+}
+
 void fsStorage::writeByteArray(const QString& aPath, const QByteArray& aData){
     auto pth = stgRoot(aPath);
     checkPath(pth);
@@ -59,6 +65,10 @@ QJsonObject fsStorage::readJson(const QString& aPath){
 
 cv::Mat fsStorage::readCVMat(const QString& aPath){
     return cv::imread((stgRoot(aPath)).toLocal8Bit().toStdString().data(), cv::IMREAD_UNCHANGED);
+}
+
+QImage fsStorage::readQImage(const QString& aPath){
+    return QImage(stgRoot(aPath));
 }
 
 QByteArray fsStorage::readByteArray(const QString& aPath){
@@ -114,9 +124,11 @@ fsStorage::fsStorage(const QString& aRoot){
     readStorage(Json);
     readStorage(ByteArray);
     readStorage(CVMat);
+    readStorage(QImage);
     writeStorage(Json);
     writeStorage(ByteArray);
     writeStorage(CVMat);
+    writeStorage(QImage);
 
     rea::pipeline::add<stgVector<stgByteArray>, rea::pipePartial>([this](rea::stream<stgVector<stgByteArray>>* aInput){
         auto dt = aInput->data();
