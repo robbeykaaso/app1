@@ -1,6 +1,7 @@
 #ifndef REAL_FRAMEWORK_IMAGEMODEL_H_
 #define REAL_FRAMEWORK_IMAGEMODEL_H_
 
+#include "reactive2.h"
 #include <memory>
 #include <QJsonObject>
 #include <QSGNode>
@@ -72,6 +73,7 @@ protected:
     void checkArrowVisible(int aCount);
     void checkFaceOpacity();
     void checkTextVisible();
+    virtual void updateArrowLocation(){}
     void calcArrow(const QPointF& aStart, const QPointF& aEnd, QSGGeometryNode& aNode);
     QRectF m_bound = QRectF(0, 0, 0, 0); //leftbottomrighttop
     pointList m_points;
@@ -81,7 +83,7 @@ protected:
 private:
     void setQSGFace(QSGGeometryNode& aNode, int aOpacity);
     void updateTextValue(const QJsonObject& aTextConfig);
-    void updateTextLocation(const QJsonObject& aTextConfig, const QSGTransformNode* aTransform = nullptr);
+    void updateTextLocation(const QJsonObject& aTextConfig);
 protected:
     QJsonArray getPoints();
     int getWidth();
@@ -102,6 +104,7 @@ public:
     void transformChanged() override;
 protected:
     IUpdateQSGAttr doUpdateQSGAttr(const QString& aModification) override;
+    void updateArrowLocation() override;
 private:
 };
 
@@ -112,6 +115,7 @@ public:
     void transformChanged() override;
 protected:
     IUpdateQSGAttr doUpdateQSGAttr(const QString& aModification) override;
+    void updateArrowLocation() override;
 private:
     class l_qsgPoint3D : public QPointF{
     public:
@@ -130,18 +134,20 @@ class qsgModel : public QJsonObject{
 public:
     qsgModel(){}
     qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages);
+    ~qsgModel();
 
     void clearQSGObjects();
-    void show(QSGNode* aTransform, QQuickWindow* aWindow);
+    void show(QSGTransformNode* aTransform, QQuickWindow* aWindow);
     IUpdateQSGAttr updateQSGAttr(const QJsonObject& aModification);
+private:
+    QString overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, const QJsonValue&& aValue);
     void zoom(int aStep, const QPointF& aCenter, double aRatio = 0);
     void move(const QPointF& aDistance);
-    void transformChanged();
+    void WCS2SCS();
 
+    QTransform getTransform(bool aDeserialize = false);
     int getWidth();
     int getHeight();
-    QTransform getTransform(bool aDeserialize = false);
-private:
     QJsonObject getArrowConfig();
     bool getArrowVisible(const QJsonObject& aConfig);
     bool getPoleArrow(const QJsonObject& aConfig);
@@ -154,7 +160,12 @@ private:
     QMap<QString, std::shared_ptr<qsgObject>> m_objects;
     QTransform m_trans;
 private:
+    rea::pipe0* objectCreator(const QString& aName);
     QMap<QString, QImage> m_images;
+    QHash<QString, rea::pipe0*> m_creators;
+    QQuickWindow* m_window = nullptr;
+    QSGTransformNode* m_trans_node = nullptr;
+    friend qsgObject;
     friend shapeObject;
     friend imageObject;
 };

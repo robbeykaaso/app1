@@ -34,9 +34,7 @@ private:
     void installPlugins(const QJsonArray& aPlugins);
     QString m_name;
     QMap<QString, std::shared_ptr<qsgBoardPlugin>> m_plugins;
-    QQueue<qsgBoardPlugin*> m_updates;
-    QQueue<IUpdateQSGAttr> m_updates2;
-    bool m_refreshed = false;
+    QQueue<IUpdateQSGAttr> m_updates;
     friend qsgBoardPlugin;
 };
 
@@ -57,17 +55,10 @@ protected:
             m_parent = aParent;
         return m_name;
     }
-    virtual void updateQSGModel(std::shared_ptr<qsgModel> aModel){}
     virtual void wheelEvent(QWheelEvent *event) = 0;
     virtual void mouseMoveEvent(QMouseEvent *event) = 0;
     virtual void hoverMoveEvent(QHoverEvent *event) = 0;
-    virtual void updatePaintNode(QSGNode* aBackground) = 0;
-    void update(){
-        if (m_parent)
-            m_parent->m_updates.push_back(this);
-        m_parent->update();
-    }
-
+    QString getParentName() {return m_parent ? m_parent->getName() : "";}
     qsgBoard* m_parent;
     QString m_name;
 };
@@ -75,16 +66,10 @@ protected:
 class qsgPluginTransform : public qsgBoardPlugin{
 public:
     qsgPluginTransform(const QJsonObject& aConfig) : qsgBoardPlugin(aConfig){}
-protected:
-    void updateQSGModel(std::shared_ptr<qsgModel> aModel) override;
     void wheelEvent(QWheelEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void hoverMoveEvent(QHoverEvent *event) override;
-    void updatePaintNode(QSGNode* aBackground) override;
 private:
-    void calcTransform();
-    std::shared_ptr<qsgModel> m_qsgmodel = nullptr;
-    QTransform m_trans;
     QPoint m_lastpos;
 };
 

@@ -1,5 +1,4 @@
 #include "qsgModel.h"
-#include "reactive2.h"
 #include "tess.h"
 #include <array>
 #include <queue>
@@ -9,15 +8,7 @@
 #include <QPainter>
 
 IUpdateQSGAttr qsgObject::updateQSGAttr(const QJsonObject& aModification){
-    auto keys = aModification.value("key").toArray();
-    QString mdy = "";
-    for (auto i : keys){
-        auto key = i.toString();
-        mdy += key + "_";
-        if (value(key).isObject()){
-            value(key).toObject();
-        }
-    }
+    auto mdy = m_parent->overwriteAttr(*this, aModification.value("key").toArray(), aModification.value("val"));
     return doUpdateQSGAttr(mdy);
 }
 
@@ -27,7 +18,7 @@ bool shapeObject::canBePickedUp(int aX, int aY){
 }
 
 IUpdateQSGAttr shapeObject::doUpdateQSGAttr(const QString& aModification){
-    if (aModification == "face"){
+    if (aModification == "face_"){
         return [this](){checkFaceOpacity();};
     }else if (aModification == "text_visible_")
         return [this](){checkTextVisible();};
@@ -93,14 +84,14 @@ void shapeObject::updateTextValue(const QJsonObject& aTextConfig){
     m_text->markDirty(QSGNode::DirtyMaterial);
 }
 
-void shapeObject::updateTextLocation(const QJsonObject& aTextConfig, const QSGTransformNode* aTransform){
+void shapeObject::updateTextLocation(const QJsonObject& aTextConfig){
     auto bnd = getBoundBox();
     auto top_lft = bnd.topLeft(), btm_rt = bnd.bottomRight();
-    if (aTransform){
-        auto trans = aTransform->matrix();
-        top_lft = trans.map(top_lft);
-        btm_rt = trans.map(btm_rt);
-    }
+
+    auto trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
+    top_lft = trans.map(top_lft);
+    btm_rt = trans.map(btm_rt);
+
     auto sz = m_parent->getTextSize(aTextConfig);
     auto del = 0.5 * (btm_rt.x() - top_lft.x() - sz.x());
     auto loc = m_parent->getTextLocation(aTextConfig);
@@ -130,8 +121,7 @@ void shapeObject::removeQSGNode() {
 
 void shapeObject::transformChanged(){
     if (m_text && m_node){
-        auto trans = reinterpret_cast<QSGTransformNode*>(m_node->parent());
-        updateTextLocation(getTextConfig(), trans);
+        updateTextLocation(getTextConfig());
     }
 }
 
@@ -178,6 +168,7 @@ void shapeObject::setQSGColor(QSGGeometryNode& aNode, const QColor& aColor){
     material->setColor(aColor);
     aNode.setMaterial(material);
     aNode.setFlag(QSGNode::OwnsMaterial);
+    aNode.markDirty(QSGNode::DirtyMaterial);
 }
 
 void shapeObject::checkArrowVisible(int aCount){
@@ -193,6 +184,8 @@ void shapeObject::checkArrowVisible(int aCount){
                     prt->appendChildNode(arrow);
                     m_arrows.push_back(arrow);
                 }
+                if (m_arrows.size() > 0)
+                    updateArrowLocation();
             }
         }else{
             if (m_arrows.size() > 0){
@@ -346,20 +339,23 @@ QSGNode* polyObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNod
     return ret;
 }
 
+void polyObject::updateArrowLocation(){
+    auto trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
+    auto st = trans.map(m_points[0]);
+    bool pole = getPoleArrow(getArrowConfig());
+    for (size_t i = 1; i < m_points.size(); ++i){
+        auto ed = trans.map(m_points[i]);
+        calcArrow(st, ed, *m_arrows[i - 1]);
+        if (pole)
+            calcArrow(ed, st, *m_arrows[i - 1 + m_points.size() - 1]);
+        st = ed;
+    }
+}
+
 void polyObject::transformChanged(){
     shapeObject::transformChanged();
-    if (m_node && m_arrows.size() > 1){
-        auto trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
-        auto st = trans.map(m_points[0]);
-        bool pole = getPoleArrow(getArrowConfig());
-        for (size_t i = 1; i < m_points.size(); ++i){
-            auto ed = trans.map(m_points[i]);
-            calcArrow(st, ed, *m_arrows[i - 1]);
-            if (pole)
-                calcArrow(ed, st, *m_arrows[i - 1 + m_points.size() - 1]);
-            st = ed;
-        }
-    }
+    if (m_node && m_arrows.size() > 0)
+        updateArrowLocation();
 }
 
 IUpdateQSGAttr polyObject::doUpdateQSGAttr(const QString& aModification){
@@ -378,23 +374,26 @@ static rea::regPip<QJsonObject, rea::pipePartial> create_poly([](rea::stream<QJs
     aInput->out<std::shared_ptr<qsgObject>>(std::make_shared<polyObject>(aInput->data()));
 }, rea::Json("name", "create_qsgobject_poly"));
 
+void ellipseObject::updateArrowLocation(){
+    auto w_trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
+    auto r = getRadius();
+    auto ct = getCenter();
+    auto del = getCCW() ?  - 1 : 1;
+    pointList pts = {QPointF(ct.x() - r.x(), ct.y()), QPointF(ct.x(), ct.rx() + r.y()),
+                     QPointF(ct.x() + r.x(), ct.y()), QPointF(ct.x(), ct.rx() - r.y()),
+                     QPointF(ct.x() - r.x(), ct.y() + del), QPointF(ct.x() + del, ct.rx() + r.y()),
+                     QPointF(ct.x() + r.x(), ct.y() - del), QPointF(ct.x() - del, ct.rx() - r.y())};
+    QTransform trans;
+    auto ang = getAngle();
+    trans.rotate(ang);
+    for (auto i = 0; i < 4; ++i)
+        calcArrow(w_trans.map(trans.map(pts[i + 4] - ct) + ct), w_trans.map(trans.map(pts[i] - ct) + ct), *m_arrows[i]);
+}
+
 void ellipseObject::transformChanged(){
     shapeObject::transformChanged();
-    if (m_arrows.size() > 0 && m_node){
-        auto w_trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
-        auto r = getRadius();
-        auto ct = getCenter();
-        auto del = getCCW() ?  - 1 : 1;
-        pointList pts = {QPointF(ct.x() - r.x(), ct.y()), QPointF(ct.x(), ct.rx() + r.y()),
-                         QPointF(ct.x() + r.x(), ct.y()), QPointF(ct.x(), ct.rx() - r.y()),
-                         QPointF(ct.x() - r.x(), ct.y() + del), QPointF(ct.x() + del, ct.rx() + r.y()),
-                         QPointF(ct.x() + r.x(), ct.y() - del), QPointF(ct.x() - del, ct.rx() - r.y())};
-        QTransform trans;
-        auto ang = getAngle();
-        trans.rotate(ang);
-        for (auto i = 0; i < 4; ++i)
-            calcArrow(w_trans.map(trans.map(pts[i + 4] - ct) + ct), w_trans.map(trans.map(pts[i] - ct) + ct), *m_arrows[i]);
-    }
+    if (m_arrows.size() > 0 && m_node)
+        updateArrowLocation();
 }
 
 IUpdateQSGAttr ellipseObject::doUpdateQSGAttr(const QString& aModification){
@@ -504,20 +503,55 @@ void qsgModel::clearQSGObjects(){
         i->removeQSGNode();
 }
 
-void qsgModel::show(QSGNode* aTransform, QQuickWindow* aWindow){
-    for (auto i : m_objects)
-        i->getQSGNode(aWindow, this, aTransform);
+void qsgModel::show(QSGTransformNode* aTransform, QQuickWindow* aWindow){
+    if (!m_window){
+        m_window = aWindow;
+        m_trans_node = aTransform;
+        for (auto i : m_objects)
+            i->getQSGNode(aWindow, this, aTransform);
+        WCS2SCS();
+    }
 }
 
 IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
-    return [](){};
+    if (aModification.contains("obj")){
+        auto obj = aModification.value("obj").toString();
+        if (m_objects.contains(obj))
+            return m_objects.value(obj)->updateQSGAttr(aModification);
+    }else{
+        auto kys = aModification.value("key").toArray();
+        if (kys.size() > 0){
+            if (kys[0] == "transform"){
+                if (aModification.value("type") == "zoom"){
+                    auto ct = aModification.value("center").toArray();
+                    zoom(aModification.value("dir").toInt(), QPointF(ct[0].toDouble(), ct[1].toDouble()));
+                }else if (aModification.value("type") == "move"){
+                    auto del = aModification.value("del").toArray();
+                    move(QPointF(del[0].toDouble(), del[1].toDouble()));
+                }else
+                    return nullptr;
+                setTransform();
+                return [this](){
+                    WCS2SCS();
+                };
+            }else{
+                return [this, aModification](){
+                    for (auto i : m_objects){
+                        auto up = i->updateQSGAttr(aModification);
+                        if (up)
+                            up();
+                    }
+                };
+            }
+        }
+    }
+    return nullptr;
 }
 
 void qsgModel::zoom(int aStep, const QPointF& aCenter, double aRatio){
     if (aStep == 0){
         m_trans = QTransform();
         if (aRatio == 0.0){
-            setTransform();
             return;
         }
     }
@@ -533,7 +567,67 @@ void qsgModel::zoom(int aStep, const QPointF& aCenter, double aRatio){
     m_trans.translate(ct.x(), ct.y());
     m_trans.scale(ratio, ratio);
     m_trans.translate(- ct.x(), - ct.y());
-    setTransform();
+}
+
+void qsgModel::WCS2SCS(){
+    if (!m_window)
+        return;
+    auto width = getWidth(),
+         height = getHeight();
+    if (width == 0)
+        width = int(m_window->width());
+    if (height == 0)
+        height = int(m_window->height());
+
+    QTransform trans0;
+    trans0.scale(m_window->width() * 1.0 / width, m_window->height() * 1.0 / height);
+    // return aTransform;
+    auto ratio =  width * 1.0 / height;
+    QTransform trans;
+    if (ratio > m_window->width() * 1.0 / m_window->height()){
+        auto ry = m_window->width() / ratio / m_window->height();
+        trans = trans.scale(1, ry);
+        trans = trans.translate(0, (m_window->height() - m_window->width() / ratio) * 0.5 / ry);
+        //m_image->setRect(QRect(0, (m_ui_height - m_ui_width / ratio) * 0.5, m_ui_width, m_ui_width / ratio));
+    }else{
+        auto rx = (m_window->height() * ratio) / m_window->width();
+        trans = trans.scale(rx, 1);
+        trans = trans.translate((m_window->width() - m_window->height() * ratio) * 0.5 / rx, 0);
+        //m_image->setRect(QRect((m_ui_width - m_ui_height * ratio) * 0.5, 0, m_ui_height * ratio, m_ui_height));
+    }
+    m_trans_node->setMatrix(QMatrix4x4(trans0 * trans * getTransform()));
+    m_trans_node->markDirty(QSGNode::DirtyMatrix);
+    for (auto i : m_objects)
+        i->transformChanged();
+}
+
+QString qsgModel::overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, const QJsonValue&& aValue){
+    if (aKeys.size() == 0)
+        return "";
+    else if (aKeys.size() == 1){
+        auto ret = aKeys[0].toString();
+        aObject.insert(ret, aValue);
+        return ret + "_";
+    }
+    QString ret = "";
+    std::vector<QJsonObject> objs;
+    for (int i = 0; i < aKeys.size(); ++i){
+        auto key = aKeys[i].toString();
+        ret += key + "_";
+        if (i == aKeys.size() - 1)
+            objs.back().insert(key, aValue);
+        else{
+            if (i == 0)
+                objs.push_back(aObject.value(key).toObject());
+            else
+                objs.push_back(objs.back().value(key).toObject());
+        }
+    }
+    for (int i = objs.size() - 1; i > 0; --i){
+        objs[i - 1].insert(aKeys[i].toString(), objs[i]);
+    }
+    aObject.insert(aKeys[0].toString(), objs[0]);
+    return ret;
 }
 
 QJsonObject qsgModel::getArrowConfig(){
@@ -604,7 +698,6 @@ void qsgModel::move(const QPointF& aDistance){
             ds1 = m_trans.inverted().map(QPointF(0, 0)),
             ds = ds0 - ds1;
     m_trans.translate(ds.x(), ds.y());
-    setTransform();
 }
 
 
@@ -614,6 +707,12 @@ int qsgModel::getWidth() {
 
 int qsgModel::getHeight() {
     return value("height").toInt();
+}
+
+rea::pipe0* qsgModel::objectCreator(const QString& aName){
+    if (!m_creators.contains(aName))
+        m_creators.insert(aName, rea::local<QJsonObject>(aName));
+    return m_creators.value(aName);
 }
 
 qsgModel::qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages) : QJsonObject(aConfig){
@@ -627,9 +726,8 @@ qsgModel::qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages) : 
     for (auto i : shps.keys()){
         auto obj = shps.value(i).toObject();
         auto cmd = "create_qsgobject_" + obj.value("type").toString();
-        auto tag = rea::Json("tag", add_qsg_obj->actName());
-        rea::pipeline::find(cmd)->next(add_qsg_obj, tag);
-        rea::pipeline::run<QJsonObject>(cmd, rea::Json(obj, "id", i), tag);
+        objectCreator(cmd)->nextB(0, add_qsg_obj, QJsonObject())  //ensure the create_qsgobject_ is in the same thead of here
+        ->execute(std::make_shared<rea::stream<QJsonObject>>(rea::Json(obj, "id", i)));
     }
 
     getTransform(true);
@@ -637,9 +735,9 @@ qsgModel::qsgModel(const QJsonObject& aConfig, QMap<QString, QImage> aImages) : 
     m_images = aImages;
 }
 
-void qsgModel::transformChanged(){
-    for (auto i : m_objects)
-        i->transformChanged();
+qsgModel::~qsgModel(){
+    for (auto i : m_creators)
+        rea::pipeline::remove(i->actName());
 }
 
 static rea::regPip<int> unit_test([](rea::stream<int>* aInput){

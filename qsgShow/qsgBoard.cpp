@@ -3,32 +3,21 @@
 #include <QSGTransformNode>
 #include <QTransform>
 
-void qsgPluginTransform::updateQSGModel(std::shared_ptr<qsgModel> aModel){
-    m_qsgmodel = aModel;
-    calcTransform();
-}
-
 void qsgPluginTransform::wheelEvent(QWheelEvent *event){
     auto cur = event->pos();
-
-    if (m_qsgmodel){
-        if (event->delta() < 0)
-            m_qsgmodel->zoom(- 1, QPointF(cur.x(), cur.y()));
-        else
-            m_qsgmodel->zoom(1, QPointF(cur.x(), cur.y()));
-        calcTransform();
-        update();
-    }
+    rea::pipeline::run<QJsonObject>("updateQSGAttr_" + getParentName(), rea::Json("key", rea::JArray("transform"),
+                                                                         "type", "zoom",
+                                                                         "dir", event->delta() < 0 ? - 1 : 1,
+                                                                         "center", rea::JArray(cur.x(), cur.y())));
 }
 
 void qsgPluginTransform::mouseMoveEvent(QMouseEvent *event){
-    if (m_qsgmodel)
-        if (event->buttons().testFlag(Qt::MiddleButton)){
-            auto cur = event->pos();
-            m_qsgmodel->move(QPointF(cur.x() - m_lastpos.x(), cur.y() - m_lastpos.y()));
-            calcTransform();
-            update();
-        }
+    if (event->buttons().testFlag(Qt::MiddleButton)){
+        auto cur = event->pos();
+        rea::pipeline::run<QJsonObject>("updateQSGAttr_" + getParentName(), rea::Json("key", rea::JArray("transform"),
+                                                                             "type", "move",
+                                                                             "del", rea::JArray(cur.x() - m_lastpos.x(), cur.y() - m_lastpos.y())));
+    }
     m_lastpos = event->pos();
 }
 
@@ -36,48 +25,7 @@ void qsgPluginTransform::hoverMoveEvent(QHoverEvent *event){
     m_lastpos = event->pos();
 }
 
-void qsgPluginTransform::updatePaintNode(QSGNode* aBackground){
-    if (!aBackground)
-        return;
-    auto trans_node = reinterpret_cast<QSGTransformNode*>(aBackground);
-    trans_node->setMatrix(QMatrix4x4(m_trans));
-    trans_node->markDirty(QSGNode::DirtyMatrix);
-    if (m_qsgmodel)
-        m_qsgmodel->transformChanged();
-}
-
-void qsgPluginTransform::calcTransform(){
-    if (!m_qsgmodel){
-        m_trans = QTransform();
-        return;
-    }
-    auto width = m_qsgmodel->getWidth(),
-         height = m_qsgmodel->getHeight();
-    if (width == 0)
-        width = int(m_parent->width());
-    if (height == 0)
-        height = int(m_parent->height());
-
-    QTransform trans0;
-    trans0.scale(m_parent->width() * 1.0 / width, m_parent->height() * 1.0 / height);
-    // return aTransform;
-    auto ratio =  width * 1.0 / height;
-    QTransform trans;
-    if (ratio > m_parent->width() * 1.0 / m_parent->height()){
-        auto ry = m_parent->width() / ratio / m_parent->height();
-        trans = trans.scale(1, ry);
-        trans = trans.translate(0, (m_parent->height() - m_parent->width() / ratio) * 0.5 / ry);
-        //m_image->setRect(QRect(0, (m_ui_height - m_ui_width / ratio) * 0.5, m_ui_width, m_ui_width / ratio));
-    }else{
-        auto rx = (m_parent->height() * ratio) / m_parent->width();
-        trans = trans.scale(rx, 1);
-        trans = trans.translate((m_parent->width() - m_parent->height() * ratio) * 0.5 / rx, 0);
-        //m_image->setRect(QRect((m_ui_width - m_ui_height * ratio) * 0.5, 0, m_ui_height * ratio, m_ui_height));
-    }
-    m_trans = trans0 * trans * m_qsgmodel->getTransform();
-}
-
-static rea::regPip<QJsonObject, rea::pipePartial> create_ellipse([](rea::stream<QJsonObject>* aInput){
+static rea::regPip<QJsonObject, rea::pipePartial> create_qsgboardplugin_transform([](rea::stream<QJsonObject>* aInput){
    aInput->out<std::shared_ptr<qsgBoardPlugin>>(std::make_shared<qsgPluginTransform>(aInput->data()));
 }, rea::Json("name", "create_qsgboardplugin_transform"));
 
@@ -102,17 +50,12 @@ void qsgBoard::setName(const QString& aName){
     m_name = aName;
     rea::pipeline::add<std::shared_ptr<qsgModel>>([this](rea::stream<std::shared_ptr<qsgModel>>* aInput){
         m_models.push_back(aInput->data());
-        for (auto i : m_plugins){
-            i->updateQSGModel(aInput->data());
-            m_updates.push_back(i.get());
-        }
-        m_refreshed = false;
         update();
     }, rea::Json("name", "updateQSGModel_" + m_name));
 
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
         if (m_models.size() > 0){
-            m_updates2.push_back(m_models.front()->updateQSGAttr(aInput->data()));
+            m_updates.push_back(m_models.front()->updateQSGAttr(aInput->data()));
             update();
         }
     }, rea::Json("name", "updateQSGAttr_" + m_name));
@@ -153,18 +96,13 @@ QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* noded
         while (m_models.size() > 1)
             m_models.pop_front();
     }
-    if (!m_refreshed && m_models.size() == 1){
+    if (m_models.size() == 1)
         m_models.front()->show(m_trans_node, window());
-        m_refreshed = true;
-    }
 
     for (auto i : m_updates)
-        i->updatePaintNode(m_trans_node);
+        if (i)
+            i();
     m_updates.clear();
-
-    for (auto i : m_updates2)
-        i();
-    m_updates2.clear();
 
     return ret;
 }
