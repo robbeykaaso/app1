@@ -212,6 +212,30 @@ ApplicationWindow {
             }
             MenuItem{
                 checkable: true
+                text: qsTr("polyCaption")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["caption"], val: checked ? "poly_new" : "poly"})
+                }
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("polyWidth")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["width"], val: checked ? 10 : 3})
+                }
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("polyAngle")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["angle"], val: checked ? 90 : 20})
+                }
+            }
+            MenuItem{
+                checkable: true
                 text: qsTr("imagePath")
                 onClicked: {
                     checked != checked

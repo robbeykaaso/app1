@@ -75,6 +75,10 @@ protected:
     void checkFaceOpacity();
     void checkTextVisible();
     void checkColor();
+    void checkCaption();
+    void checkWidth();
+    void checkAngle();
+    virtual void updateGeometry(){}
     virtual void updateArrowLocation(){}
     void calcArrow(const QPointF& aStart, const QPointF& aEnd, QSGGeometryNode& aNode);
     QRectF m_bound = QRectF(0, 0, 0, 0); //leftbottomrighttop
@@ -83,15 +87,15 @@ protected:
     std::vector<QSGGeometryNode*> m_arrows;
     QSGSimpleTextureNode* m_text = nullptr;
 private:
-    void setQSGFace(QSGGeometryNode& aNode, int aOpacity);
-    void setQSGFaceColor(QSGGeometryNode& aNode, int aOpacity);
+    void updateQSGFace(QSGGeometryNode& aNode, int aOpacity);
+    void updateQSGFaceColor(QSGGeometryNode& aNode, int aOpacity);
     void updateTextValue(const QJsonObject& aTextConfig);
     void updateTextLocation(const QJsonObject& aTextConfig);
     void updateArrowCount(int aCount);
 protected:
     QJsonArray getPoints();
     int getWidth();
-    QColor getColor(const qsgModel& aParent);
+    QColor getColor();
     QString getText();
     int getFaceOpacity();
     QJsonObject getTextConfig();
@@ -108,6 +112,7 @@ public:
     void transformChanged() override;
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
+    void updateGeometry() override;
     void updateArrowLocation() override;
     void checkArrowPole();
 private:
@@ -120,6 +125,7 @@ public:
     void transformChanged() override;
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
+    void updateGeometry() override;
     void updateArrowLocation() override;
 private:
     class l_qsgPoint3D : public QPointF{
