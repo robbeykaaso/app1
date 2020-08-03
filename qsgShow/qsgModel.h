@@ -74,6 +74,7 @@ protected:
     void checkArrowVisible(int aCount);
     void checkFaceOpacity();
     void checkTextVisible();
+    void checkColor();
     virtual void updateArrowLocation(){}
     void calcArrow(const QPointF& aStart, const QPointF& aEnd, QSGGeometryNode& aNode);
     QRectF m_bound = QRectF(0, 0, 0, 0); //leftbottomrighttop
@@ -83,13 +84,14 @@ protected:
     QSGSimpleTextureNode* m_text = nullptr;
 private:
     void setQSGFace(QSGGeometryNode& aNode, int aOpacity);
+    void setQSGFaceColor(QSGGeometryNode& aNode, int aOpacity);
     void updateTextValue(const QJsonObject& aTextConfig);
     void updateTextLocation(const QJsonObject& aTextConfig);
     void updateArrowCount(int aCount);
 protected:
     QJsonArray getPoints();
     int getWidth();
-    QColor getColor();
+    QColor getColor(const qsgModel& aParent);
     QString getText();
     int getFaceOpacity();
     QJsonObject getTextConfig();

@@ -14,10 +14,12 @@ bool shapeObject::canBePickedUp(int aX, int aY){
 }
 
 IUpdateQSGAttr shapeObject::updateQSGAttr(const QString& aModification){
-    if (aModification == "face_"){
+    if (aModification == "face_")
         return [this](){checkFaceOpacity();};
-    }else if (aModification == "text_visible_")
+    else if (aModification == "text_visible_")
         return [this](){checkTextVisible();};
+    else if (aModification == "color_")
+        return [this](){checkColor();};
     else
         return nullptr;
 }
@@ -61,7 +63,7 @@ bool shapeObject::getPoleArrow(const QJsonObject& aConfig){
 void shapeObject::updateTextValue(const QJsonObject& aTextConfig){
     auto sz = m_parent->getTextSize(aTextConfig);
     auto img = QImage(sz.x(), sz.y(), QImage::Format_ARGB32);
-    auto clr = getColor();
+    auto clr = getColor(*m_parent);
     img.fill(QColor(clr.red(), clr.green(), clr.blue(), 64));
 
     auto txt = getText();
@@ -179,7 +181,7 @@ void shapeObject::updateArrowCount(int aCount){
         auto arrow = new QSGGeometryNode();
         pointList pts;
         setQSGGemoetry(pts, *arrow, QSGGeometry::DrawLineStrip);
-        setQSGColor(*arrow, getColor());
+        setQSGColor(*arrow, getColor(*m_parent));
         prt->appendChildNode(arrow);
         m_arrows.push_back(arrow);
     }
@@ -205,8 +207,11 @@ void shapeObject::setQSGFace(QSGGeometryNode& aNode, int aOpacity){
     polygon.push_back(poly);
     std::vector<uint32_t> indices = mapbox::earcut(polygon);
     setQSGGemoetry(m_points, aNode, QSGGeometry::DrawTriangles, &indices);
+    setQSGFaceColor(aNode, aOpacity);
+}
 
-    auto clr0 = getColor();
+void shapeObject::setQSGFaceColor(QSGGeometryNode& aNode, int aOpacity){
+    auto clr0 = getColor(*m_parent);
     auto clr = QColor(clr0.red(), clr0.green(), clr0.blue(), aOpacity);
     setQSGColor(aNode, clr);
 }
@@ -245,6 +250,18 @@ void shapeObject::checkTextVisible(){
         }
 }
 
+void shapeObject::checkColor(){
+    if (m_node)
+        setQSGColor(*m_node, getColor(*m_parent));
+    for (auto i : m_arrows)
+        setQSGColor(*i, getColor(*m_parent));
+    if (m_node->childCount() > 0)
+        setQSGFaceColor(*reinterpret_cast<QSGGeometryNode*>(m_node->childAtIndex(0)), getFaceOpacity());
+    auto txt_cfg = getTextConfig();
+    if (m_parent->getTextVisible(txt_cfg) && m_text)
+        updateTextValue(txt_cfg);
+}
+
 QJsonArray shapeObject::getPoints(){
     return value("points").toArray();
 }
@@ -253,8 +270,11 @@ int shapeObject::getWidth(){
     return value("width").toInt(5);
 }
 
-QColor shapeObject::getColor(){
-    return QColor(value("color").toString("red"));
+QColor shapeObject::getColor(const qsgModel& aParent){
+    if (contains("color"))
+        return QColor(value("color").toString());
+    else
+        return QColor(aParent.value("color").toString("red"));
 }
 
 QString shapeObject::getText(){
@@ -335,7 +355,7 @@ QSGNode* polyObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNod
 
         m_node = new QSGGeometryNode();
         setQSGGemoetry(m_points, *m_node, QSGGeometry::DrawLineStrip);
-        setQSGColor(*m_node, getColor());
+        setQSGColor(*m_node, getColor(*aParent));
 
         aTransformNode->appendChildNode(m_node);
     }
@@ -484,7 +504,7 @@ QSGNode* ellipseObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSG
 
         m_node = new QSGGeometryNode();
         setQSGGemoetry(m_points, *m_node, QSGGeometry::DrawLineStrip);
-        setQSGColor(*m_node, getColor());
+        setQSGColor(*m_node, getColor(*aParent));
 
         aTransformNode->appendChildNode(m_node);
     }
@@ -778,6 +798,7 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                              "text", rea::Json("visible", false,
                                                "size", rea::JArray(100, 50),
                                                "location", "bottom"),
+                             "color", "blue",
                              "objects", rea::Json(
                                             "img_2", rea::Json(
                                                          "type", "image",
@@ -798,7 +819,6 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                                                          "type", "ellipse",
                                                          "center", rea::JArray(400, 400),
                                                          "radius", rea::JArray(300, 200),
-                                                         "color", "blue",
                                                          "width", 5,
                                                          "ccw", true,
                                                          "angle", 30,

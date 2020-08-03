@@ -9,8 +9,8 @@ ApplicationWindow {
     id: mainwindow
     property var view_cfg
     visible: true
-    width: 600
-    height: 400
+    width: 800
+    height: 600
     //width: Screen.desktopAvailableWidth
     //height: Screen.desktopAvailableHeight
     //visibility: Window.Maximized
@@ -159,6 +159,14 @@ ApplicationWindow {
                     Pipeline2.run("updateQSGAttr_testbrd", {key: ["text", "visible"], val: checked})
                 }
             }
+            MenuItem{
+                checkable: true
+                text: qsTr("wholeColor")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["color"], val: checked ? "yellow" : "green"})
+                }
+            }
             MenuSeparator{
 
             }
@@ -192,6 +200,14 @@ ApplicationWindow {
                 onClicked: {
                     checked != checked
                     Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["text", "visible"], val: checked})
+                }
+            }
+            MenuItem{
+                checkable: true
+                text: qsTr("polyColor")
+                onClicked: {
+                    checked != checked
+                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["color"], val: checked ? "yellow" : "green"})
                 }
             }
             MenuItem{
