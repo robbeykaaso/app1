@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.5
 import ".."
+import Pipeline2 1.0
 
 Column{
     id: root
@@ -88,61 +89,47 @@ Column{
                         }
                     }
 
-                    Row{
-                        anchors.right: parent.right
-                        anchors.rightMargin: 5
-                        spacing: 10
-                        ButtonDialog{
-                            text.text: qsTr("Cancel")
-                            onClicked: typeselect.close()
-                        }
-                        ButtonDialog{
-                            text.text: qsTr("OK")
-                            onClicked: {
-                                var tp, ky
-                                for (var i = 0; i < sel.count; ++i){
-                                    if (sel.itemAt(i).children[0].checked){
-                                        tp = sel.itemAt(i).children[0].text
-                                        ky = sel.itemAt(i).children[1].input.text
-                                        break
-                                    }
-                                }
-                                if (tag == "array"){
-                                    ky = cld.children.length - Object.keys(cld.deleted).length
-                                    if (sel.itemAt(i).children[3].visible)
-                                        addJsonChild(tp, ky, sel.itemAt(i).children[3].checked)
-                                    else if (sel.itemAt(i).children[2].visible){
-                                        if (tp !== "string")
-                                            tp = "double"
-                                        addJsonChild(tp, ky, sel.itemAt(i).children[2].input.text);
-                                    }
-                                    else
-                                        addJsonChild(tp, ky)
-                                }
-                                else{
-                                    for (var j = 0; j < cld.children.length; ++j)
-                                        if (ky === cld.getChildValue(j)){
-                                            UIManager.setCommand({signal2: "popupMessageDialog", type: "nullptr", param: {
-                                                                         title: "warning",
-                                                                         text: "Duplicated key!"
-                                                                     }}, null)
-                                            return
-                                        }
-
-                                    if (sel.itemAt(i).children[3].visible)
-                                        addJsonChild(tp, ky, sel.itemAt(i).children[3].checked)
-                                    else if (sel.itemAt(i).children[2].visible){
-                                        if (tp !== "string")
-                                            tp = "double"
-                                        addJsonChild(tp, ky, sel.itemAt(i).children[2].input.text);
-                                    }
-                                    else
-                                        addJsonChild(tp, ky)
-                                }
-                            }
-                        }
+                }
+            footbuttons: [{cap: "Cancel", func: function(){close()}},
+            {cap: "OK", func: function(){
+                var tp, ky
+                for (var i = 0; i < sel.count; ++i){
+                    if (sel.itemAt(i).children[0].checked){
+                        tp = sel.itemAt(i).children[0].text
+                        ky = sel.itemAt(i).children[1].input.text
+                        break
                     }
                 }
+                if (tag == "array"){
+                    ky = cld.children.length - Object.keys(cld.deleted).length
+                    if (sel.itemAt(i).children[3].visible)
+                        addJsonChild(tp, ky, sel.itemAt(i).children[3].checked)
+                    else if (sel.itemAt(i).children[2].visible){
+                        if (tp !== "string")
+                            tp = "double"
+                        addJsonChild(tp, ky, sel.itemAt(i).children[2].input.text);
+                    }
+                    else
+                        addJsonChild(tp, ky)
+                }
+                else{
+                    for (var j = 0; j < cld.children.length; ++j)
+                        if (ky === cld.getChildValue(j)){
+                            Pipeline2.run("popMessage", {title: "warning", text: "Duplicated key!"})
+                            return
+                        }
+
+                    if (sel.itemAt(i).children[3].visible)
+                        addJsonChild(tp, ky, sel.itemAt(i).children[3].checked)
+                    else if (sel.itemAt(i).children[2].visible){
+                        if (tp !== "string")
+                            tp = "double"
+                        addJsonChild(tp, ky, sel.itemAt(i).children[2].input.text);
+                    }
+                    else
+                        addJsonChild(tp, ky)
+                }
+            }}]
         }
     }
     Column{
@@ -246,7 +233,7 @@ Column{
 
     function addJsonChild(aType, aKey, aValue, aStyle, aInitialize){
         var ret
-        var src = "import QtQuick 2.12; import '../Basic/DeepSight'; import UIManager 1.0; import TextFieldDoubleValidator 1.0;"
+        var src = "import QtQuick 2.12; import '../Basic/DeepSight'; import Pipeline2 1.0; import TextFieldDoubleValidator 1.0;"
         src += "Row{"
         if (aStyle && aStyle["jsst"] && aStyle["jsst"]["invisible"])
             src += "visible: false;"
@@ -262,7 +249,7 @@ Column{
             cap = aStyle["jsst"]["caption"]
         if (aType === "boolean"){
             src += "anchors.verticalCenter: parent ? parent.children[1].verticalCenter : undefined;}"
-            src += "CheckBox1{"
+            src += "CheckBox{"
             src += "leftPadding: 0;"
             //if (tag !== "array")
             src += "key: '" + aKey + "';"
@@ -272,7 +259,7 @@ Column{
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["val_script"])
                 src += aStyle["jsst"]["val_script"]
             else
-                src += "onCheckedChanged: {UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: checked}}, null); labelColor = 'red';}"
+                src += "onCheckedChanged: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: checked});}"
             src += "}"
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["comment"] && aStyle["jsst"]["comment"] !== ""){
                 src += "TreeNodeTag{anchors.verticalCenter: parent ? parent.children[1].verticalCenter : undefined;"
@@ -313,7 +300,6 @@ Column{
                     src += "onValueChanged: {"
                     src += "if (mdytick++){"
                     src += "UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: value}}, null);"
-                    src += "cap.color = 'red';"
                     //src += "console.log('hi2');"
                     src += "}}"
                 }
@@ -347,9 +333,9 @@ Column{
                     //src += "}"
 
                     if (aType === "string")
-                        src += "input.onTextEdited: {UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: input.text}}, null); caption.color = 'red';}"
+                        src += "input.onTextEdited: {UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: input.text}}, null);}"
                     else
-                        src += "input.onTextEdited: {UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: parseFloat(input.text)}}, null); caption.color = 'red';}"
+                        src += "input.onTextEdited: {UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: parseFloat(input.text)}}, null);}"
                 }
             }
             src += "}"
@@ -389,22 +375,6 @@ Column{
 //        if (cld.children.length - Object.keys(cld.deleted).length > 1)
 //            scr_root.contentHeight += 5
         return ret
-    }
-
-    function recoverDefaultUI(){
-        for (var i = 0; i < cld.children.length; ++i)
-            if (!cld.deleted[cld.children[i]]){
-                var cld0 = cld.children[i].children[1]
-                if (cld0 instanceof Edit1){
-                    cld0.caption.color = UIManager.fontColor
-                }else if (cld0 instanceof CheckBox1){
-                    cld0.labelColor = UIManager.fontColor
-                }else if (cld0 instanceof ComboBox1){
-                    cld0.cap.color = UIManager.fontColor
-                }else{
-                    cld0.recoverDefaultUI()
-                }
-            }
     }
 
     function buildArray(){

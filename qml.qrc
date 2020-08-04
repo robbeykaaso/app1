@@ -11,5 +11,9 @@
         <file>gui/TreeNodeView/TreeNodeTag.qml</file>
         <file>gui/TreeNodeView/TreeNodeView.qml</file>
         <file>gui/MsgDialog.qml</file>
+        <file>gui/Edit.ui.qml</file>
+        <file>gui/Check.ui.qml</file>
+        <file>gui/Combo.ui.qml</file>
+        <file>gui/Radio.ui.qml</file>
     </qresource>
 </RCC>

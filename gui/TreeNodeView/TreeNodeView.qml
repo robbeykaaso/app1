@@ -69,7 +69,6 @@ ScrollView{
             })
 
             UIManager.registerPipe("applyTreeView", "mdyGUI", function(aInput){
-                recoverDefaultUI()
                 return modifiedCache
             })
         }

@@ -1,16 +1,11 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.5
-import "../Basic"
-import UIManager 1.0
 
-Button0{
+Button{
     property string comment
-    text.text: "?"
+    text: "?"
     width: 12
     height: width
-    text.color: UIManager.fontColor
-    text.font.pixelSize: UIManager.fontDespSize
-    radius: 6
 
     onClicked: {
         detail.open()
@@ -19,8 +14,7 @@ Button0{
         id: detail
         Text{
             text: comment
-            color: UIManager.fontColor
-            font.pixelSize: UIManager.fontTitleSize
+            font.pixelSize: 12
         }
     }
 }

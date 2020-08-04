@@ -327,6 +327,12 @@ ApplicationWindow {
                 onClicked:
                     Pipeline2.run("popMessage", {title: "hello4", text: "world"})
             }
+            MenuItem{
+                text: qsTr("baseCtrl")
+                onClicked: {
+                    basectrl.show()
+                }
+            }
         }
 
         Component.onCompleted: {
@@ -361,24 +367,54 @@ ApplicationWindow {
                 width: parent.width
                 height: parent.height * 0.3
             }
-
-            TWindow{
-                id: twin
-                caption: qsTr("TWindow")
-                content: Column{
-                    anchors.fill: parent
-                    Rectangle{
-                        width: parent.width
-                        height: parent.height
-                        color: "gray"
-                    }
-                }
-                titlebuttons: [{cap: "O", func: function(){console.log("hello")}},
-                                {cap: "W", func: function(){console.log("world")}}]
-                footbuttons: [{cap: "OK", func: function(){close()}},
-                               {cap: "Cancel", func: function(){close()}}]
+        }
+    TWindow{
+        id: twin
+        caption: qsTr("TWindow")
+        content: Column{
+            anchors.fill: parent
+            Rectangle{
+                width: parent.width
+                height: parent.height
+                color: "gray"
             }
         }
+        titlebuttons: [{cap: "O", func: function(){console.log("hello")}},
+                        {cap: "W", func: function(){console.log("world")}}]
+        footbuttons: [{cap: "OK", func: function(){close()}},
+                       {cap: "Cancel", func: function(){close()}}]
+    }
+
+    TWindow{
+        id: basectrl
+        caption: qsTr("baseCtrl")
+        content: Rectangle{
+            anchors.fill: parent
+            color: "gray"
+            Column{
+                Edit{
+                    width: 160
+                    caption.text: qsTr("attribute1") + ":"
+                    caption.width: width * 0.5
+                    input.width: width * 0.5
+                }
+                Check{
+                    width: 160
+                    caption.text: qsTr("attribute2") + ":"
+                    caption.width: width * 0.5
+                    check.width: width * 0.5
+                }
+                Combo{
+                    width: 160
+                    caption.text: qsTr("attribute3") + ":"
+                    caption.width: width * 0.5
+                    combo.width: width * 0.5
+                }
+            }
+        }
+        footbuttons: [{cap: "OK", func: function(){close()}}]
+    }
+
     MsgDialog{
 
     }

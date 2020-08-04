@@ -1,13 +1,11 @@
 import QtQuick 2.12
-import "../Basic"
-import UIManager 1.0
+import QtQuick.Controls 2.5
 
-Button0{
-    text.text: "x"
+Button{
+    text: "x"
     width: 12
     height: width
-    text.color: UIManager.fontColor
-    text.font.pixelSize: UIManager.fontTitleSize
+    font.pixelSize: 12
 
     function enumChildHeight(aNode){
         var ret = 0
