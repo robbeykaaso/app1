@@ -6,5 +6,10 @@
         <file>gui/Log0.ui.qml</file>
         <file>gui/Log.qml</file>
         <file>gui/TWindow.qml</file>
+        <file>gui/TreeNodeView/TreeNode.qml</file>
+        <file>gui/TreeNodeView/TreeNodeDelete.qml</file>
+        <file>gui/TreeNodeView/TreeNodeTag.qml</file>
+        <file>gui/TreeNodeView/TreeNodeView.qml</file>
+        <file>gui/MsgDialog.qml</file>
     </qresource>
 </RCC>

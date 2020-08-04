@@ -322,6 +322,11 @@ ApplicationWindow {
                     twin.show()
                 }
             }
+            MenuItem{
+                text: qsTr("MsgDialog")
+                onClicked:
+                    Pipeline2.run("popMessage", {title: "hello4", text: "world"})
+            }
         }
 
         Component.onCompleted: {
@@ -374,4 +379,7 @@ ApplicationWindow {
                                {cap: "Cancel", func: function(){close()}}]
             }
         }
+    MsgDialog{
+
+    }
 }

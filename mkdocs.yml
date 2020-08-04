@@ -22,5 +22,6 @@ nav:
         - gui:
             - log: gui/log.md
             - twindow: gui/twindow.md
+            - msgdialog: gui/msgdialog.md
     - About: about.md
 theme: readthedocs
