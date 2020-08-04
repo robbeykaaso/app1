@@ -81,16 +81,16 @@ protected:
     virtual void updateGeometry(){}
     virtual void updateArrowLocation(){}
     void calcArrow(const QPointF& aStart, const QPointF& aEnd, QSGGeometryNode& aNode);
+    void updateQSGFace(QSGGeometryNode& aNode, int aOpacity);
+    void updateTextLocation(const QJsonObject& aTextConfig);
     QRectF m_bound = QRectF(0, 0, 0, 0); //leftbottomrighttop
     pointList m_points;
     QSGGeometryNode* m_node = nullptr;
     std::vector<QSGGeometryNode*> m_arrows;
     QSGSimpleTextureNode* m_text = nullptr;
 private:
-    void updateQSGFace(QSGGeometryNode& aNode, int aOpacity);
     void updateQSGFaceColor(QSGGeometryNode& aNode, int aOpacity);
     void updateTextValue(const QJsonObject& aTextConfig);
-    void updateTextLocation(const QJsonObject& aTextConfig);
     void updateArrowCount(int aCount);
 protected:
     QJsonArray getPoints();
@@ -115,6 +115,7 @@ protected:
     void updateGeometry() override;
     void updateArrowLocation() override;
     void checkArrowPole();
+    void checkGeometry();
 private:
 };
 
@@ -155,6 +156,7 @@ private:
     void zoom(int aStep, const QPointF& aCenter, double aRatio = 0);
     void move(const QPointF& aDistance);
     void WCS2SCS();
+    void addObject(const QJsonObject& aConfig);
 
     QTransform getTransform(bool aDeserialize = false);
     int getWidth();
@@ -173,11 +175,13 @@ private:
     QPointF m_size;
 private:
     rea::pipe0* objectCreator(const QString& aName);
+    rea::pipe0* m_add_object;
     QHash<QString, rea::pipe0*> m_creators;
     QQuickWindow* m_window = nullptr;
     QSGTransformNode* m_trans_node = nullptr;
     friend qsgObject;
     friend shapeObject;
+    friend polyObject;
     friend imageObject;
 };
 

@@ -21,19 +21,7 @@ ApplicationWindow {
 
     menuBar: MenuBar{
         Menu{
-            title: qsTr("file")
-            MenuItem {
-                text: qsTr("show")
-                onClicked: {
-                    Pipeline2.run("testQSGShow", view_cfg)
-                }
-            }
-            /*MenuItem{
-                text: qsTr("close")
-            }*/
-        }
-        Menu{
-            title: qsTr("repaint")
+            title: qsTr("qsgShow")
 
             delegate: MenuItem {
                 id: menuItem
@@ -97,157 +85,219 @@ ApplicationWindow {
                 }
             }
 
-            Action {
-                text: qsTr("face")
-                checkable: true
-                shortcut: "Ctrl+V"
-                onTriggered: {
-                    view_cfg["face"] = 100 - view_cfg["face"]
-                    Pipeline2.run("testQSGShow", view_cfg)
+            Menu{
+                title: qsTr("updateModel")
+                MenuItem {
+                    text: qsTr("show")
+                    onClicked: {
+                        Pipeline2.run("testQSGShow", view_cfg)
+                    }
+                }
+
+                Action {
+                    text: qsTr("face")
+                    checkable: true
+                    shortcut: "Ctrl+V"
+                    onTriggered: {
+                        view_cfg["face"] = 100 - view_cfg["face"]
+                        Pipeline2.run("testQSGShow", view_cfg)
+                    }
+                }
+                Action {
+                    text: qsTr("arrow")
+                    checkable: true
+                    shortcut: "Ctrl+A"
+                    onTriggered: {
+                        view_cfg["arrow"]["visible"] = !view_cfg["arrow"]["visible"]
+                        Pipeline2.run("testQSGShow", view_cfg)
+                    }
+                }
+                Action {
+                    text: qsTr("text")
+                    checkable: true
+                    shortcut: "Ctrl+T"
+                    onTriggered: {
+                        view_cfg["text"]["visible"] = !view_cfg["text"]["visible"]
+                        Pipeline2.run("testQSGShow", view_cfg)
+                    }
                 }
             }
-            Action {
-                text: qsTr("arrow")
-                checkable: true
-                shortcut: "Ctrl+A"
-                onTriggered: {
-                    view_cfg["arrow"]["visible"] = !view_cfg["arrow"]["visible"]
-                    Pipeline2.run("testQSGShow", view_cfg)
+
+            Menu{
+                title: qsTr("updateWholeAttr")
+
+                MenuItem{
+                    checkable: true
+                    text: qsTr("wholeArrowVisible")
+                    onClicked:{
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {key: ["arrow", "visible"], val: checked})
+                    }
                 }
-            }
-            Action {
-                text: qsTr("text")
-                checkable: true
-                shortcut: "Ctrl+T"
-                onTriggered: {
-                    view_cfg["text"]["visible"] = !view_cfg["text"]["visible"]
-                    Pipeline2.run("testQSGShow", view_cfg)
+                MenuItem{
+                    checkable: true
+                    text: qsTr("wholeArrowPole")
+                    onClicked:{
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {key: ["arrow", "pole"], val: checked})
+                    }
                 }
-            }
-        }
-        Menu{
-            title: qsTr("modify")
-            MenuItem{
-                checkable: true
-                text: qsTr("wholeArrowVisible")
-                onClicked:{
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["arrow", "visible"], val: checked})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("wholeFaceOpacity")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {key: ["face"], val: checked ? 200 : 0})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("wholeArrowPole")
-                onClicked:{
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["arrow", "pole"], val: checked})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("wholeTextVisible")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {key: ["text", "visible"], val: checked})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("wholeFaceOpacity")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["face"], val: checked ? 200 : 0})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("wholeColor")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {key: ["color"], val: checked ? "yellow" : "green"})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("wholeTextVisible")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["text", "visible"], val: checked})
+
+                MenuItem{
+                    checkable: true
+                    text: qsTr("wholeObjects")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {key: ["objects"], type: checked ? "add" : "del", tar: "shp_3", val: {
+                                                                                                         type: "poly",
+                                                                                                         points: [500, 300, 700, 300, 700, 500, 500, 300],
+                                                                                                         color: "pink",
+                                                                                                         caption: "new_obj",
+                                                                                                         face: 200
+                                                                                                     }})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("wholeColor")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {key: ["color"], val: checked ? "yellow" : "green"})
-                }
-            }
-            MenuSeparator{
 
             }
-            MenuItem{
-                checkable: true
-                text: qsTr("polyArrowVisible")
-                onClicked:{
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["arrow", "visible"], val: checked})
+            Menu{
+                title: qsTr("updateLocalAttr")
+
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyArrowVisible")
+                    onClicked:{
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["arrow", "visible"], val: checked})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("polyArrowPole")
-                onClicked:{
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["arrow", "pole"], val: checked})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyArrowPole")
+                    onClicked:{
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["arrow", "pole"], val: checked})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("polyFaceOpacity")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["face"], val: checked ? 200 : 0})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyFaceOpacity")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["face"], val: checked ? 200 : 0})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("polyTextVisible")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["text", "visible"], val: checked})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyTextVisible")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["text", "visible"], val: checked})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("polyColor")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["color"], val: checked ? "yellow" : "green"})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyColor")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["color"], val: checked ? "yellow" : "green"})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("polyCaption")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["caption"], val: checked ? "poly_new" : "poly"})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyCaption")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["caption"], val: checked ? "poly_new" : "poly"})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("polyWidth")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["width"], val: checked ? 10 : 3})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyWidth")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["width"], val: checked ? 10 : 3})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("polyAngle")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["angle"], val: checked ? 90 : 20})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyAngle")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["angle"], val: checked ? 90 : 20})
+                    }
                 }
-            }
-            MenuItem{
-                checkable: true
-                text: qsTr("imagePath")
-                onClicked: {
-                    checked != checked
-                    Pipeline2.run("updateQSGAttr_testbrd", {obj: "img_2", key: ["path"], val: checked ? "F:/3M/B4DT/DF Mark/V1-1.bmp" : "F:/3M/B4DT/DF Mark/V1-2.bmp"})
+                MenuItem{
+                    checkable: true
+                    text: qsTr("polyPoints")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["points"], val: checked ? [50, 50, 200, 50, 200, 200, 50, 200, 50, 50] : [50, 50, 200, 200, 200, 50, 50, 50]})
+                    }
                 }
+                MenuItem{
+                    checkable: true
+                    text: qsTr("ellipseCenter")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_1", key: ["center"], val: checked ? [600, 400] : [400, 400]})
+                    }
+                }
+                MenuItem{
+                    checkable: true
+                    text: qsTr("ellipseRadius")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_1", key: ["radius"], val: checked ? [200, 400] : [300, 200]})
+                    }
+                }
+                MenuItem{
+                    checkable: true
+                    text: qsTr("ellipseCCW")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_1", key: ["ccw"], val: checked})
+                    }
+                }
+                MenuItem{
+                    checkable: true
+                    text: qsTr("imagePath")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "img_2", key: ["path"], val: checked ? "F:/3M/B4DT/DF Mark/V1-1.bmp" : "F:/3M/B4DT/DF Mark/V1-2.bmp"})
+                    }
+                }
+
             }
         }
 
         Menu{
-            title: qsTr("gui")
+            title: qsTr("log")
             MenuItem{
-                text: qsTr("log")
+                text: qsTr("addLogRecord")
                 onClicked:{
                     Pipeline2.run("addLogRecord", {type: "train", level: "info", msg: "train_info"})
                     Pipeline2.run("addLogRecord", {type: "train", level: "warning", msg: "train_warning"})
@@ -255,6 +305,12 @@ ApplicationWindow {
                     Pipeline2.run("addLogRecord", {type: "system", level: "info", msg: "system_info"})
                     Pipeline2.run("addLogRecord", {type: "system", level: "warning", msg: "system_warning"})
                     Pipeline2.run("addLogRecord", {type: "system", level: "error", msg: "system_error"})
+                }
+            }
+            MenuItem{
+                text: qsTr("showLogPanel")
+                onClicked:{
+                    Pipeline2.run("showLogPanel")
                 }
             }
         }
@@ -287,7 +343,7 @@ ApplicationWindow {
                 }
             }
 
-            Log2{
+            Log{
                 width: parent.width
                 height: parent.height * 0.3
             }

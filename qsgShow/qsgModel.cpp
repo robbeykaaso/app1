@@ -374,6 +374,17 @@ polyObject::polyObject(const QJsonObject& aConfig) : shapeObject(aConfig){
 
 }
 
+void polyObject::checkGeometry(){
+    updateGeometry();
+    if (m_arrows.size() > 0)
+        checkArrowPole();
+    if (m_node->childCount() > 0)
+        updateQSGFace(*reinterpret_cast<QSGGeometryNode*>(m_node->childAtIndex(0)), getFaceOpacity());
+    auto txt_cfg = getTextConfig();
+    if (m_parent->getTextVisible(txt_cfg) && m_text)
+        updateTextLocation(txt_cfg);
+}
+
 QSGNode* polyObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode) {
     auto ret = shapeObject::getQSGNode(aWindow, aParent, aTransformNode);
     checkArrowPole();
@@ -425,6 +436,8 @@ IUpdateQSGAttr polyObject::updateQSGAttr(const QString& aModification){
         return [this](){
             checkArrowPole();
         };
+    else if (aModification == "points_")
+        return [this](){checkGeometry();};
     else
         return shapeObject::updateQSGAttr(aModification);
 }
@@ -445,10 +458,10 @@ void ellipseObject::updateArrowLocation(){
     auto r = getRadius();
     auto ct = getCenter();
     auto del = getCCW() ?  - 1 : 1;
-    pointList pts = {QPointF(ct.x() - r.x(), ct.y()), QPointF(ct.x(), ct.rx() + r.y()),
-                     QPointF(ct.x() + r.x(), ct.y()), QPointF(ct.x(), ct.rx() - r.y()),
-                     QPointF(ct.x() - r.x(), ct.y() + del), QPointF(ct.x() + del, ct.rx() + r.y()),
-                     QPointF(ct.x() + r.x(), ct.y() - del), QPointF(ct.x() - del, ct.rx() - r.y())};
+    pointList pts = {QPointF(ct.x() - r.x(), ct.y()), QPointF(ct.x(), ct.y() + r.y()),
+                     QPointF(ct.x() + r.x(), ct.y()), QPointF(ct.x(), ct.y() - r.y()),
+                     QPointF(ct.x() - r.x(), ct.y() + del), QPointF(ct.x() + del, ct.y() + r.y()),
+                     QPointF(ct.x() + r.x(), ct.y() - del), QPointF(ct.x() - del, ct.y() - r.y())};
     QTransform trans;
     auto ang = getAngle();
     trans.rotate(ang);
@@ -466,6 +479,15 @@ IUpdateQSGAttr ellipseObject::updateQSGAttr(const QString& aModification){
     if (aModification == "arrow_visible_")
         return [this](){
             checkArrowVisible(4);
+        };
+    else if (aModification == "center_" || aModification == "radius_")
+        return [this](){
+            checkAngle();
+        };
+    else if (aModification == "ccw_")
+        return [this](){
+            if (m_arrows.size() > 0 && m_node)
+                updateArrowLocation();
         };
     else
         return shapeObject::updateQSGAttr(aModification);
@@ -578,6 +600,14 @@ void qsgModel::show(QSGTransformNode* aTransform, QQuickWindow* aWindow, const Q
     }
 }
 
+/*{type: "add", obj: "shp_3", val: {
+     type: "poly",
+     points: [300, 300, 500, 300, 400, 400, 300, 300],
+     color: "green",
+     caption: "new_obj",
+     face: 200
+ }} : {type: "del", obj: "shp_3"}}*/
+
 IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
     if (aModification.contains("obj")){
         auto obj = aModification.value("obj").toString();
@@ -603,6 +633,27 @@ IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
                 return [this](){
                     WCS2SCS();
                 };
+            }else if (kys[0] == "objects"){
+                if (aModification.value("type") == "add"){
+                    auto obj = aModification.value("tar").toString();
+                    if (!contains(obj)){
+                        auto attr = aModification.value("val").toObject();
+                        insert(obj, attr);
+                        addObject(rea::Json(attr, "id", obj));
+                        return [this, obj](){
+                            m_objects.value(obj)->getQSGNode(m_window, this, m_trans_node);
+                        };
+                    }
+                }else if (aModification.value("type") == "del"){
+                    auto obj = aModification.value("tar").toString();
+                    if (contains(obj)){
+                        remove(obj);
+                        return [this, obj](){
+                            m_objects.value(obj)->removeQSGNode();
+                            m_objects.remove(obj);
+                        };
+                    }
+                }
             }else{
                 auto mdy = overwriteAttr(*this, aModification.value("key").toArray(), aModification.value("val"));
                 if (mdy != "")
@@ -792,21 +843,22 @@ rea::pipe0* qsgModel::objectCreator(const QString& aName){
     return m_creators.value(aName);
 }
 
+void qsgModel::addObject(const QJsonObject& aConfig){
+    auto cmd = "create_qsgobject_" + aConfig.value("type").toString();
+    objectCreator(cmd)->nextB(0, m_add_object, QJsonObject())  //ensure the create_qsgobject_ is in the same thead of here
+        ->execute(std::make_shared<rea::stream<QJsonObject>>(aConfig));
+}
+
 qsgModel::qsgModel(const QJsonObject& aConfig) : QJsonObject(aConfig){
     auto shps = value("objects").toObject();
 
-    auto add_qsg_obj = rea::pipeline::add<std::shared_ptr<qsgObject>>([this](rea::stream<std::shared_ptr<qsgObject>>* aInput){
+    m_add_object = rea::pipeline::add<std::shared_ptr<qsgObject>>([this](rea::stream<std::shared_ptr<qsgObject>>* aInput){
         auto dt = aInput->data();
         m_objects.insert(dt->value("id").toString(), dt);
         dt->remove("id");
     });
-    for (auto i : shps.keys()){
-        auto obj = shps.value(i).toObject();
-        auto cmd = "create_qsgobject_" + obj.value("type").toString();
-        objectCreator(cmd)->nextB(0, add_qsg_obj, QJsonObject())  //ensure the create_qsgobject_ is in the same thead of here
-        ->execute(std::make_shared<rea::stream<QJsonObject>>(rea::Json(obj, "id", i)));
-    }
-
+    for (auto i : shps.keys())
+        addObject(rea::Json(shps.value(i).toObject(), "id", i));
     getTransform(true);
 }
 
@@ -851,7 +903,7 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                                                          "center", rea::JArray(400, 400),
                                                          "radius", rea::JArray(300, 200),
                                                          "width", 5,
-                                                         "ccw", true,
+                                                         "ccw", false,
                                                          "angle", 30,
                                                          "caption", "ellipse"
                                                          )

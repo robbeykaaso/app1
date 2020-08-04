@@ -14,5 +14,12 @@ nav:
             - normalClient: socket/normalClient.md
         - serial:
             - modbusMaster: serial/modbusMaster.md
+        - qsgShow:
+            - qsgModel: qsg/qsgModel.md
+            - qsgBoard: qsg/qsgBoard.md
+            - qsgBoardPlugin: qsg/qsgBoardPlugin.md
+            - imagePool: qsg/imagePool.md
+        - gui:
+            - log: gui/log.md
     - About: about.md
 theme: readthedocs

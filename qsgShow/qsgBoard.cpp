@@ -114,11 +114,13 @@ QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* noded
 }
 
 void qsgBoard::keyPressEvent(QKeyEvent *event){
-
+    for (auto i : m_plugins)
+        i->keyPressEvent(event);
 }
 
 void qsgBoard::mousePressEvent(QMouseEvent *event){
-
+    for (auto i : m_plugins)
+        i->mousePressEvent(event);
 }
 
 void qsgBoard::mouseMoveEvent(QMouseEvent *event){
@@ -127,7 +129,8 @@ void qsgBoard::mouseMoveEvent(QMouseEvent *event){
 }
 
 void qsgBoard::mouseReleaseEvent(QMouseEvent *event){
-
+    for (auto i : m_plugins)
+        i->mouseReleaseEvent(event);
 }
 
 void qsgBoard::hoverMoveEvent(QHoverEvent *event){

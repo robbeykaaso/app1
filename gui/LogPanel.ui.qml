@@ -5,10 +5,12 @@ Column {
     id: column
     height: 180
     property alias loglist: loglist
+    property alias typelist: typelist
     property alias closepanel: closepanel
     property alias loglevel: loglevel
-    property alias train: train
-    property alias system: system
+
+    property alias logmenu: logmenu
+    property alias clear: clear
     width: 540
     Row {
         id: row
@@ -18,24 +20,28 @@ Column {
             width: parent.width * 0.8 - parent.height
             height: parent.height
             spacing: -1
-            Button {
-                id: system
-                width: parent.width * 0.2
-                height: parent.height
-                text: qsTr("System")
-                background: Rectangle {
-                    border.color: "gray"
-                    color: "transparent"
+
+            Repeater {
+                id: typelist
+                model: ListModel {
+                    ListElement {
+                        cap: "system"
+                        clr: "transparent"
+                    }
+                    ListElement {
+                        cap: "train"
+                        clr: "transparent"
+                    }
                 }
-            }
-            Button {
-                id: train
-                width: parent.width * 0.2
-                height: parent.height
-                text: qsTr("Train")
-                background: Rectangle {
-                    border.color: "gray"
-                    color: "transparent"
+
+                delegate: Button {
+                    width: parent.width * 0.2
+                    height: parent.height
+                    text: cap
+                    background: Rectangle {
+                        border.color: "gray"
+                        color: clr
+                    }
                 }
             }
         }
@@ -50,7 +56,7 @@ Column {
                 font.family: "Courier"
                 anchors.fill: parent
                 currentIndex: 0
-                model: [qsTr("Info"), qsTr("Warning"), qsTr("Error")]
+                model: [qsTr("Opt1"), qsTr("Opt2"), qsTr("Opt3")]
                 font.pixelSize: 13
             }
         }
@@ -92,6 +98,7 @@ Column {
             Menu {
                 id: logmenu
                 MenuItem {
+                    id: clear
                     text: qsTr("Clear")
                 }
             }
