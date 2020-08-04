@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import Pipe2 1.0
 
-LogPanel{
+Log0{
     property var type: ["system", "train"]
     property var level: ["info", "warning", "error"]
 

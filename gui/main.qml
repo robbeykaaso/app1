@@ -295,22 +295,31 @@ ApplicationWindow {
         }
 
         Menu{
-            title: qsTr("log")
-            MenuItem{
-                text: qsTr("addLogRecord")
-                onClicked:{
-                    Pipeline2.run("addLogRecord", {type: "train", level: "info", msg: "train_info"})
-                    Pipeline2.run("addLogRecord", {type: "train", level: "warning", msg: "train_warning"})
-                    Pipeline2.run("addLogRecord", {type: "train", level: "error", msg: "train_error"})
-                    Pipeline2.run("addLogRecord", {type: "system", level: "info", msg: "system_info"})
-                    Pipeline2.run("addLogRecord", {type: "system", level: "warning", msg: "system_warning"})
-                    Pipeline2.run("addLogRecord", {type: "system", level: "error", msg: "system_error"})
+            title: qsTr("gui")
+            Menu{
+                title: qsTr("Log")
+                MenuItem{
+                    text: qsTr("addLogRecord")
+                    onClicked:{
+                        Pipeline2.run("addLogRecord", {type: "train", level: "info", msg: "train_info"})
+                        Pipeline2.run("addLogRecord", {type: "train", level: "warning", msg: "train_warning"})
+                        Pipeline2.run("addLogRecord", {type: "train", level: "error", msg: "train_error"})
+                        Pipeline2.run("addLogRecord", {type: "system", level: "info", msg: "system_info"})
+                        Pipeline2.run("addLogRecord", {type: "system", level: "warning", msg: "system_warning"})
+                        Pipeline2.run("addLogRecord", {type: "system", level: "error", msg: "system_error"})
+                    }
+                }
+                MenuItem{
+                    text: qsTr("showLogPanel")
+                    onClicked:{
+                        Pipeline2.run("showLogPanel")
+                    }
                 }
             }
             MenuItem{
-                text: qsTr("showLogPanel")
-                onClicked:{
-                    Pipeline2.run("showLogPanel")
+                text: qsTr("TWindow")
+                onClicked: {
+                    twin.show()
                 }
             }
         }
@@ -346,6 +355,23 @@ ApplicationWindow {
             Log{
                 width: parent.width
                 height: parent.height * 0.3
+            }
+
+            TWindow{
+                id: twin
+                caption: qsTr("TWindow")
+                content: Column{
+                    anchors.fill: parent
+                    Rectangle{
+                        width: parent.width
+                        height: parent.height
+                        color: "gray"
+                    }
+                }
+                titlebuttons: [{cap: "O", func: function(){console.log("hello")}},
+                                {cap: "W", func: function(){console.log("world")}}]
+                footbuttons: [{cap: "OK", func: function(){close()}},
+                               {cap: "Cancel", func: function(){close()}}]
             }
         }
 }

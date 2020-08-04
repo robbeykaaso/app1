@@ -3,7 +3,6 @@ import QtQuick.Controls 2.5
 
 Column {
     id: column
-    height: 180
     property alias loglist: loglist
     property alias typelist: typelist
     property alias closepanel: closepanel
@@ -11,6 +10,7 @@ Column {
 
     property alias logmenu: logmenu
     property alias clear: clear
+    height: 180
     width: 540
     Row {
         id: row

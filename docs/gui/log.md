@@ -22,7 +22,7 @@ Pipeline2.run("addLogRecord", {type: "train", level: "info", msg: "hello"}) // a
 ```  
 </br>
 
-* **showLogPanel**
+* **showLogPanel**  
 set log component "visible" to true  
 </br>
 
