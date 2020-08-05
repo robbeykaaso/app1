@@ -414,7 +414,8 @@ ApplicationWindow {
 
                     }
                 }*/
-
+                id: clm
+                leftPadding: 5
                 Edit{
                     width: 180
                     caption.text: qsTr("attr1") + ":"
@@ -429,6 +430,9 @@ ApplicationWindow {
                     width: 180
                     caption.text: qsTr("attribute3") + ":"
                     ratio: 0.4
+                }
+                AutoSize{
+
                 }
             }
         }

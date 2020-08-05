@@ -13,7 +13,7 @@ Row {
     Text {
         id: caption
         text: "hello:"
-        horizontalAlignment: Text.AlignRight
+        //horizontalAlignment: Text.AlignRight
         verticalAlignment: Text.AlignVCenter
         anchors.verticalCenter: parent.verticalCenter
         font.pixelSize: 12

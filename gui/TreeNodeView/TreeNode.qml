@@ -16,7 +16,7 @@ Column{
     spacing: 5
     Row{
         //width: parent.width
-        //height: 40
+        //height: 20
         spacing: 5
         Text{
             text: tag == "object" ? "{" + caption + "}" : "[" + caption + "]"
@@ -26,12 +26,22 @@ Column{
                     cld.visible = !cld.visible
                 }
             }
+            font.pixelSize: 12
         }
         Button{
             visible: opt_add
             text: "+"
             width: 12
             height: width
+            contentItem: Text{
+                text: parent.text
+                color: "white"
+                font.pixelSize: 14
+                anchors.fill: parent
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+
             onClicked: {
                 typeselect.show()
             }
@@ -253,12 +263,12 @@ Column{
             //if (tag !== "array")
             src += "property string key: '" + aKey + "';"
             src += "caption.text: '" + cap + "';"
-            src += "height: 15;"
-            src += "checked: " + aValue + ";"
+            src += "height: 20;"
+            src += "check.checked: " + aValue + ";"
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["val_script"])
                 src += aStyle["jsst"]["val_script"]
             else
-                src += "check.onCheckedChanged: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: checked});}"
+                src += "check.onCheckedChanged: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: check.checked});}"
             src += "}"
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["comment"] && aStyle["jsst"]["comment"] !== ""){
                 src += "TreeNodeTag{anchors.verticalCenter: parent ? parent.children[1].verticalCenter : undefined;"

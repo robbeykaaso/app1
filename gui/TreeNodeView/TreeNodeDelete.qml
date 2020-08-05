@@ -7,6 +7,15 @@ Button{
     width: 12
     height: width
     font.pixelSize: 12
+    //anchors.verticalCenter: parent.verticalCenter
+    contentItem: Text{
+        text: parent.text
+        color: "white"
+        font.pixelSize: 12
+        anchors.fill: parent
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+    }
 
     function enumChildHeight(aNode){
         var ret = 0

@@ -13,7 +13,7 @@ Row {
     Text {
         id: caption
         text: "hello:"
-        horizontalAlignment: Text.AlignRight
+        //horizontalAlignment: Text.AlignRight
         verticalAlignment: Text.AlignVCenter
         anchors.verticalCenter: parent.verticalCenter
         font.pixelSize: 12
@@ -29,17 +29,19 @@ Row {
         indicator: Rectangle {
             implicitWidth: parent.height * 0.6
             implicitHeight: parent.height * 0.6
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: chk.verticalCenter
+            anchors.horizontalCenter: chk.horizontalCenter
             radius: width / 4
             color: "white"
             border.color: "gray"
 
             Rectangle {
+                x: (parent.height - width) * 0.5
+                y: (parent.height - height) * 0.5
                 width: parent.height * 0.55
                 height: parent.height * 0.55
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.horizontalCenter: parent.horizontalCenter
+                //anchors.verticalCenter: chk.verticalCenter
+                //anchors.horizontalCenter: chk.horizontalCenter
                 radius: width / 4
                 color: "gray"
                 visible: parent.parent.checked
