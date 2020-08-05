@@ -20,8 +20,13 @@ nav:
             - qsgBoardPlugin: qsg/qsgBoardPlugin.md
             - imagePool: qsg/imagePool.md
         - gui:
-            - log: gui/log.md
-            - twindow: gui/twindow.md
-            - msgdialog: gui/msgdialog.md
+            - basic:
+                - edit: gui/basic/edit.md
+                - check: gui/basic/check.md
+                - combo: gui/basic/combo.md
+                - twindow: gui/basic/twindow.md
+                - msgdialog: gui/basic/msgdialog.md
+            - component:
+                - log: gui/component/log.md
     - About: about.md
 theme: readthedocs

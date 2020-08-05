@@ -1,7 +1,7 @@
 import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.5
-import ".."
+import "../Basic"
 import Pipeline2 1.0
 
 Column{
@@ -233,7 +233,7 @@ Column{
 
     function addJsonChild(aType, aKey, aValue, aStyle, aInitialize){
         var ret
-        var src = "import QtQuick 2.12; import '../Basic/DeepSight'; import Pipeline2 1.0; import TextFieldDoubleValidator 1.0;"
+        var src = "import QtQuick 2.12; import '../Basic'; import Pipeline2 1.0; import TextFieldDoubleValidator 1.0;"
         src += "Row{"
         if (aStyle && aStyle["jsst"] && aStyle["jsst"]["invisible"])
             src += "visible: false;"
@@ -249,17 +249,16 @@ Column{
             cap = aStyle["jsst"]["caption"]
         if (aType === "boolean"){
             src += "anchors.verticalCenter: parent ? parent.children[1].verticalCenter : undefined;}"
-            src += "CheckBox{"
-            src += "leftPadding: 0;"
+            src += "Check{"
             //if (tag !== "array")
-            src += "key: '" + aKey + "';"
-            src += "text: '" + cap + "';"
+            src += "property string key: '" + aKey + "';"
+            src += "caption.text: '" + cap + "';"
             src += "height: 15;"
             src += "checked: " + aValue + ";"
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["val_script"])
                 src += aStyle["jsst"]["val_script"]
             else
-                src += "onCheckedChanged: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: checked});}"
+                src += "check.onCheckedChanged: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: checked});}"
             src += "}"
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["comment"] && aStyle["jsst"]["comment"] !== ""){
                 src += "TreeNodeTag{anchors.verticalCenter: parent ? parent.children[1].verticalCenter : undefined;"
@@ -272,13 +271,13 @@ Column{
         }else if (aType === "string" || aType === "double"){
             src += "anchors.verticalCenter: parent ? parent.children[1].verticalCenter : undefined;}"
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["val_type"] === "combo"){
-                src += "ComboBox1{"
+                src += "Combo{"
                 //if (tag !== "array")
                 src += "property int mdytick: 0;"
-                src += "key: '" + aKey + "';"
-                src += "caption: '" + cap + "';"
-                src += "cmb.width: 60;"
-                //src += "cmb.height: 35;"
+                src += "property string key: '" + aKey + "';"
+                src += "caption.text: '" + cap + "';"
+                src += "combo.width: 60;"
+                //src += "combo.height: 35;"
                 var val = ""
                 var cur = 0;
                 for (var i in aStyle["jsst"]["val_value"]){
@@ -286,31 +285,29 @@ Column{
                         val += ","
                     else
                         if (typeof aStyle["jsst"]["val_value"][i] != "string")
-                            src += "tag: 'double';"
+                            src += "property string tag: 'double';"
                     if (aStyle["jsst"]["val_value"][i] === aValue)
-                        src += "cmb.currentIndex: " + cur + ";"
+                        src += "combo.currentIndex: " + cur + ";"
                     val += "'" + aStyle["jsst"]["val_value"][i] + "'"
                     cur++
                 }
-                src += "model: [" + val + "];"
+                src += "combo.model: [" + val + "];"
                 if (aStyle["jsst"]["val_script"]){
                     src += aStyle["jsst"]["val_script"]
                 }
                 else{
-                    src += "onValueChanged: {"
+                    src += "combo.onCurrentTextChanged: {"
                     src += "if (mdytick++){"
-                    src += "UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: value}}, null);"
+                    src += "Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: combo.currentText});"
                     //src += "console.log('hi2');"
                     src += "}}"
                 }
             }else{
-                src += "Edit1{"
-                src += "tag: '" + aType + "';"
+                src += "Edit{"
+                src += "property string tag: '" + aType + "';"
                 //if (tag !== "array")
-                src += "key: '" + aKey + "';"
+                src += "property string key: '" + aKey + "';"
                 src += "caption.text: '" + cap + "';"
-                src += "editbackground.width: 60;"
-                src += "editbackground.height: 25;"
                 src += "input.text: '" + aValue + "';"
                 if (aStyle && aStyle["jsst"] && aStyle["jsst"]["val_type"] === "regExp"){
                     if (aStyle["jsst"]["val_value"] !== "")
@@ -333,9 +330,9 @@ Column{
                     //src += "}"
 
                     if (aType === "string")
-                        src += "input.onTextEdited: {UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: input.text}}, null);}"
+                        src += "input.onTextEdited: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: input.text});}"
                     else
-                        src += "input.onTextEdited: {UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: parent.parent.parent.extractKeyChain() + ';' + key, value: parseFloat(input.text)}}, null);}"
+                        src += "input.onTextEdited: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: parseFloat(input.text)});}"
                 }
             }
             src += "}"

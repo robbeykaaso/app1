@@ -349,17 +349,23 @@ void imageObject::updateImagePath(){
         img.fill(QColor("transparent"));
     }
     m_node->setTexture(m_window->createTextureFromImage(img));
-    m_node->setRect(img.rect());
+    m_node->setRect(getRange(img));
     m_node->markDirty(QSGNode::DirtyMaterial);
 }
 
 IUpdateQSGAttr imageObject::updateQSGAttr(const QString& aModification){
-    if (aModification == "path_")
+    if (aModification == "path_" || aModification == "range_")
         return [this](){
             updateImagePath();
         };
     else
         return qsgObject::updateQSGAttr(aModification);
+}
+
+QRectF imageObject::getRange(const QImage& aImage){
+    auto rg = value("range").toArray();
+    return rg.size() == 4 ? QRectF(QPointF(rg[0].toDouble(), rg[1].toDouble()),
+                                   QPointF(rg[2].toDouble(), rg[3].toDouble())) : aImage.rect();
 }
 
 QString imageObject::getPath(){
@@ -885,6 +891,7 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                              "objects", rea::Json(
                                             "img_2", rea::Json(
                                                          "type", "image",
+                                                         "range", rea::JArray(0, 0, 400, 300),
                                                          "path", pth
                                                          ),
                                             "shp_0", rea::Json(

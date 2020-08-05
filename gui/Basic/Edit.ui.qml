@@ -4,6 +4,7 @@ Row {
     property alias caption: caption
     property alias background: bak
     property alias input: val
+    property double ratio: 0.3
     width: 120
     height: 30
 
@@ -11,20 +12,18 @@ Row {
     Text {
         id: caption
         text: "hello:"
-        horizontalAlignment: Text.AlignHCenter
+        horizontalAlignment: Text.AlignRight
         verticalAlignment: Text.AlignVCenter
         anchors.verticalCenter: parent.verticalCenter
         font.pixelSize: 12
-        leftPadding: 5
-        width: parent.width * 0.3
+        width: parent.width * ratio
         height: parent.height * 0.8
     }
 
     Rectangle {
         id: bak
         color: "white"
-        border.color: "gray"
-        width: parent.width * 0.6
+        width: parent.width * (1 - ratio - 0.1)
         height: parent.height * 0.8
         anchors.verticalCenter: parent.verticalCenter
         TextInput {

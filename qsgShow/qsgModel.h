@@ -54,6 +54,7 @@ public:
 private:
     void updateImagePath();
     QString getPath();
+    QRectF getRange(const QImage& aImage);
     QSGSimpleTextureNode* m_node = nullptr;
 };
 

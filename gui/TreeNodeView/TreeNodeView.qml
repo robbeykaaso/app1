@@ -1,6 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.5
-import UIManager 1.0
+import Pipeline2 1.0
 
 ScrollView{
     id: scrrange
@@ -47,30 +47,26 @@ ScrollView{
                             "hi22": 3
                         }
             //buildGUI(mytree, mytree.sample)
-            UIManager.registerPipe("loadTreeView", "mdyGUI", function(aInput){
+            Pipeline2.add(function(aInput){
                 modifiedCache = {}
                 clearChildren()
                 contentHeight = 0
                 buildGUI(aInput["data"], aInput["style"])
-            }, "mdybak")
+            }, {name: "loadTreeView"})
 
-            UIManager.registerPipe("treeViewModelModified", "mdyGUI", function(aInput){
+            Pipeline2.add(function(aInput){
                 var kys = aInput["keys"]
                 if (kys[0] === caption){
                     kys.splice(0, 1)
                     modifyGUI(kys, aInput["opt"], aInput["type"], aInput["value"], aInput["style"])
                 }
-            }, "mdybak")
+            }, {name: "treeViewModelModified"})
 
-            UIManager.registerPipe("treeViewGUIModified", "mdyGUI", function(aInput){
+            Pipeline2.add(function(aInput){
                 if (!modifiedCache)
                     modifiedCache = {}
                 modifiedCache[aInput["keys"]] = aInput["value"]
-            })
-
-            UIManager.registerPipe("applyTreeView", "mdyGUI", function(aInput){
-                return modifiedCache
-            })
+            }, {name: "treeViewGUIModified"})
         }
     }
 

@@ -25,7 +25,7 @@ _sample_:
                         {cap: "Cancel", func: function(){close()}}]
     }
 ```  
-<center><p>![avatar](../img/twindow.png)</p></center>  
+<center><p>![avatar](../../img/twindow.png)</p></center>  
 </br>
 
 # Test and Demo

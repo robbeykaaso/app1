@@ -22,7 +22,8 @@ _sample_:
     objects: {  //the object is saved by object name and object attributes
         img_2: {
             type: "image",  //the type of imageObject
-            path: "c:/xxx/xx.png"  //the path of the image in the cache or file system
+            path: "c:/xxx/xx.png",  //the path of the image in the cache or file system
+            range: [0, 0, 400, 400]  //the view port of the image, the default is the boundbox of it
         },
         shp_0: {
             type: "poly",  //the type of polyObject which inherits from shapeObject

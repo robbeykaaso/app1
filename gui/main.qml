@@ -2,6 +2,9 @@ import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.5
 import QtQuick.Controls.Universal 2.3
+import "Basic"
+import "Component"
+import "TreeNodeView"
 import QSGBoard 1.0
 import Pipeline2 1.0
 
@@ -290,7 +293,14 @@ ApplicationWindow {
                         Pipeline2.run("updateQSGAttr_testbrd", {obj: "img_2", key: ["path"], val: checked ? "F:/3M/B4DT/DF Mark/V1-1.bmp" : "F:/3M/B4DT/DF Mark/V1-2.bmp"})
                     }
                 }
-
+                MenuItem{
+                    checkable: true
+                    text: qsTr("imageRange")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "img_2", key: ["range"], val: checked ? [0, 0, 600, 800] : [0, 0, 400, 300]})
+                    }
+                }
             }
         }
 
@@ -333,6 +343,13 @@ ApplicationWindow {
                     basectrl.show()
                 }
             }
+            MenuItem{
+                text: qsTr("treeNodeView")
+                onClicked: {
+                    treeview.show()
+                }
+            }
+
         }
 
         Component.onCompleted: {
@@ -392,27 +409,68 @@ ApplicationWindow {
             anchors.fill: parent
             color: "gray"
             Column{
+                /*Repeater{
+                    delegate: T{
+
+                    }
+                }*/
+
                 Edit{
-                    width: 160
-                    caption.text: qsTr("attribute1") + ":"
-                    caption.width: width * 0.5
-                    input.width: width * 0.5
+                    width: 180
+                    caption.text: qsTr("attr1") + ":"
+                    ratio: 0.4
                 }
                 Check{
-                    width: 160
-                    caption.text: qsTr("attribute2") + ":"
-                    caption.width: width * 0.5
-                    check.width: width * 0.5
+                    width: 180
+                    caption.text: qsTr("attribu2") + ":"
+                    ratio: 0.4
                 }
                 Combo{
-                    width: 160
+                    width: 180
                     caption.text: qsTr("attribute3") + ":"
-                    caption.width: width * 0.5
-                    combo.width: width * 0.5
+                    ratio: 0.4
                 }
             }
         }
         footbuttons: [{cap: "OK", func: function(){close()}}]
+    }
+
+    TWindow{
+        id: treeview
+        caption: qsTr("treeview")
+        content: Rectangle{
+            color: "gray"
+            anchors.fill: parent
+            TreeNodeView{
+                anchors.fill: parent
+            }
+        }
+        footbuttons: [{cap: "load", func: function(){
+            var sample = {
+                            "hello": "world",
+                            "he": [true, false],
+                            "hi": {
+                                "hi1": "hi2",
+                                "ge": {
+                                    "too": 3,
+                                    "heww": {
+                                        "ll": [3, 3, 4],
+                                        "dd": "dddd",
+                                        "ff": false
+                                    }
+                                }
+                            },
+                            "hi20": true,
+                            "hello2": "world",
+                            "he2": [0, {"kao": "gege"}, 1],
+                            "hi2": [
+                                {"hello": "world"},
+                                {"no": [true, false]}
+                            ],
+                            "hi22": 3
+                        }
+            Pipeline2.run("loadTreeView", {data: sample});
+        }}]
     }
 
     MsgDialog{
