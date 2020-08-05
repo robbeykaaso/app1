@@ -17,6 +17,6 @@ Item{
             }
         }
         for (var j in clds)
-            clds[j].width = mx / clds[j].ratio
+            clds[j].caption.width = mx + 5
     }
 }

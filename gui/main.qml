@@ -431,6 +431,10 @@ ApplicationWindow {
                     caption.text: qsTr("attribute3") + ":"
                     ratio: 0.4
                 }
+                Radio{
+                    text: qsTr("attribute4")
+                }
+
                 AutoSize{
 
                 }

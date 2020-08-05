@@ -57,48 +57,63 @@ Column{
             }
 
             content:
-                Column{
+                Rectangle{
+                    color: "gray"
                     anchors.fill: parent
-                    spacing: height * 0.05
-                    topPadding: spacing
+                    ScrollView{
+                        anchors.fill: parent
+                        contentHeight: 200
+                        contentWidth: parent.width
+                        clip: true
 
-                    Repeater{
-                        id: sel
-                        model: ListModel{
-                            ListElement {cap: "double/integer"; chk: false}
-                            ListElement {cap: "string"; chk: true}
-                            ListElement {cap: "boolean"; chk: false}
-                            ListElement {cap: "array"; chk: false}
-                            ListElement {cap: "object"; chk: false}
-                        }
-                        Row{
-                            height: 20
+                        Column{
+                            height: 150
                             width: parent.width
-                            spacing: 10
-                            leftPadding: spacing
-                            RadioButton{
-                                text: cap
-                                height: parent.height
-                                checked: chk
-                                ButtonGroup.group: btngrp
-                            }
-                            TextEdit{
-                                visible: root.tag == "object"
-                                text: qsTr("key")
-                            }
-                            TextEdit{
-                                //visible: root.tag ==
-                                visible: cap == "double/integer" || cap == "string"
-                                text: qsTr("value")
-                            }
-                            CheckBox{
-                                visible: cap == "boolean"
-                                text: qsTr("value")
-                                height: 20
+                            spacing: height * 0.05
+                            topPadding: spacing
+
+                            Repeater{
+                                id: sel
+                                model: ListModel{
+                                    ListElement {cap: "double/integer"; chk: false}
+                                    ListElement {cap: "string"; chk: true}
+                                    ListElement {cap: "boolean"; chk: false}
+                                    ListElement {cap: "array"; chk: false}
+                                    ListElement {cap: "object"; chk: false}
+                                }
+                                Row{
+                                    height: 25
+                                    width: parent.width
+                                    spacing: 5
+                                    leftPadding: spacing
+                                    Radio{
+                                        text: cap
+                                        checked: chk
+                                        height: parent.height
+                                        ButtonGroup.group: btngrp
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Edit{
+                                        visible: root.tag == "object"
+                                        caption.text: qsTr("key")
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Edit{
+                                        //visible: root.tag ==
+                                        visible: cap == "double/integer" || cap == "string"
+                                        caption.text: qsTr("value")
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Check{
+                                        visible: cap == "boolean"
+                                        caption.text: qsTr("value")
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
                             }
                         }
-                    }
 
+                    }
                 }
             footbuttons: [{cap: "Cancel", func: function(){close()}},
             {cap: "OK", func: function(){
@@ -113,7 +128,7 @@ Column{
                 if (tag == "array"){
                     ky = cld.children.length - Object.keys(cld.deleted).length
                     if (sel.itemAt(i).children[3].visible)
-                        addJsonChild(tp, ky, sel.itemAt(i).children[3].checked)
+                        addJsonChild(tp, ky, sel.itemAt(i).children[3].check.checked)
                     else if (sel.itemAt(i).children[2].visible){
                         if (tp !== "string")
                             tp = "double"
@@ -130,7 +145,7 @@ Column{
                         }
 
                     if (sel.itemAt(i).children[3].visible)
-                        addJsonChild(tp, ky, sel.itemAt(i).children[3].checked)
+                        addJsonChild(tp, ky, sel.itemAt(i).children[3].check.checked)
                     else if (sel.itemAt(i).children[2].visible){
                         if (tp !== "string")
                             tp = "double"
@@ -163,7 +178,7 @@ Column{
 
         function getChildType(){
             if (children.length > 0)
-                if (children[0].children[1] instanceof CheckBox1)
+                if (children[0].children[1] instanceof Check)
                     return "boolean"
                 else
                     return children[0].children[1].tag
@@ -173,10 +188,8 @@ Column{
 
         function getChildValue(aIndex){
             var chd = children[aIndex].children[1]
-            if (chd instanceof Edit1)
-                return chd.input.text
-            else if (chd instanceof CheckBox1)
-                return chd.text
+            if (chd instanceof Edit || chd instanceof Check || chd instanceof Combo)
+                return chd.caption.text
             else
                 return chd.caption
         }
@@ -208,15 +221,15 @@ Column{
                 for (i = 0; i < cld.children.length; ++i)
                     if (!cld.deleted[cld.children[i]]){
                         var istar = false
-                        if (cld.children[i].children[1] instanceof CheckBox0){
+                        if (cld.children[i].children[1] instanceof Check){
                             istar = cld.children[i].children[1].key === aKeys[0]
                             if (aOpt !== "del")
                                 cld.children[i].children[1].checked = aValue
-                        }else if (cld.children[i].children[1] instanceof ComboBox0){
+                        }else if (cld.children[i].children[1] instanceof Combo){
                             istar = cld.children[i].children[1].key === aKeys[0]
                             if (aOpt !== "del")
                                 cld.children[i].children[1].setCurrent(aValue)
-                        }else if (cld.children[i].children[1] instanceof Edit0){
+                        }else if (cld.children[i].children[1] instanceof Edit){
                             istar = cld.children[i].children[1].key === aKeys[0]
                             if (aOpt !== "del")
                                 cld.children[i].children[1].input.text = aValue
@@ -275,7 +288,7 @@ Column{
                 src += "comment: '" + aStyle["jsst"]["comment"] + "';"
                 src += "}"
             }
-            src += "}"
+            src += "AutoSize{}}"
             ret = Qt.createQmlObject(src, cld)
             scr_root.contentHeight += 25
         }else if (aType === "string" || aType === "double"){
@@ -351,7 +364,7 @@ Column{
                 src += "comment: '" + aStyle["jsst"]["comment"] + "';"
                 src += "}"
             }
-            src += "}"
+            src += "AutoSize{}}"
             ret = Qt.createQmlObject(src, cld)
             scr_root.contentHeight += 25
         }else{
@@ -373,11 +386,13 @@ Column{
             ret = Qt.createQmlObject(src, cld)
             ret.children[1].scr_root = scr_root
             ret.children[1].treelayer = treelayer + 1
+            if (!aInitialize)
+                ret.children[1].nodechild.visible = true
             scr_root.contentHeight += 37
         }
         scr_root.contentWidth = Math.max(scr_root.contentWidth, (treelayer + 1) * 10 + treelayer * 17 + ret.children[1].x + ret.children[1].width + 30)
         if (!aInitialize)
-            UIManager.setCommand({signal2: 'treeViewGUIModified', type: 'nullptr', param: {keys: extractKeyChain(), key: aKey, value: aValue, type: aType, opt: "add"}}, null)
+            Pipeline2.run("treeViewGUIModified", {key: extractKeyChain() + ";" + aKey, val: aValue, type: "add", val_type: aType})
 //        console.log(ret.children[1].x + ";" + ret.children[1].width)
 //        if (cld.children.length - Object.keys(cld.deleted).length > 1)
 //            scr_root.contentHeight += 5
@@ -389,14 +404,14 @@ Column{
         for (var i = 0; i < cld.children.length; ++i)
             if (!cld.deleted[cld.children[i]]){
                 var cld0 = cld.children[i].children[1]
-                if (cld0 instanceof Edit1){
+                if (cld0 instanceof Edit){
                     if (cld0.tag === "double")
                         ret.push(parseFloat(cld0.input.text))
                     else
                         ret.push(cld0.input.text)
-                }else if (cld0 instanceof CheckBox1){
+                }else if (cld0 instanceof Check){
                     ret.push(cld0.checked)
-                }else if (cld0 instanceof ComboBox1){
+                }else if (cld0 instanceof Combo){
                     if (cld0.tag === "double")
                         ret.push(parseFloat(cld0.value))
                     else
@@ -416,14 +431,14 @@ Column{
         for (var i = 0; i < cld.children.length; ++i)
             if (!cld.deleted[cld.children[i]]){
                 var cld0 = cld.children[i].children[1]
-                if (cld0 instanceof Edit1){
+                if (cld0 instanceof Edit){
                     if (cld0.tag === "double")
                         ret[cld0.key] = parseFloat(cld0.input.text)
                     else
                         ret[cld0.key] = cld0.input.text
-                }else if (cld0 instanceof CheckBox1){
+                }else if (cld0 instanceof Check){
                     ret[cld0.key] = cld0.checked
-                }else if (cld0 instanceof ComboBox1){
+                }else if (cld0 instanceof Combo){
                     if (cld0.tag === "double")
                         ret[cld0.key] = parseFloat(cld0.value)
                     else
