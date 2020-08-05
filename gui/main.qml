@@ -445,6 +445,29 @@ ApplicationWindow {
 
     TWindow{
         id: treeview
+        property var sample: {
+            "hello": "world",
+            "he": [true, false],
+            "hi": {
+                "hi1": "hi2",
+                "ge": {
+                    "too": 3,
+                    "heww": {
+                        "ll": [3, 3, 4],
+                        "dd": "dddd",
+                        "ff": false
+                    }
+                }
+            },
+            "hi20": true,
+            "hello2": "world",
+            "he2": [0, {"kao": "gege"}, 1],
+            "hi2": [
+                {"hello": "world"},
+                {"no": [true, false]}
+            ],
+            "hi22": 3
+        }
         caption: qsTr("treeview")
         content: Rectangle{
             color: "gray"
@@ -454,31 +477,34 @@ ApplicationWindow {
             }
         }
         footbuttons: [{cap: "load", func: function(){
-            var sample = {
-                            "hello": "world",
-                            "he": [true, false],
-                            "hi": {
-                                "hi1": "hi2",
-                                "ge": {
-                                    "too": 3,
-                                    "heww": {
-                                        "ll": [3, 3, 4],
-                                        "dd": "dddd",
-                                        "ff": false
-                                    }
-                                }
-                            },
-                            "hi20": true,
-                            "hello2": "world",
-                            "he2": [0, {"kao": "gege"}, 1],
-                            "hi2": [
-                                {"hello": "world"},
-                                {"no": [true, false]}
-                            ],
-                            "hi22": 3
-                        }
-            Pipeline2.run("loadTreeView", {data: sample});
+            Pipeline2.run("loadTreeView", {data: sample}, {tag: "testTreeView"})}},
+        {cap: "save", func: function(){
+            Pipeline2.run("saveTreeView", {}, {tag: "testTreeView"})
         }}]
+
+        function sameObject(aTarget, aRef){
+            for (var i in aTarget)
+                if (typeof aRef[i] === "object"){
+                    if (!sameObject(aTarget[i], aRef[i])){
+                        console.log(i + ";" + aTarget[i] + ";" + aRef[i])
+                        return false
+                    }
+                }else if (aTarget[i] !== aRef[i]){
+                    console.log(i + ";" + aTarget[i] + ";" + aRef[i])
+                    return false
+                }
+            return true
+        }
+
+        Component.onCompleted: {
+            Pipeline2.find("loadTreeView")
+            .next(null, {tag: "testTreeView"}, {name: "saveTreeView", type: "Local"})
+            //.next("saveTreeView")
+            .next(function(aInput){
+                console.assert(sameObject(aInput, sample))
+                return {data: {}, out: [{out: "Pass: save/load TreeView", next: "testSuccess"}]}
+            }, {tag: "testTreeView"}).next("testSuccess")
+        }
     }
 
     MsgDialog{

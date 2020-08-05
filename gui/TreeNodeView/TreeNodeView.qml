@@ -52,7 +52,8 @@ ScrollView{
                 clearChildren()
                 contentHeight = 0
                 buildGUI(aInput["data"], aInput["style"])
-            }, {name: "loadTreeView"})
+                return {data: aInput, out: {}}
+            }, {name: "loadTreeView", type: "Partial"})
 
             Pipeline2.add(function(aInput){
                 var kys = aInput["keys"]
@@ -67,10 +68,10 @@ ScrollView{
                     modifiedCache = {}
                 modifiedCache[aInput["keys"]] = aInput["value"]
             }, {name: "treeViewGUIModified"})
-        }
-    }
 
-    function saveObject(){
-        return root.buildObject()
+            Pipeline2.add(function(aInput){
+                return {data: root.buildObject(), out: {}}
+            }, {name: "saveTreeView", type: "Partial"})
+        }
     }
 }
