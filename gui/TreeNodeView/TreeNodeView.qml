@@ -118,24 +118,10 @@ ScrollView{
                 return {data: buildObject(), out: {}}
             }, {name: key + "saveTreeView", type: "Partial"})
 
-            var style = "styleTreeView"
             Pipeline2.add(function(aInput){
-                var content = buildObject()
-                var stl = generateJSST(content)
-                return {out: [{
-                            out: {data: content, style: stl},
-                            next: "loadTreeView"
-                        }]}
-            }, {name: key + style})
-            .nextL("loadTreeView")
-            .nextL("saveTreeView")
-            .next(function(aInput){
-                return {out: [{
-                            out: {data: aInput, path: "style.json"},
-                        }]}
-            })
-            .nextL("json2stg")
-            .nextL("writeJson")
+                var stl = generateJSST(aInput)
+                return {data: stl, out: {}}
+            }, {name: key + "styleTreeView", type: "Partial"})
         }
     }
 }

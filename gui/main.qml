@@ -768,7 +768,7 @@ ApplicationWindow {
             {cap: "save", func: function(){
                 Pipeline2.run("saveTreeView", {}, {tag: "testTreeView"})}},
             {cap: "style", func: function(){
-                Pipeline2.run("styleTreeView")}}
+                Pipeline2.run("saveTreeView", {}, {tag: "styleTreeView"})}}
             ]
 
         function sameObject(aTarget, aRef){
@@ -793,6 +793,17 @@ ApplicationWindow {
                 return {out: [{out: "Pass: save/load TreeView", next: "testSuccess"}]}
             })
             .next("testSuccess")
+
+            /*Pipeline2.find("saveTreeView")
+            .nextL("styleTreeView", {tag: "styleTreeView"})
+            .nextL("saveTreeView")
+            .next(function(aInput){
+                return {out: [{
+                            out: {data: aInput, path: "style.json"},
+                        }]}
+            })
+            .nextL("json2stg")
+            .nextL("writeJson")*/
         }
     }
 
