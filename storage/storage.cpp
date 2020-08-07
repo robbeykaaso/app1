@@ -186,3 +186,8 @@ std::vector<QString> fsStorage::listFiles(const QString& aDirectory){
         ret.push_back(i);
     return ret;
 }
+
+static rea::regPip<QJsonObject, rea::pipePartial> json2stg([](rea::stream<QJsonObject>* aInput){
+    auto dt = aInput->data();
+    aInput->out<stgJson>(stgJson(dt.value("data").toObject(), dt.value("path").toString()), dt.value("next").toString(), dt.value("param").toObject());
+}, rea::Json("name", "json2stg"));

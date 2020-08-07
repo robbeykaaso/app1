@@ -284,21 +284,21 @@ void testStorage(const QString& aRoot = ""){ //for fs: aRoot == ""; for minIO: a
     using namespace rea;
     auto tag = Json("tag", "testStorage");
     pipeline::find(aRoot + "writeJson")
-        ->next(local<stgJson>(aRoot + "readJson"), tag)
+        ->next(local(aRoot + "readJson"), tag)
         ->next(FUNCT(stgJson, aRoot,
                      auto js = aInput->data().getData();
                      assert(js.value("hello") == "world2");
                      aInput->out<stgCVMat>(stgCVMat(cv::Mat(10, 10, CV_8UC1, cv::Scalar(0)), "testMat.png"), aRoot + "writeCVMat");
                              ))
-        ->next(local<stgCVMat>(aRoot + "writeCVMat"))
-        ->next(local<stgCVMat>(aRoot + "readCVMat"))
+        ->next(local(aRoot + "writeCVMat"))
+        ->next(local(aRoot + "readCVMat"))
         ->next(FUNCT(stgCVMat, aRoot,
                      auto dt = aInput->data().getData();
                      assert(dt.cols == 10 && dt.rows == 10);
                      aInput->out<stgByteArray>(stgByteArray(QJsonDocument(Json("hello", "world")).toJson(), "testFS.json"), aRoot + "writeByteArray");
                              ))
-        ->next(local<stgByteArray>(aRoot + "writeByteArray"))
-        ->next(local<stgByteArray>(aRoot + "readByteArray"))
+        ->next(local(aRoot + "writeByteArray"))
+        ->next(local(aRoot + "readByteArray"))
         ->next(FUNCT(stgByteArray, aRoot,
                      auto dt = aInput->data().getData();
                      auto cfg = QJsonDocument::fromJson(dt).object();
@@ -309,15 +309,15 @@ void testStorage(const QString& aRoot = ""){ //for fs: aRoot == ""; for minIO: a
                      stgVector<stgByteArray> stm(dts, "testDir");
                      aInput->out<stgVector<stgByteArray>>(stm, aRoot + "writeDir");
                              ))
-        ->next(local<stgVector<stgByteArray>>(aRoot + "writeDir"))
-        ->next(local<stgVector<stgByteArray>>(aRoot + "readDir"))
+        ->next(local(aRoot + "writeDir"))
+        ->next(local(aRoot + "readDir"))
         ->next(FUNCT(stgVector<stgByteArray>, aRoot,
                      auto dt = aInput->data().getData();
                      if (aRoot == "")
                          assert(QDir().exists(aInput->data() + "/" + dt.at(0)));
                      aInput->out<stgVector<QString>>(stgVector<QString>(std::vector<QString>(), aInput->data()), aRoot + "listFiles");
                              ))
-        ->next(local<stgVector<QString>>(aRoot + "listFiles"))
+        ->next(local(aRoot + "listFiles"))
         ->next(FUNCT(stgVector<QString>, aRoot,
                      auto dt = aInput->data().getData();
                      if (aRoot == "")
@@ -328,12 +328,12 @@ void testStorage(const QString& aRoot = ""){ //for fs: aRoot == ""; for minIO: a
                      aInput->out<QString>("testFS.json", aRoot + "deletePath");
                      aInput->out<QString>("testMat.png", aRoot + "deletePath");
                              ))
-        ->next(local<QString>(aRoot + "deletePath"))
+        ->next(local(aRoot + "deletePath"))
         ->next(buffer<QString>(3))
         ->next(FUNCT(std::vector<QString>, aRoot,
                      aInput->out<stgVector<QString>>(stgVector<QString>(std::vector<QString>(), aRoot + "/testDir"), aRoot + "listFiles");
                              ))
-        ->next(local<stgVector<QString>>(aRoot + "listFiles"))
+        ->next(local(aRoot + "listFiles"))
         ->next(FUNCT(stgVector<QString>, aRoot,
                      auto dt = aInput->data().getData();
                      assert(dt.size() == 0);

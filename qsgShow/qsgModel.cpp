@@ -343,7 +343,7 @@ QSGNode* imageObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNo
 }
 
 void imageObject::updateImagePath(){
-    QImage img = imagePool::readCache(getPath());
+    QImage img = rea::imagePool::readCache(getPath());
     if (img.width() == 0 || img.height() == 0){
         img = QImage(10, 10, QImage::Format_ARGB32);
         img.fill(QColor("transparent"));
@@ -845,7 +845,7 @@ int qsgModel::getHeight() {
 
 rea::pipe0* qsgModel::objectCreator(const QString& aName){
     if (!m_creators.contains(aName))
-        m_creators.insert(aName, rea::local<QJsonObject>(aName));
+        m_creators.insert(aName, rea::local(aName));
     return m_creators.value(aName);
 }
 
@@ -878,7 +878,7 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
         static int count = 0;
         auto pth = "F:/3M/B4DT/DF Mark/V1-1.bmp";
         QImage img(pth);
-        imagePool::cacheImage(pth, img);
+        rea::imagePool::cacheImage(pth, img);
         auto cfg = rea::Json("width", img.width() ? img.width() : 600,
                              "height", img.height() ? img.height() : 600,
                              "arrow", rea::Json("visible", false,

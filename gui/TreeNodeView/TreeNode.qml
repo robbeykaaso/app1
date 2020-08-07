@@ -212,11 +212,30 @@ Column{
         return ret
     }
 
-    function modifyGUI(aKeys, aOpt, aType, aValue, aStyle){
+    function getType(aValue){
+        if (!(aValue instanceof Object)){
+            var tp = typeof aValue
+            if (tp == "boolean"){
+                return "boolean"
+            }else{
+                if (tp === "string")
+                    return "string"
+                else
+                    return "double"
+            }
+        }else{
+            if (aValue instanceof Array)
+                return "array"
+            else
+                return "object"
+        }
+    }
+
+    function modifyGUI(aKeys, aOpt, aValue, aStyle){
         var i
         if (aKeys.length === 1){
             if (aOpt === "add")
-                addJsonChild(aType, aKeys[0], aValue, aStyle)
+                addJsonChild(getType(aValue), aKeys[0], aValue, aStyle)
             else{
                 for (i = 0; i < cld.children.length; ++i)
                     if (!cld.deleted[cld.children[i]]){
@@ -224,11 +243,13 @@ Column{
                         if (cld.children[i].children[1] instanceof Check){
                             istar = cld.children[i].children[1].key === aKeys[0]
                             if (aOpt !== "del")
-                                cld.children[i].children[1].checked = aValue
+                                cld.children[i].children[1].check.checked = aValue
                         }else if (cld.children[i].children[1] instanceof Combo){
                             istar = cld.children[i].children[1].key === aKeys[0]
-                            if (aOpt !== "del")
-                                cld.children[i].children[1].setCurrent(aValue)
+                            if (aOpt !== "del"){
+                                var cmb = cld.children[i].children[1].combo
+                                cmb.currentIndex = cmb.model.indexOf(aValue)
+                            }
                         }else if (cld.children[i].children[1] instanceof Edit){
                             istar = cld.children[i].children[1].key === aKeys[0]
                             if (aOpt !== "del")
@@ -245,10 +266,10 @@ Column{
             }
         }else if (aKeys.length > 1){
             for (i = 0; i < cld.children.length; ++i)
-                if (!cld.deleted[cld.children[i]] && cld.children[i].children[1] instanceof TreeNode && cld.children[i].children[1].caption === aKeys[0]){
+                if (!cld.deleted[cld.children[i]] && cld.children[i].children[1] instanceof TreeNode && cld.children[i].children[1].key === aKeys[0]){
                     var kys = aKeys
                     kys.splice(0, 1)
-                    cld.children[i].children[1].modifyGUI(kys, aOpt, aType, aValue, aStyle)
+                    cld.children[i].children[1].modifyGUI(kys, aOpt, aValue, aStyle)
                     break
                 }
         }
@@ -263,9 +284,10 @@ Column{
         src += "spacing: 5;"
         src += "TreeNodeDelete{"
         if (aStyle && aStyle["jsst"] && aStyle["jsst"]["opt_del"]){
-            src += "enabled: false;"
-            src += "text.text: '';"
-            src += "color: 'transparent';"
+            //src += "enabled: false;"
+            //src += "text: '';"
+            //src += "color: 'transparent';"
+            src += "visible: false;"
         }
         var cap = aKey
         if (aStyle && aStyle["jsst"] && aStyle["jsst"]["caption"] && aStyle["jsst"]["caption"] !== "")
@@ -383,6 +405,10 @@ Column{
                 src += "}"
             }
             src += "}"
+
+           // if (aStyle)
+           //     console.log(src)
+
             ret = Qt.createQmlObject(src, cld)
             ret.children[1].scr_root = scr_root
             ret.children[1].treelayer = treelayer + 1
@@ -392,7 +418,7 @@ Column{
         }
         scr_root.contentWidth = Math.max(scr_root.contentWidth, (treelayer + 1) * 10 + treelayer * 17 + ret.children[1].x + ret.children[1].width + 30)
         if (!aInitialize)
-            Pipeline2.run("treeViewGUIModified", {key: extractKeyChain() + ";" + aKey, val: aValue, type: "add", val_type: aType})
+            Pipeline2.run("treeViewGUIModified", {key: extractKeyChain() + ";" + aKey, val: aValue, type: "add"})
 //        console.log(ret.children[1].x + ";" + ret.children[1].width)
 //        if (cld.children.length - Object.keys(cld.deleted).length > 1)
 //            scr_root.contentHeight += 5
@@ -410,12 +436,12 @@ Column{
                     else
                         ret.push(cld0.input.text)
                 }else if (cld0 instanceof Check){
-                    ret.push(cld0.checked)
+                    ret.push(cld0.check.checked)
                 }else if (cld0 instanceof Combo){
                     if (cld0.tag === "double")
-                        ret.push(parseFloat(cld0.value))
+                        ret.push(parseFloat(cld0.combo.currentText))
                     else
-                        ret.push(cld0.value)
+                        ret.push(cld0.combo.currentText)
                 }else{
                     if (cld0.tag === "object")
                         ret.push(cld0.buildObject())
@@ -437,14 +463,14 @@ Column{
                     else
                         ret[cld0.key] = cld0.input.text
                 }else if (cld0 instanceof Check){
-                    ret[cld0.key] = cld0.checked
+                    //console.log("xxxxx: " + cld0.key + ";" + cld0.tag)
+                    ret[cld0.key] = cld0.check.checked
                 }else if (cld0 instanceof Combo){
                     if (cld0.tag === "double")
-                        ret[cld0.key] = parseFloat(cld0.value)
+                        ret[cld0.key] = parseFloat(cld0.combo.currentText)
                     else
-                        ret[cld0.key] = cld0.value
+                        ret[cld0.key] = cld0.combo.currentText
                 }else{
-                    //console.log(cld0.caption + ";" + cld0.tag)
                     if (cld0.tag === "object")
                         ret[cld0.key] = cld0.buildObject()
                     else
@@ -456,24 +482,10 @@ Column{
 
     function doBuildGUI(aKey, aValue, aStyle){
         //console.log("hi")
-        if (!(aValue instanceof Object)){
-            var tp = typeof aValue
-            if (tp == "boolean"){
-                addJsonChild("boolean", aKey, aValue, aStyle ? aStyle[aKey] : undefined, true)
-            }else{
-                if (tp === "string")
-                    addJsonChild("string", aKey, aValue, aStyle ? aStyle[aKey] : undefined, true)
-                else
-                    addJsonChild("double", aKey, aValue, aStyle ? aStyle[aKey] : undefined, true)
-            }
-        }else{
-            var nd
-            if (aValue instanceof Array)
-                nd = addJsonChild("array", aKey, "", aStyle ? aStyle[aKey] : undefined, true)
-            else
-                nd = addJsonChild("object", aKey, "", aStyle ? aStyle[aKey] : undefined, true)
+        var tp = getType(aValue)
+        var nd = addJsonChild(tp, aKey, aValue, aStyle ? aStyle[aKey] : undefined, true)
+        if ((aValue instanceof Object))
             nd.children[1].buildGUI(aValue, aStyle ? aStyle[aKey] : undefined)
-        }
     }
 
     function buildGUI(aJson, aStyle){

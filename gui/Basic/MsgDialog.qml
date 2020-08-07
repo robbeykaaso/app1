@@ -11,7 +11,7 @@ MessageDialog {
             title = aInput["title"]
             text = aInput["text"]
             open()
-            return {data: aInput, out: {}}
+            return {out: {}}
         }, {name: "popMessage"})
     }
 }

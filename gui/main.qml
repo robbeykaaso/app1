@@ -468,6 +468,286 @@ ApplicationWindow {
             ],
             "hi22": 3
         }
+        property var sample_style: {
+            "he": {
+                "0": {
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_del": true
+                    }
+                },
+                "1": {
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_del": true
+                    }
+                },
+                "jsst": {
+                    "caption": "",
+                    "comment": "",
+                    "invisible": false,
+                    "opt_add": false,
+                    "opt_del": true
+                }
+            },
+            "he2": {
+                "0": {
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_del": true,
+                        "val_type": "regExp",
+                        "val_value": ""
+                    }
+                },
+                "1": {
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_add": true,
+                        "opt_del": true
+                    },
+                    "kao": {
+                        "jsst": {
+                            "caption": "",
+                            "comment": "",
+                            "invisible": false,
+                            "opt_del": true,
+                            "val_type": "regExp",
+                            "val_value": ""
+                        }
+                    }
+                },
+                "2": {
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_del": true,
+                        "val_type": "regExp",
+                        "val_value": ""
+                    }
+                },
+                "jsst": {
+                    "caption": "",
+                    "comment": "",
+                    "invisible": false,
+                    "opt_add": false,
+                    "opt_del": true
+                }
+            },
+            "hello": {
+                "jsst": {
+                    "caption": "",
+                    "comment": "",
+                    "invisible": false,
+                    "opt_del": true,
+                    "val_type": "regExp",
+                    "val_value": ""
+                }
+            },
+            "hello2": {
+                "jsst": {
+                    "caption": "",
+                    "comment": "",
+                    "invisible": false,
+                    "opt_del": true,
+                    "val_type": "regExp",
+                    "val_value": ""
+                }
+            },
+            "hi": {
+                "ge": {
+                    "heww": {
+                        "dd": {
+                            "jsst": {
+                                "caption": "",
+                                "comment": "",
+                                "invisible": false,
+                                "opt_del": true,
+                                "val_type": "regExp",
+                                "val_value": ""
+                            }
+                        },
+                        "ff": {
+                            "jsst": {
+                                "caption": "",
+                                "comment": "",
+                                "invisible": false,
+                                "opt_del": true
+                            }
+                        },
+                        "jsst": {
+                            "caption": "",
+                            "comment": "",
+                            "invisible": false,
+                            "opt_add": true,
+                            "opt_del": true
+                        },
+                        "ll": {
+                            "0": {
+                                "jsst": {
+                                    "caption": "",
+                                    "comment": "",
+                                    "invisible": false,
+                                    "opt_del": true,
+                                    "val_type": "regExp",
+                                    "val_value": ""
+                                }
+                            },
+                            "1": {
+                                "jsst": {
+                                    "caption": "",
+                                    "comment": "",
+                                    "invisible": false,
+                                    "opt_del": true,
+                                    "val_type": "regExp",
+                                    "val_value": ""
+                                }
+                            },
+                            "2": {
+                                "jsst": {
+                                    "caption": "",
+                                    "comment": "",
+                                    "invisible": false,
+                                    "opt_del": true,
+                                    "val_type": "regExp",
+                                    "val_value": ""
+                                }
+                            },
+                            "jsst": {
+                                "caption": "",
+                                "comment": "",
+                                "invisible": false,
+                                "opt_add": false,
+                                "opt_del": true
+                            }
+                        }
+                    },
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_add": true,
+                        "opt_del": true
+                    },
+                    "too": {
+                        "jsst": {
+                            "caption": "",
+                            "comment": "",
+                            "invisible": false,
+                            "opt_del": true,
+                            "val_type": "regExp",
+                            "val_value": ""
+                        }
+                    }
+                },
+                "hi1": {
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_del": true,
+                        "val_type": "regExp",
+                        "val_value": ""
+                    }
+                },
+                "jsst": {
+                    "caption": "",
+                    "comment": "",
+                    "invisible": false,
+                    "opt_add": true,
+                    "opt_del": true
+                }
+            },
+            "hi2": {
+                "0": {
+                    "hello": {
+                        "jsst": {
+                            "caption": "",
+                            "comment": "",
+                            "invisible": false,
+                            "opt_del": true,
+                            "val_type": "regExp",
+                            "val_value": ""
+                        }
+                    },
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_add": true,
+                        "opt_del": true
+                    }
+                },
+                "1": {
+                    "jsst": {
+                        "caption": "",
+                        "comment": "",
+                        "invisible": false,
+                        "opt_add": true,
+                        "opt_del": true
+                    },
+                    "no": {
+                        "0": {
+                            "jsst": {
+                                "caption": "",
+                                "comment": "",
+                                "invisible": false,
+                                "opt_del": true
+                            }
+                        },
+                        "1": {
+                            "jsst": {
+                                "caption": "",
+                                "comment": "",
+                                "invisible": false,
+                                "opt_del": true
+                            }
+                        },
+                        "jsst": {
+                            "caption": "",
+                            "comment": "",
+                            "invisible": false,
+                            "opt_add": false,
+                            "opt_del": true
+                        }
+                    }
+                },
+                "jsst": {
+                    "caption": "",
+                    "comment": "",
+                    "invisible": false,
+                    "opt_add": false,
+                    "opt_del": true
+                }
+            },
+            "hi20": {
+                "jsst": {
+                    "caption": "",
+                    "comment": "",
+                    "invisible": false,
+                    "opt_del": true
+                }
+            },
+            "hi22": {
+                "jsst": {
+                    "caption": "",
+                    "comment": "",
+                    "invisible": false,
+                    "opt_del": true,
+                    "val_type": "regExp",
+                    "val_value": ""
+                }
+            }
+        }
+
         caption: qsTr("treeview")
         content: Rectangle{
             color: "gray"
@@ -476,21 +756,30 @@ ApplicationWindow {
                 anchors.fill: parent
             }
         }
-        footbuttons: [{cap: "load", func: function(){
-            Pipeline2.run("loadTreeView", {data: sample}, {tag: "testTreeView"})}},
-        {cap: "save", func: function(){
-            Pipeline2.run("saveTreeView", {}, {tag: "testTreeView"})
-        }}]
+        footbuttons: [
+            {cap: "modify", func: function(){
+                Pipeline2.run("modifyTreeViewGUI", {key: ["hi2", "1", "no", "1"], val: true}, {tag: "modifyTreeView"})}},
+            {cap: "add", func: function(){
+                Pipeline2.run("modifyTreeViewGUI", {key: ["hi2", "1", "no", "2"], type: "add", val: 14}, {tag: "modifyTreeView"})}},
+            {cap: "delete", func: function(){
+                Pipeline2.run("modifyTreeViewGUI", {key: ["hi"], type: "del"}, {tag: "modifyTreeView"})}},
+            {cap: "load", func: function(){
+                Pipeline2.run("loadTreeView", {data: sample}, {tag: "testTreeView"})}},
+            {cap: "save", func: function(){
+                Pipeline2.run("saveTreeView", {}, {tag: "testTreeView"})}},
+            {cap: "style", func: function(){
+                Pipeline2.run("styleTreeView")}}
+            ]
 
         function sameObject(aTarget, aRef){
             for (var i in aTarget)
                 if (typeof aRef[i] === "object"){
                     if (!sameObject(aTarget[i], aRef[i])){
-                        console.log(i + ";" + aTarget[i] + ";" + aRef[i])
+                        //console.log(i + ";" + aTarget[i] + ";" + aRef[i])
                         return false
                     }
                 }else if (aTarget[i] !== aRef[i]){
-                    console.log(i + ";" + aTarget[i] + ";" + aRef[i])
+                    //console.log(i + ";" + aTarget[i] + ";" + aRef[i])
                     return false
                 }
             return true
@@ -498,12 +787,12 @@ ApplicationWindow {
 
         Component.onCompleted: {
             Pipeline2.find("loadTreeView")
-            .next(null, {tag: "testTreeView"}, {name: "saveTreeView", type: "Local"})
-            //.next("saveTreeView")
+            .nextL("saveTreeView", {tag: "testTreeView"})
             .next(function(aInput){
                 console.assert(sameObject(aInput, sample))
-                return {data: {}, out: [{out: "Pass: save/load TreeView", next: "testSuccess"}]}
-            }, {tag: "testTreeView"}).next("testSuccess")
+                return {out: [{out: "Pass: save/load TreeView", next: "testSuccess"}]}
+            })
+            .next("testSuccess")
         }
     }
 
