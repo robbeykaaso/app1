@@ -71,22 +71,22 @@ ScrollView{
                                     jsst: {
                                         val_type: "combo",
                                         val_value: mdl,
-                                        val_script: "combo.onCurrentTextChanged: {
-                                            if (parent.parent.children.length > 5){
-                                                if (combo.currentText === 'combo'){
-                                                    parent.parent.children[5].children[0].deleteTreeNode()
-                                                    parent.parent.parent.addJsonChild('array', 'val_value')
-                                                }else if (combo.currentText === 'range'){
-                                                    parent.parent.children[5].children[0].deleteTreeNode()
-                                                    var reg = parent.parent.parent.addJsonChild('array', 'val_value')
-                                                    reg.children[1].addJsonChild('double', 'min', 0)
-                                                    reg.children[1].addJsonChild('double', 'max', 1)
-                                                }else{
-                                                    parent.parent.children[5].children[0].deleteTreeNode()
-                                                    parent.parent.parent.addJsonChild('string', 'val_value', '')
-                                                }
-                                            }
-                                        }"
+                                        val_script: "combo.onCurrentTextChanged: {" +
+                                            "if (parent.parent.children.length > 5){" +
+                                                "if (combo.currentText === 'combo'){" +
+                                                    "parent.parent.children[5].children[0].deleteTreeNode();" +
+                                                    "parent.parent.parent.addJsonChild('array', 'val_value');" +
+                                                "}else if (combo.currentText === 'range'){" +
+                                                    "parent.parent.children[5].children[0].deleteTreeNode();" +
+                                                    "var reg = parent.parent.parent.addJsonChild('array', 'val_value');" +
+                                                    "reg.children[1].addJsonChild('double', 'min', 0);" +
+                                                    "reg.children[1].addJsonChild('double', 'max', 1);" +
+                                                "}else{" +
+                                                    "parent.parent.children[5].children[0].deleteTreeNode();" +
+                                                    "parent.parent.parent.addJsonChild('string', 'val_value', '');" +
+                                                "}" +
+                                            "}" +
+                                        "}"
                                     }
                                 }
                              }}
@@ -110,7 +110,7 @@ ScrollView{
             }, {name: key + "modifyTreeViewGUI", type: "Partial"})
 
             Pipeline2.add(function(aInput){
-                //console.log(aInput["key"] + ";" + aInput["val"] + ";" + aInput["type"])
+                console.log(aInput["key"] + ";" + aInput["val"] + ";" + aInput["type"])
                 return {out: {}}
             }, {name: key + "treeViewGUIModified"})
 
@@ -120,8 +120,24 @@ ScrollView{
 
             Pipeline2.add(function(aInput){
                 var stl = generateJSST(aInput)
-                return {data: stl, out: {}}
+                return {data: {data: aInput, style: stl}, out: {}}
             }, {name: key + "styleTreeView", type: "Partial"})
+
+          /*  var style = "styleTreeView"
+            Pipeline2.add(function(aInput){
+                var content = buildObject()
+                var stl = generateJSST(content)
+                return {data: {data: content, style: stl}, out: {}}
+            }, {name: key + style})
+            .nextL("loadTreeView")
+            //.nextL("saveTreeView")
+            .next(function(aInput){
+                return {out: [{
+                            out: {data: aInput["style"], path: "style1.json"},
+                        }]}
+            })
+            .nextL("json2stg")
+            .nextL("writeJson")*/
         }
     }
 }

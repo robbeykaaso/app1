@@ -30,5 +30,6 @@ nav:
                 - msgdialog: gui/basic/msgdialog.md
             - component:
                 - log: gui/component/log.md
+                - treeNodeView: gui/component/treeNodeView.md
     - About: about.md
 theme: readthedocs

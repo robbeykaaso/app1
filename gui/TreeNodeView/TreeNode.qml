@@ -303,7 +303,7 @@ Column{
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["val_script"])
                 src += aStyle["jsst"]["val_script"]
             else
-                src += "check.onCheckedChanged: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: check.checked});}"
+                src += "check.onCheckedChanged: {Pipeline2.run(scr_root.contentChildren[0].key + 'treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: check.checked});}"
             src += "}"
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["comment"] && aStyle["jsst"]["comment"] !== ""){
                 src += "TreeNodeTag{anchors.verticalCenter: parent ? parent.children[1].verticalCenter : undefined;"
@@ -343,7 +343,7 @@ Column{
                 else{
                     src += "combo.onCurrentTextChanged: {"
                     src += "if (mdytick++){"
-                    src += "Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: combo.currentText});"
+                    src += "Pipeline2.run(scr_root.contentChildren[0].key + 'treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: combo.currentText});"
                     //src += "console.log('hi2');"
                     src += "}}"
                 }
@@ -375,9 +375,9 @@ Column{
                     //src += "}"
 
                     if (aType === "string")
-                        src += "input.onTextEdited: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: input.text});}"
+                        src += "input.onTextEdited: {Pipeline2.run(scr_root.contentChildren[0].key + 'treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: input.text});}"
                     else
-                        src += "input.onTextEdited: {Pipeline2.run('treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: parseFloat(input.text)});}"
+                        src += "input.onTextEdited: {Pipeline2.run(scr_root.contentChildren[0].key + 'treeViewGUIModified', {key: parent.parent.parent.extractKeyChain() + ';' + key, val: parseFloat(input.text)});}"
                 }
             }
             src += "}"
@@ -418,7 +418,7 @@ Column{
         }
         scr_root.contentWidth = Math.max(scr_root.contentWidth, (treelayer + 1) * 10 + treelayer * 17 + ret.children[1].x + ret.children[1].width + 30)
         if (!aInitialize)
-            Pipeline2.run("treeViewGUIModified", {key: extractKeyChain() + ";" + aKey, val: aValue, type: "add"})
+            Pipeline2.run(scr_root.contentChildren[0].key + "treeViewGUIModified", {key: extractKeyChain() + ";" + aKey, val: aValue, type: "add"})
 //        console.log(ret.children[1].x + ";" + ret.children[1].width)
 //        if (cld.children.length - Object.keys(cld.deleted).length > 1)
 //            scr_root.contentHeight += 5
@@ -489,8 +489,9 @@ Column{
     }
 
     function buildGUI(aJson, aStyle){
-        if (aJson["jsst"])
+        if (aJson["jsst"]){
             doBuildGUI("jsst", aJson["jsst"], aStyle)
+        }
         for (var i in aJson)
             if (i !== "jsst")
                 doBuildGUI(i, aJson[i], aStyle)

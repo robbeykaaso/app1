@@ -468,285 +468,6 @@ ApplicationWindow {
             ],
             "hi22": 3
         }
-        property var sample_style: {
-            "he": {
-                "0": {
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_del": true
-                    }
-                },
-                "1": {
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_del": true
-                    }
-                },
-                "jsst": {
-                    "caption": "",
-                    "comment": "",
-                    "invisible": false,
-                    "opt_add": false,
-                    "opt_del": true
-                }
-            },
-            "he2": {
-                "0": {
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_del": true,
-                        "val_type": "regExp",
-                        "val_value": ""
-                    }
-                },
-                "1": {
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_add": true,
-                        "opt_del": true
-                    },
-                    "kao": {
-                        "jsst": {
-                            "caption": "",
-                            "comment": "",
-                            "invisible": false,
-                            "opt_del": true,
-                            "val_type": "regExp",
-                            "val_value": ""
-                        }
-                    }
-                },
-                "2": {
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_del": true,
-                        "val_type": "regExp",
-                        "val_value": ""
-                    }
-                },
-                "jsst": {
-                    "caption": "",
-                    "comment": "",
-                    "invisible": false,
-                    "opt_add": false,
-                    "opt_del": true
-                }
-            },
-            "hello": {
-                "jsst": {
-                    "caption": "",
-                    "comment": "",
-                    "invisible": false,
-                    "opt_del": true,
-                    "val_type": "regExp",
-                    "val_value": ""
-                }
-            },
-            "hello2": {
-                "jsst": {
-                    "caption": "",
-                    "comment": "",
-                    "invisible": false,
-                    "opt_del": true,
-                    "val_type": "regExp",
-                    "val_value": ""
-                }
-            },
-            "hi": {
-                "ge": {
-                    "heww": {
-                        "dd": {
-                            "jsst": {
-                                "caption": "",
-                                "comment": "",
-                                "invisible": false,
-                                "opt_del": true,
-                                "val_type": "regExp",
-                                "val_value": ""
-                            }
-                        },
-                        "ff": {
-                            "jsst": {
-                                "caption": "",
-                                "comment": "",
-                                "invisible": false,
-                                "opt_del": true
-                            }
-                        },
-                        "jsst": {
-                            "caption": "",
-                            "comment": "",
-                            "invisible": false,
-                            "opt_add": true,
-                            "opt_del": true
-                        },
-                        "ll": {
-                            "0": {
-                                "jsst": {
-                                    "caption": "",
-                                    "comment": "",
-                                    "invisible": false,
-                                    "opt_del": true,
-                                    "val_type": "regExp",
-                                    "val_value": ""
-                                }
-                            },
-                            "1": {
-                                "jsst": {
-                                    "caption": "",
-                                    "comment": "",
-                                    "invisible": false,
-                                    "opt_del": true,
-                                    "val_type": "regExp",
-                                    "val_value": ""
-                                }
-                            },
-                            "2": {
-                                "jsst": {
-                                    "caption": "",
-                                    "comment": "",
-                                    "invisible": false,
-                                    "opt_del": true,
-                                    "val_type": "regExp",
-                                    "val_value": ""
-                                }
-                            },
-                            "jsst": {
-                                "caption": "",
-                                "comment": "",
-                                "invisible": false,
-                                "opt_add": false,
-                                "opt_del": true
-                            }
-                        }
-                    },
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_add": true,
-                        "opt_del": true
-                    },
-                    "too": {
-                        "jsst": {
-                            "caption": "",
-                            "comment": "",
-                            "invisible": false,
-                            "opt_del": true,
-                            "val_type": "regExp",
-                            "val_value": ""
-                        }
-                    }
-                },
-                "hi1": {
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_del": true,
-                        "val_type": "regExp",
-                        "val_value": ""
-                    }
-                },
-                "jsst": {
-                    "caption": "",
-                    "comment": "",
-                    "invisible": false,
-                    "opt_add": true,
-                    "opt_del": true
-                }
-            },
-            "hi2": {
-                "0": {
-                    "hello": {
-                        "jsst": {
-                            "caption": "",
-                            "comment": "",
-                            "invisible": false,
-                            "opt_del": true,
-                            "val_type": "regExp",
-                            "val_value": ""
-                        }
-                    },
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_add": true,
-                        "opt_del": true
-                    }
-                },
-                "1": {
-                    "jsst": {
-                        "caption": "",
-                        "comment": "",
-                        "invisible": false,
-                        "opt_add": true,
-                        "opt_del": true
-                    },
-                    "no": {
-                        "0": {
-                            "jsst": {
-                                "caption": "",
-                                "comment": "",
-                                "invisible": false,
-                                "opt_del": true
-                            }
-                        },
-                        "1": {
-                            "jsst": {
-                                "caption": "",
-                                "comment": "",
-                                "invisible": false,
-                                "opt_del": true
-                            }
-                        },
-                        "jsst": {
-                            "caption": "",
-                            "comment": "",
-                            "invisible": false,
-                            "opt_add": false,
-                            "opt_del": true
-                        }
-                    }
-                },
-                "jsst": {
-                    "caption": "",
-                    "comment": "",
-                    "invisible": false,
-                    "opt_add": false,
-                    "opt_del": true
-                }
-            },
-            "hi20": {
-                "jsst": {
-                    "caption": "",
-                    "comment": "",
-                    "invisible": false,
-                    "opt_del": true
-                }
-            },
-            "hi22": {
-                "jsst": {
-                    "caption": "",
-                    "comment": "",
-                    "invisible": false,
-                    "opt_del": true,
-                    "val_type": "regExp",
-                    "val_value": ""
-                }
-            }
-        }
 
         caption: qsTr("treeview")
         content: Rectangle{
@@ -794,16 +515,26 @@ ApplicationWindow {
             })
             .next("testSuccess")
 
-            /*Pipeline2.find("saveTreeView")
+            Pipeline2.find("treeViewGUIModified")
+            .next(function(aInput){
+                console.log("treeViewGUIModified;" + aInput["key"] + ";" + aInput["val"] + ";" + aInput["type"])
+            })
+
+            Pipeline2.find("saveTreeView")
             .nextL("styleTreeView", {tag: "styleTreeView"})
+            .nextL("loadTreeView")
             .nextL("saveTreeView")
             .next(function(aInput){
+                return {data: {data: sample, style: aInput}, out: {}}
+            })
+            .nextL("loadTreeView")
+            .next(function(aInput){
                 return {out: [{
-                            out: {data: aInput, path: "style.json"},
+                            out: {data: aInput["style"], path: "style.json"},
                         }]}
             })
             .nextL("json2stg")
-            .nextL("writeJson")*/
+            .nextL("writeJson")
         }
     }
 

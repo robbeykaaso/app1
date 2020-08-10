@@ -32,7 +32,7 @@ Button{
     function deleteTreeNode(aNotNotify){
         parent.parent.deleted[parent] = true
         if (!aNotNotify)
-            Pipeline2.run("treeViewGUIModified", {key: parent.parent.parent.extractKeyChain() + ";" + parent.children[1].key, type: "del"})
+            Pipeline2.run(parent.parent.parent.scr_root.contentChildren[0].key + "treeViewGUIModified", {key: parent.parent.parent.extractKeyChain() + ";" + parent.children[1].key, type: "del"})
         parent.parent.parent.scr_root.contentHeight -= enumChildHeight(parent.children[1])
         parent.destroy()
     }
