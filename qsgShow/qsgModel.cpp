@@ -153,21 +153,26 @@ QRectF calcBoundBox(const pointList &aPoints){
 
 void shapeObject::setQSGGemoetry(const pointList& aPointList, QSGGeometryNode& aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies){
     auto sz = aIndecies ? aIndecies->size() : aPointList.size();
+    auto wth = getWidth();
+    if (wth == 0.0)
+        sz = 0;
     QSGGeometry *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), int(sz));
     auto vertices = geometry->vertexDataAsPoint2D();
-    if (aIndecies)
-        for (auto i = 0; i < aIndecies->size(); ++i){
-            auto idx = aIndecies->at(i);
-            vertices[i].set(aPointList[idx].x(), aPointList[idx].y());
-        }
-    else
-        for (auto i = 0; i < aPointList.size(); ++i)
-            vertices[i].set(aPointList[i].x(), aPointList[i].y());
-    geometry->setLineWidth(getWidth());
-    /*if (getConfig()->value("fill").toBool() && aPointList.size() > 2)
-        geometry->setDrawingMode(GL_POLYGON);
-    else*/
-    geometry->setDrawingMode(aMode);
+    if (sz){
+        if (aIndecies)
+            for (auto i = 0; i < aIndecies->size(); ++i){
+                auto idx = aIndecies->at(i);
+                vertices[i].set(aPointList[idx].x(), aPointList[idx].y());
+            }
+        else
+            for (auto i = 0; i < aPointList.size(); ++i)
+                vertices[i].set(aPointList[i].x(), aPointList[i].y());
+        geometry->setLineWidth(wth);
+        /*if (getConfig()->value("fill").toBool() && aPointList.size() > 2)
+            geometry->setDrawingMode(GL_POLYGON);
+        else*/
+        geometry->setDrawingMode(aMode);
+    }
     aNode.setGeometry(geometry);
     aNode.setFlag(QSGNode::OwnsGeometry);
     aNode.markDirty(QSGNode::DirtyGeometry);

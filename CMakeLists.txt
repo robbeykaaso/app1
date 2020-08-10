@@ -49,6 +49,7 @@ add_executable(${PROJECT_NAME}
     "qsgShow/qsgBoard.cpp"
     "qsgShow/qsgModel.h"
     "qsgShow/qsgModel.cpp"
+    "device/camera.cpp"
     "qml.qrc"
     #"resource/logo.rc"
     )

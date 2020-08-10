@@ -242,7 +242,7 @@ ApplicationWindow {
                     text: qsTr("polyWidth")
                     onClicked: {
                         checked != checked
-                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["width"], val: checked ? 10 : 3})
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["width"], val: checked ? 0 : 10})
                     }
                 }
                 MenuItem{
