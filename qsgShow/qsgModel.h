@@ -21,17 +21,19 @@ public:
     qsgObject(const QJsonObject& aConfig) : QJsonObject(aConfig){
 
     }
-    virtual QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr){
+    virtual std::vector<QSGNode*> getQSGNodes(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr){
         if (aWindow)
             m_window = aWindow;
         if (aParent)
             m_parent = aParent;
-        return nullptr;
+        return std::vector<QSGNode*>();
     }
-    virtual void removeQSGNode() {
-        auto nd = getQSGNode();
-        if (nd)
-            nd->parent()->removeChildNode(nd);
+    virtual void removeQSGNodes() {
+        auto nds = getQSGNodes();
+        for (auto i : nds){
+            i->parent()->removeChildNode(i);
+            delete i;
+        }
     }
     virtual void transformChanged() {}
     virtual IUpdateQSGAttr updateQSGAttr(const QString& aModification){return nullptr;}
@@ -45,9 +47,9 @@ public:
     imageObject(const QJsonObject& aConfig) : qsgObject(aConfig){
 
     }
-    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
-    void removeQSGNode() override {
-        qsgObject::removeQSGNode();
+    std::vector<QSGNode*> getQSGNodes(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
+    void removeQSGNodes() override {
+        qsgObject::removeQSGNodes();
         m_node = nullptr;
     }
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
@@ -65,8 +67,8 @@ public:
     }
     QRectF getBoundBox() {return m_bound;}
     virtual bool canBePickedUp(int aX, int aY);
-    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
-    void removeQSGNode() override;
+    std::vector<QSGNode*> getQSGNodes(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
+    void removeQSGNodes() override;
     void transformChanged() override;
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
@@ -85,8 +87,10 @@ protected:
     void updateQSGFace(QSGGeometryNode& aNode, int aOpacity);
     void updateTextLocation(const QJsonObject& aTextConfig);
     QRectF m_bound = QRectF(0, 0, 0, 0); //leftbottomrighttop
-    pointList m_points;
-    QSGGeometryNode* m_node = nullptr;
+    std::vector<pointList> m_points;
+    QSGGeometryNode* m_outline = nullptr;
+    QSGGeometryNode* m_face = nullptr;
+    std::vector<QSGGeometryNode*> m_holes;
     std::vector<QSGGeometryNode*> m_arrows;
     QSGSimpleTextureNode* m_text = nullptr;
 private:
@@ -94,7 +98,6 @@ private:
     void updateTextValue(const QJsonObject& aTextConfig);
     void updateArrowCount(int aCount);
 protected:
-    QJsonArray getPoints();
     int getWidth();
     QColor getColor();
     QString getText();
@@ -109,10 +112,11 @@ protected:
 class polyObject : public shapeObject{
 public:
     polyObject(const QJsonObject& aConfig);
-    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
+    std::vector<QSGNode*> getQSGNodes(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
     void transformChanged() override;
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
+    QJsonArray getPoints();
     void updateGeometry() override;
     void updateArrowLocation() override;
     void checkArrowPole();
@@ -123,7 +127,7 @@ private:
 class ellipseObject : public shapeObject{
 public:
     ellipseObject(const QJsonObject& aConfig);
-    QSGNode* getQSGNode(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
+    std::vector<QSGNode*> getQSGNodes(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
     void transformChanged() override;
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:

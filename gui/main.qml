@@ -258,7 +258,7 @@ ApplicationWindow {
                     text: qsTr("polyPoints")
                     onClicked: {
                         checked != checked
-                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["points"], val: checked ? [50, 50, 200, 50, 200, 200, 50, 200, 50, 50] : [50, 50, 200, 200, 200, 50, 50, 50]})
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["points"], val: checked ? [[50, 50, 200, 50, 200, 200, 50, 200, 50, 50]] : [[50, 50, 200, 200, 200, 50, 50, 50]]})
                     }
                 }
                 MenuItem{

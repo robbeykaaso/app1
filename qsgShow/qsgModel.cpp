@@ -30,17 +30,18 @@ IUpdateQSGAttr shapeObject::updateQSGAttr(const QString& aModification){
         return nullptr;
 }
 
-QSGNode* shapeObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode){
-    qsgObject::getQSGNode(aWindow, aParent, aTransformNode);
-    if (!m_node){
-        m_node = new QSGGeometryNode();
+std::vector<QSGNode*> shapeObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode){
+    auto ret = qsgObject::getQSGNodes(aWindow, aParent, aTransformNode);
+    if (!m_outline){
+        m_outline = new QSGGeometryNode();
         updateGeometry();
-        setQSGColor(*m_node, getColor());
-        aTransformNode->appendChildNode(m_node);
+        setQSGColor(*m_outline, getColor());
+        aTransformNode->appendChildNode(m_outline);
     }
+    ret.push_back(m_outline);
     checkFaceOpacity();
     checkTextVisible();
-    return m_node;
+    return ret;
 }
 
 int shapeObject::getFaceOpacity(){
@@ -98,7 +99,7 @@ void shapeObject::updateTextLocation(const QJsonObject& aTextConfig){
     auto bnd = getBoundBox();
     auto top_lft = bnd.topLeft(), btm_rt = bnd.bottomRight();
 
-    auto trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
+    auto trans = reinterpret_cast<QSGTransformNode*>(m_outline->parent())->matrix();
     top_lft = trans.map(top_lft);
     btm_rt = trans.map(btm_rt);
 
@@ -116,21 +117,24 @@ void shapeObject::updateTextLocation(const QJsonObject& aTextConfig){
     m_text->markDirty(QSGNode::DirtyGeometry);
 }
 
-void shapeObject::removeQSGNode() {
-    qsgObject::removeQSGNode();
+void shapeObject::removeQSGNodes() {
+    qsgObject::removeQSGNodes();
 
-    m_node = nullptr;
+    m_outline = nullptr;
+    m_holes.clear();
     if (m_text){
-        m_text->parent()->removeChildNode(m_text);
+        m_text->parent()->removeChildNode(m_text); //cannot delete here
         m_text = nullptr;
     }
-    for (auto i : m_arrows)
+    for (auto i : m_arrows){
         i->parent()->removeChildNode(i);
+        delete i;
+    }
     m_arrows.clear();
 }
 
 void shapeObject::transformChanged(){
-    if (m_text && m_node){
+    if (m_text && m_outline){
         updateTextLocation(getTextConfig());
     }
 }
@@ -154,25 +158,21 @@ QRectF calcBoundBox(const pointList &aPoints){
 void shapeObject::setQSGGemoetry(const pointList& aPointList, QSGGeometryNode& aNode, unsigned int aMode, std::vector<uint32_t>* aIndecies){
     auto sz = aIndecies ? aIndecies->size() : aPointList.size();
     auto wth = getWidth();
-    if (wth == 0.0)
-        sz = 0;
     QSGGeometry *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), int(sz));
     auto vertices = geometry->vertexDataAsPoint2D();
-    if (sz){
-        if (aIndecies)
-            for (auto i = 0; i < aIndecies->size(); ++i){
-                auto idx = aIndecies->at(i);
-                vertices[i].set(aPointList[idx].x(), aPointList[idx].y());
-            }
-        else
-            for (auto i = 0; i < aPointList.size(); ++i)
-                vertices[i].set(aPointList[i].x(), aPointList[i].y());
-        geometry->setLineWidth(wth);
-        /*if (getConfig()->value("fill").toBool() && aPointList.size() > 2)
-            geometry->setDrawingMode(GL_POLYGON);
-        else*/
-        geometry->setDrawingMode(aMode);
-    }
+    if (aIndecies)
+        for (auto i = 0; i < aIndecies->size(); ++i){
+            auto idx = aIndecies->at(i);
+            vertices[i].set(aPointList[idx].x(), aPointList[idx].y());
+        }
+    else if (wth)
+        for (auto i = 0; i < aPointList.size(); ++i)
+            vertices[i].set(aPointList[i].x(), aPointList[i].y());
+    geometry->setLineWidth(wth);
+    /*if (getConfig()->value("fill").toBool() && aPointList.size() > 2)
+        geometry->setDrawingMode(GL_POLYGON);
+    else*/
+    geometry->setDrawingMode(aMode);
     aNode.setGeometry(geometry);
     aNode.setFlag(QSGNode::OwnsGeometry);
     aNode.markDirty(QSGNode::DirtyGeometry);
@@ -193,7 +193,7 @@ void shapeObject::updateArrowCount(int aCount){
         m_arrows.pop_back();
         delete arr;
     }
-    auto prt = m_node->parent()->parent();
+    auto prt = m_outline->parent()->parent();
     for (int i = m_arrows.size(); i < aCount; ++i){
         auto arrow = new QSGGeometryNode();
         pointList pts;
@@ -205,7 +205,7 @@ void shapeObject::updateArrowCount(int aCount){
 }
 
 void shapeObject::checkArrowVisible(int aCount){
-    if (m_node){
+    if (m_outline){
         if (getArrowVisible(getArrowConfig())) {
             updateArrowCount(aCount);
             if (m_arrows.size() > 0)
@@ -217,13 +217,17 @@ void shapeObject::checkArrowVisible(int aCount){
 
 void shapeObject::updateQSGFace(QSGGeometryNode& aNode, int aOpacity){
     std::vector<std::vector<std::array<qreal, 2>>> polygon;
-    std::vector<std::array<qreal, 2>> poly;
+    pointList pts;
     for (auto i : m_points){
-        poly.push_back({i.x(), i.y()});
+        std::vector<std::array<qreal, 2>> poly;
+        for (auto j : i){
+            poly.push_back({j.x(), j.y()});
+            pts.push_back(j);
+        }
+        polygon.push_back(poly);
     }
-    polygon.push_back(poly);
     std::vector<uint32_t> indices = mapbox::earcut(polygon);
-    setQSGGemoetry(m_points, aNode, QSGGeometry::DrawTriangles, &indices);
+    setQSGGemoetry(pts, aNode, QSGGeometry::DrawTriangles, &indices);
     updateQSGFaceColor(aNode, aOpacity);
 }
 
@@ -234,20 +238,23 @@ void shapeObject::updateQSGFaceColor(QSGGeometryNode& aNode, int aOpacity){
 }
 
 void shapeObject::checkFaceOpacity(){
-    if (!m_node)
+    if (!m_outline)
         return;
     auto fc = getFaceOpacity();
     if (fc > 0){
-        if (m_node->childCount() == 0){
-            auto face = new QSGGeometryNode();
-            updateQSGFace(*face, fc);
-            face->setFlag(QSGNode::OwnedByParent);
-            m_node->appendChildNode(face);
+        if (!m_face){
+            m_face = new QSGGeometryNode();
+            updateQSGFace(*m_face, fc);
+            m_face->setFlag(QSGNode::OwnedByParent);
+            m_outline->appendChildNode(m_face);
         }else
-            updateQSGFace(*reinterpret_cast<QSGGeometryNode*>(m_node->childAtIndex(0)), fc);
+            updateQSGFace(*m_face, fc);
     }else
-        if (m_node->childCount() > 0)
-            m_node->removeAllChildNodes();
+        if (m_face){
+            m_face->parent()->removeChildNode(m_face);
+            delete m_face;
+            m_face = nullptr;
+        }
 }
 
 void shapeObject::checkTextVisible(){
@@ -258,7 +265,7 @@ void shapeObject::checkTextVisible(){
             m_text->setFlag(QSGNode::OwnsMaterial);
             updateTextValue(txt_cfg);
             updateTextLocation(txt_cfg);
-            m_node->parent()->parent()->appendChildNode(m_text);
+            m_outline->parent()->parent()->appendChildNode(m_text);
         }
     }else
         if (m_text){
@@ -268,12 +275,12 @@ void shapeObject::checkTextVisible(){
 }
 
 void shapeObject::checkColor(){
-    if (m_node)
-        setQSGColor(*m_node, getColor());
+    if (m_outline)
+        setQSGColor(*m_outline, getColor());
     for (auto i : m_arrows)
         setQSGColor(*i, getColor());
-    if (m_node->childCount() > 0)
-        updateQSGFaceColor(*reinterpret_cast<QSGGeometryNode*>(m_node->childAtIndex(0)), getFaceOpacity());
+    if (m_face)
+        updateQSGFaceColor(*m_face, getFaceOpacity());
     auto txt_cfg = getTextConfig();
     if (m_parent->getTextVisible(txt_cfg) && m_text)
         updateTextValue(txt_cfg);
@@ -286,8 +293,13 @@ void shapeObject::checkCaption(){
 }
 
 void shapeObject::checkWidth(){
-    if (m_node)
-        setQSGGemoetry(m_points, *m_node, QSGGeometry::DrawLineStrip);
+    if (m_outline){
+        for (int i = 0; i < m_points.size(); ++i)
+            if (i == 0)
+                setQSGGemoetry(m_points[i], *m_outline, QSGGeometry::DrawLineStrip);
+            else
+                setQSGGemoetry(m_points[i], *m_holes[i - 1], QSGGeometry::DrawLineStrip);
+    }
     if (m_arrows.size() > 0)
         updateArrowLocation();
 }
@@ -296,15 +308,11 @@ void shapeObject::checkAngle(){
     updateGeometry();
     if (m_arrows.size() > 0)
         updateArrowLocation();
-    if (m_node->childCount() > 0)
-        updateQSGFace(*reinterpret_cast<QSGGeometryNode*>(m_node->childAtIndex(0)), getFaceOpacity());
+    if (m_face)
+        updateQSGFace(*m_face, getFaceOpacity());
     auto txt_cfg = getTextConfig();
     if (m_parent->getTextVisible(txt_cfg) && m_text)
         updateTextLocation(txt_cfg);
-}
-
-QJsonArray shapeObject::getPoints(){
-    return value("points").toArray();
 }
 
 int shapeObject::getWidth(){
@@ -337,14 +345,15 @@ double shapeObject::getAngle(){
     return value("angle").toDouble();
 }
 
-QSGNode* imageObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode){
-    qsgObject::getQSGNode(aWindow, aParent, aTransformNode);
+std::vector<QSGNode*> imageObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode){
+    auto ret = qsgObject::getQSGNodes(aWindow, aParent, aTransformNode);
     if (!m_node){
         m_node = new QSGSimpleTextureNode();
         updateImagePath();
         aTransformNode->appendChildNode(m_node);
     }
-    return m_node;
+    ret.push_back(m_node);
+    return ret;
 }
 
 void imageObject::updateImagePath(){
@@ -385,56 +394,75 @@ polyObject::polyObject(const QJsonObject& aConfig) : shapeObject(aConfig){
 
 }
 
+QJsonArray polyObject::getPoints(){
+    return value("points").toArray();
+}
+
 void polyObject::checkGeometry(){
     updateGeometry();
     if (m_arrows.size() > 0)
         checkArrowPole();
-    if (m_node->childCount() > 0)
-        updateQSGFace(*reinterpret_cast<QSGGeometryNode*>(m_node->childAtIndex(0)), getFaceOpacity());
+    if (m_face)
+        updateQSGFace(*m_face, getFaceOpacity());
     auto txt_cfg = getTextConfig();
     if (m_parent->getTextVisible(txt_cfg) && m_text)
         updateTextLocation(txt_cfg);
 }
 
-QSGNode* polyObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode) {
-    auto ret = shapeObject::getQSGNode(aWindow, aParent, aTransformNode);
+std::vector<QSGNode*> polyObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode) {
+    auto ret = shapeObject::getQSGNodes(aWindow, aParent, aTransformNode);
     checkArrowPole();
     return ret;
 }
 
 void polyObject::updateGeometry(){
-    auto pts = getPoints();
-    pointList pts2;
-    for (int i = 0; i < pts.size(); i += 2)
-        pts2.push_back(QPointF(pts[i].toDouble(), pts[i + 1].toDouble()));
-    auto bnd = calcBoundBox(pts2);
+    auto pts0 = getPoints();
+    if (pts0.size() == 0)
+        return;
+    std::vector<pointList> pts2;
+    for (auto j : pts0){
+        auto pts = j.toArray();
+        pointList pts1;
+        for (int i = 0; i < pts.size(); i += 2)
+            pts1.push_back(QPointF(pts[i].toDouble(), pts[i + 1].toDouble()));
+        pts2.push_back(pts1);
+    }
+    auto bnd = calcBoundBox(pts2[0]);
 
     auto ct = bnd.center();
     QTransform trans;
     trans.rotate(getAngle());
     m_points.clear();
-    for (auto i : pts2)
-        m_points.push_back(trans.map(i - ct) + ct);
-    m_bound = calcBoundBox(m_points);
-    setQSGGemoetry(m_points, *m_node, QSGGeometry::DrawLineStrip);
+    for (auto j : pts2){
+        pointList pts1;
+        for (auto i : j)
+            pts1.push_back(trans.map(i - ct) + ct);
+        m_points.push_back(pts1);
+    }
+    m_bound = calcBoundBox(m_points[0]);
+    setQSGGemoetry(m_points[0], *m_outline, QSGGeometry::DrawLineStrip);
 }
 
 void polyObject::updateArrowLocation(){
-    auto trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
-    auto st = trans.map(m_points[0]);
-    bool pole = getPoleArrow(getArrowConfig());
-    for (size_t i = 1; i < m_points.size(); ++i){
-        auto ed = trans.map(m_points[i]);
-        calcArrow(st, ed, *m_arrows[i - 1]);
-        if (pole)
-            calcArrow(ed, st, *m_arrows[i - 1 + m_points.size() - 1]);
-        st = ed;
+    auto trans = reinterpret_cast<QSGTransformNode*>(m_outline->parent())->matrix();
+    int idx = 0;
+    for (auto j : m_points){
+        auto st = trans.map(j[0]);
+        bool pole = getPoleArrow(getArrowConfig());
+        for (size_t i = 1; i < j.size(); ++i){
+            auto ed = trans.map(j[i]);
+            calcArrow(st, ed, *m_arrows[idx]);
+            if (pole)
+                calcArrow(ed, st, *m_arrows[idx + m_points.size() - 1]);
+            st = ed;
+            idx++;
+        }
     }
 }
 
 void polyObject::transformChanged(){
     shapeObject::transformChanged();
-    if (m_node && m_arrows.size() > 0)
+    if (m_outline && m_arrows.size() > 0)
         updateArrowLocation();
 }
 
@@ -458,14 +486,17 @@ static rea::regPip<QJsonObject, rea::pipePartial> create_poly([](rea::stream<QJs
 }, rea::Json("name", "create_qsgobject_poly"));
 
 void polyObject::checkArrowPole(){
+    int sz = 0;
+    for (auto i : m_points)
+        sz += i.size() - 1;
     if (getPoleArrow(getArrowConfig()))
-        checkArrowVisible((m_points.size() - 1) * 2);
+        checkArrowVisible(sz * 2);
     else
-        checkArrowVisible(m_points.size() - 1);
+        checkArrowVisible(sz);
 }
 
 void ellipseObject::updateArrowLocation(){
-    auto w_trans = reinterpret_cast<QSGTransformNode*>(m_node->parent())->matrix();
+    auto w_trans = reinterpret_cast<QSGTransformNode*>(m_outline->parent())->matrix();
     auto r = getRadius();
     auto ct = getCenter();
     auto del = getCCW() ?  - 1 : 1;
@@ -482,7 +513,7 @@ void ellipseObject::updateArrowLocation(){
 
 void ellipseObject::transformChanged(){
     shapeObject::transformChanged();
-    if (m_arrows.size() > 0 && m_node)
+    if (m_arrows.size() > 0 && m_outline)
         updateArrowLocation();
 }
 
@@ -497,7 +528,7 @@ IUpdateQSGAttr ellipseObject::updateQSGAttr(const QString& aModification){
         };
     else if (aModification == "ccw_")
         return [this](){
-            if (m_arrows.size() > 0 && m_node)
+            if (m_arrows.size() > 0 && m_outline)
                 updateArrowLocation();
         };
     else
@@ -520,8 +551,8 @@ std::shared_ptr<ellipseObject::l_qsgPoint3D> ellipseObject::evalPoint(const QPoi
                       aParam);
 }
 
-QSGNode* ellipseObject::getQSGNode(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode){
-    auto ret = shapeObject::getQSGNode(aWindow, aParent, aTransformNode);
+std::vector<QSGNode*> ellipseObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* aParent, QSGNode* aTransformNode){
+    auto ret = shapeObject::getQSGNodes(aWindow, aParent, aTransformNode);
     checkArrowVisible(4);
     return ret;
 }
@@ -556,14 +587,14 @@ void ellipseObject::updateGeometry(){
             candidates.pop();
     }
 
-    m_points.clear();
+    pointList pts;
     auto st = i0;
     while (st){
         auto pt = trans.map(QPointF(st->x() - ct.x(), st->y() - ct.y()));
-        m_points.push_back(pt + ct);
+        pts.push_back(pt + ct);
         st = st->nxt;
     }
-    m_bound = calcBoundBox(m_points);
+    m_bound = calcBoundBox(pts);
 
     /* for( int i = 0; i <= 99999; i++) {
             auto pt0 = *evalPoint(ct, r, i * PI / 50);
@@ -574,7 +605,10 @@ void ellipseObject::updateGeometry(){
         }
         m_points.push_back(m_points.at(0));*/
 
-    setQSGGemoetry(m_points, *m_node, QSGGeometry::DrawLineStrip);
+    setQSGGemoetry(pts, *m_outline, QSGGeometry::DrawLineStrip);
+
+    m_points.clear();
+    m_points.push_back(pts);
 }
 
 QPointF ellipseObject::getRadius(){
@@ -597,7 +631,7 @@ static rea::regPip<QJsonObject, rea::pipePartial> create_ellipse([](rea::stream<
 
 void qsgModel::clearQSGObjects(){
     for (auto i : m_objects)
-        i->removeQSGNode();
+        i->removeQSGNodes();
 }
 
 void qsgModel::show(QSGTransformNode* aTransform, QQuickWindow* aWindow, const QPointF& aSize){
@@ -606,7 +640,7 @@ void qsgModel::show(QSGTransformNode* aTransform, QQuickWindow* aWindow, const Q
         m_window = aWindow;
         m_trans_node = aTransform;
         for (auto i : m_objects)
-            i->getQSGNode(aWindow, this, aTransform);
+            i->getQSGNodes(aWindow, this, aTransform);
         WCS2SCS();
     }
 }
@@ -652,7 +686,7 @@ IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
                         insert(obj, attr);
                         addObject(rea::Json(attr, "id", obj));
                         return [this, obj](){
-                            m_objects.value(obj)->getQSGNode(m_window, this, m_trans_node);
+                            m_objects.value(obj)->getQSGNodes(m_window, this, m_trans_node);
                         };
                     }
                 }else if (aModification.value("type") == "del"){
@@ -660,7 +694,7 @@ IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
                     if (contains(obj)){
                         remove(obj);
                         return [this, obj](){
-                            m_objects.value(obj)->removeQSGNode();
+                            m_objects.value(obj)->removeQSGNodes();
                             m_objects.remove(obj);
                         };
                     }
@@ -901,7 +935,9 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                                                          ),
                                             "shp_0", rea::Json(
                                                          "type", "poly",
-                                                         "points", rea::JArray(50, 50, 200, 200, 200, 50, 50, 50),
+                                                         "points", rea::JArray(QJsonArray(),
+                                                                               rea::JArray(50, 50, 200, 200, 200, 50, 50, 50),
+                                                                               rea::JArray(80, 70, 120, 100, 120, 70, 80, 70)),
                                                          "color", "red",
                                                          "width", 3,
                                                          "caption", "poly",
