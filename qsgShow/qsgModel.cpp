@@ -366,7 +366,7 @@ std::vector<QSGNode*> imageObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* 
 }
 
 void imageObject::updateImagePath(){
-    QImage img = rea::imagePool::readCache(getPath());
+    QImage img = rea::imagePool::readCache(getPath(), true);
     if (img.width() == 0 || img.height() == 0){
         img = QImage(10, 10, QImage::Format_ARGB32);
         img.fill(QColor("transparent"));

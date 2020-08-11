@@ -307,7 +307,7 @@ ApplicationWindow {
         Menu{
             title: qsTr("gui")
             Menu{
-                title: qsTr("Log")
+                title: qsTr("log")
                 MenuItem{
                     text: qsTr("addLogRecord")
                     onClicked:{
@@ -350,6 +350,61 @@ ApplicationWindow {
                 }
             }
 
+        }
+
+        Menu{
+            title: qsTr("device")
+            Action{
+                text: qsTr("camera")
+                onTriggered: camera.show()
+            }
+            Action{
+                text: qsTr("io")
+            }
+        }
+
+        Menu{
+            title: qsTr("command")
+            Action{
+                text: qsTr("transform")
+                onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", {ctrls: [{type: "transform"}]})
+            }
+            Menu{
+                title: qsTr("draw")
+                MenuItem{
+                    text: qsTr("free")
+                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", {ctrls: [{type: "drawfree"}]})
+                }
+                MenuItem{
+                    text: qsTr("poly")
+                }
+                MenuItem{
+                    text: qsTr("ellipse")
+                }
+            }
+            Menu{
+                title: qsTr("editShape")
+                MenuItem{
+                    text: qsTr("move")
+                }
+                MenuItem{
+                    text: qsTr("zoom")
+                }
+                MenuItem{
+                    text: qsTr("rotate")
+                }
+                MenuItem{
+                    text: qsTr("moveNode")
+                }
+            }
+            Action{
+                text: qsTr("undo")
+                shortcut: "Ctrl+Z"
+            }
+            Action{
+                text: qsTr("redo")
+                shortcut: "Ctrl+Y"
+            }
         }
 
         Component.onCompleted: {
@@ -536,6 +591,10 @@ ApplicationWindow {
             .nextL("json2stg")
             .nextL("writeJson")
         }
+    }
+    Camera{
+        id: camera
+        name: "camera1"
     }
 
     MsgDialog{

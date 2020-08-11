@@ -4,6 +4,7 @@ import Pipeline2 1.0
 
 ScrollView{
     id: scrrange
+    property string root: ""
     width: parent.width
     height: parent.height - 35
     contentHeight: 0
@@ -12,7 +13,7 @@ ScrollView{
 
     TreeNode{
         caption: qsTr("root")
-        key: ""
+        key: root
         width: parent.width
         height: 500
         spacing: 5

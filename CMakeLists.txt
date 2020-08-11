@@ -25,6 +25,9 @@ set(REA_DIR ${CMAKE_CURRENT_LIST_DIR}/../frm/cmake)
 #message("xxx: ${CMAKE_CURRENT_LIST_DIR}")
 find_package(REA)
 
+find_package(DeepInspectSDK REQUIRED)
+find_package(RapidJSON REQUIRED)
+
 #find_package(PythonLibs REQUIRED)
 #qtquick_compiler_add_resources(RESOURCES qml.qrc)
 #find_package(VTK REQUIRED)
@@ -49,16 +52,23 @@ add_executable(${PROJECT_NAME}
     "qsgShow/qsgBoard.cpp"
     "qsgShow/qsgModel.h"
     "qsgShow/qsgModel.cpp"
+    "shape/command.cpp"
+    "shape/drawFree.cpp"
+    "device/camera.h"
     "device/camera.cpp"
     "qml.qrc"
     #"resource/logo.rc"
     )
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 #message(${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Quick Qt5::Widgets Qt5::Sql Qt5::SerialPort Qt5::SerialBus ${OpenCV_LIBS} ${AWSSDK_LINK_LIBRARIES} ${REA_LIBS})# ${VTK_LIBRARIES})# ${PYTHON_LIBRARIES})#  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
+target_link_libraries(${PROJECT_NAME} PRIVATE Qt5::Core Qt5::Quick Qt5::Widgets Qt5::Sql Qt5::SerialPort Qt5::SerialBus ${OpenCV_LIBS} ${AWSSDK_LINK_LIBRARIES} ${REA_LIBS} ${DeepInspectSDK_LIBS})# ${VTK_LIBRARIES})# ${PYTHON_LIBRARIES})#  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
 #include_directories("${deepinspectapptemplate_ROOT}/deepinspectControl")
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${REA_INCLUDE_DIRS})
+
+include_directories(${RxCpp_INCLUDE_DIRS})
+include_directories(${RapidJSON_INCLUDE_DIRS})
+include_directories(${DeepInspectSDK_INCLUDE_DIRS})
 #message("xxx: ${REA_INCLUDE_DIRS}")
 #include(${VTK_USE_FILE})
 #include_directories("D:/thirdParty/tinydnn/tiny-dnn")
