@@ -81,7 +81,7 @@ protected:
     void checkCaption();
     void checkWidth();
     void checkAngle();
-    virtual void updateGeometry(){}
+    virtual int updateGeometry(){return 0;}
     virtual void updateArrowLocation(){}
     void calcArrow(const QPointF& aStart, const QPointF& aEnd, QSGGeometryNode& aNode);
     void updateQSGFace(QSGGeometryNode& aNode, int aOpacity);
@@ -117,7 +117,7 @@ public:
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
     QJsonArray getPoints();
-    void updateGeometry() override;
+    int updateGeometry() override;
     void updateArrowLocation() override;
     void checkArrowPole();
     void checkGeometry();
@@ -131,7 +131,7 @@ public:
     void transformChanged() override;
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
-    void updateGeometry() override;
+    int updateGeometry() override;
     void updateArrowLocation() override;
 private:
     class l_qsgPoint3D : public QPointF{

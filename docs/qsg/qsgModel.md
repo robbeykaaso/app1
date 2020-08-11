@@ -27,7 +27,7 @@ _sample_:
         },
         shp_0: {
             type: "poly",  //the type of polyObject which inherits from shapeObject
-            points: [50, 50, 200, 200, 200, 50, 50, 50],  //the point coordinates: x, y, x, y
+            points: [[50, 50, 200, 200, 200, 50, 50, 50], [80, 70, 120, 100, 120, 70, 80, 70]],  //the point coordinates: x, y, x, y; the first array is the outline, others are holes
             color: "red",  //as above in the whole attributes
             width: 3,  //the line width
             caption: "hello",  //the text value
