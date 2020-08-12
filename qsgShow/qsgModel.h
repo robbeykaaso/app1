@@ -9,7 +9,7 @@
 #include <QSGSimpleTextureNode>
 
 using pointList = std::vector<QPointF>;
-using IUpdateQSGAttr = std::function<void(void)>;
+using IUpdateQSGAttr = std::function<void(QSGNode*)>;
 
 QRectF calcBoundBox(const pointList& aPoints);
 
@@ -54,7 +54,7 @@ public:
     }
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 private:
-    void updateImagePath();
+    void updateImagePath(bool aForce = false);
     QString getPath();
     QRectF getRange(const QImage& aImage);
     QSGSimpleTextureNode* m_node = nullptr;
@@ -81,7 +81,7 @@ protected:
     void checkCaption();
     void checkWidth();
     void checkAngle();
-    virtual int updateGeometry(){return 0;}
+    virtual int updateGeometry(QSGNode*){return 0;}
     virtual void updateArrowLocation(){}
     void calcArrow(const QPointF& aStart, const QPointF& aEnd, QSGGeometryNode& aNode);
     void updateQSGFace(QSGGeometryNode& aNode, int aOpacity);
@@ -117,7 +117,7 @@ public:
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
     QJsonArray getPoints();
-    int updateGeometry() override;
+    int updateGeometry(QSGNode*) override;
     void updateArrowLocation() override;
     void checkArrowPole();
     void checkGeometry();
@@ -131,7 +131,7 @@ public:
     void transformChanged() override;
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
 protected:
-    int updateGeometry() override;
+    int updateGeometry(QSGNode* aTransformNode) override;
     void updateArrowLocation() override;
 private:
     class l_qsgPoint3D : public QPointF{
@@ -157,7 +157,7 @@ public:
     void show(QSGTransformNode* aTransform, QQuickWindow* aWindow, const QPointF& aSize);
     IUpdateQSGAttr updateQSGAttr(const QJsonObject& aModification);
 private:
-    QString overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, const QJsonValue&& aValue);
+    QString overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, const QJsonValue&& aValue, bool aForce);
     void zoom(int aStep, const QPointF& aCenter, double aRatio = 0);
     void move(const QPointF& aDistance);
     void WCS2SCS();

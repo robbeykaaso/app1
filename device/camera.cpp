@@ -88,20 +88,23 @@ rxCameras::rxCameras(){
             auto dt = aInput->data();
             for (auto i : dt){
                 auto img = cvMat2QImage(i.image);
-                rea::imagePool::cacheImage("camera_" + QString::number(m_counter), img);
-                if (!m_counter){
+                rea::imagePool::cacheImage("camera_" + nm, img);
+                if (!m_model_init.contains(nm)){
+                    m_model_init.insert(nm);
                     aInput->out<QJsonObject>(rea::Json("width", img.width(),
                                                        "height", img.height(),
                                                        "objects", rea::Json(
                                                                       "img", rea::Json(
                                                                                  "type", "image",
-                                                                                 "path", "camera_" + QString::number(m_counter))
+                                                                                 "path", "camera_" + nm)
                                                                           )),
                                              "replaceQSGModel_" + nm);
                 }else
-                    aInput->out<QJsonObject>(rea::Json("obj", "img", "key", rea::JArray("path"), "val", "camera_" + QString::number(m_counter)), "updateQSGAttr_" + nm);
-                if (m_counter++ > 10000)
-                    m_counter = 0;
+                    aInput->out<QJsonObject>(rea::Json("obj", "img",
+                                                       "key", rea::JArray("path"),
+                                                       "val", "camera_" + nm,
+                                                       "force", true),
+                                             "updateQSGAttr_" + nm);
             }
         }, rea::Json("name", nm + "_cameraShow", "thread", 2))
         ->nextB(0, "replaceQSGModel_" + nm, QJsonObject())

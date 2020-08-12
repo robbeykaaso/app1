@@ -24,5 +24,5 @@ public:
     rxCameras();
 private:
     QHash<QString, cameraInfo> m_cameras;
-    int m_counter = 0;
+    QSet<QString> m_model_init;
 };

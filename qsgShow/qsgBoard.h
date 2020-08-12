@@ -55,6 +55,7 @@ protected:
             m_parent = aParent;
         return m_name;
     }
+    virtual void beforeDestroy(){}
     virtual void keyPressEvent(QKeyEvent *event){}
     virtual void mousePressEvent(QMouseEvent *event){}
     virtual void mouseReleaseEvent(QMouseEvent *event){}
@@ -62,6 +63,10 @@ protected:
     virtual void wheelEvent(QWheelEvent *event){}
     virtual void hoverMoveEvent(QHoverEvent *event){}
     QString getParentName() {return m_parent ? m_parent->getName() : "";}
+    void updateParent(IUpdateQSGAttr aUpdate){
+        m_parent->m_updates.push_back(aUpdate);
+        m_parent->update();
+    }
     qsgBoard* m_parent;
     QString m_name;
 };
@@ -69,6 +74,7 @@ protected:
 class qsgPluginTransform : public qsgBoardPlugin{
 public:
     qsgPluginTransform(const QJsonObject& aConfig) : qsgBoardPlugin(aConfig){}
+protected:
     void wheelEvent(QWheelEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void hoverMoveEvent(QHoverEvent *event) override;

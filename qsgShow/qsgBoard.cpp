@@ -34,6 +34,8 @@ void qsgBoard::beforeDestroy(){
         auto lst = m_models.front();
         lst->clearQSGObjects();
     }
+    for (auto i : m_plugins)
+        i->beforeDestroy();
 }
 
 qsgBoard::qsgBoard(QQuickItem *parent) : QQuickItem(parent)
@@ -66,6 +68,8 @@ void qsgBoard::setName(const QString& aName){
     }, rea::Json("name", "updateQSGAttr_" + m_name));
 
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        for (auto i : m_plugins)
+            i->beforeDestroy();
         m_plugins.clear();
         installPlugins(aInput->data().value("ctrls").toArray());
     }, rea::Json("name", "updateQSGCtrl_" + m_name));
@@ -112,7 +116,7 @@ QSGNode* qsgBoard::updatePaintNode(QSGNode* aOldNode, UpdatePaintNodeData* noded
 
     for (auto i : m_updates)
         if (i)
-            i();
+            i(m_trans_node);
     m_updates.clear();
 
     return ret;

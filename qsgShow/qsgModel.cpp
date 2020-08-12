@@ -15,17 +15,17 @@ bool shapeObject::canBePickedUp(int aX, int aY){
 
 IUpdateQSGAttr shapeObject::updateQSGAttr(const QString& aModification){
     if (aModification == "face_")
-        return [this](){checkFaceOpacity();};
+        return [this](QSGNode*){checkFaceOpacity();};
     else if (aModification == "text_visible_")
-        return [this](){checkTextVisible();};
+        return [this](QSGNode*){checkTextVisible();};
     else if (aModification == "color_")
-        return [this](){checkColor();};
+        return [this](QSGNode*){checkColor();};
     else if (aModification == "caption_")
-        return [this](){checkCaption();};
+        return [this](QSGNode*){checkCaption();};
     else if (aModification == "width_")
-        return [this](){checkWidth();};
+        return [this](QSGNode*){checkWidth();};
     else if (aModification == "angle_")
-        return [this](){checkAngle();};
+        return [this](QSGNode*){checkAngle();};
     else
         return nullptr;
 }
@@ -34,7 +34,7 @@ std::vector<QSGNode*> shapeObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* 
     auto ret = qsgObject::getQSGNodes(aWindow, aParent, aTransformNode);
     if (!m_outline){
         m_outline = new QSGGeometryNode();
-        auto nw = updateGeometry();
+        auto nw = updateGeometry(aTransformNode);
         auto clr = getColor();
         setQSGColor(*m_outline, clr);
         aTransformNode->appendChildNode(m_outline);
@@ -314,7 +314,7 @@ void shapeObject::checkWidth(){
 }
 
 void shapeObject::checkAngle(){
-    updateGeometry();
+    updateGeometry(m_outline->parent());
     if (m_arrows.size() > 0)
         updateArrowLocation();
     if (m_face)
@@ -358,16 +358,18 @@ std::vector<QSGNode*> imageObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* 
     auto ret = qsgObject::getQSGNodes(aWindow, aParent, aTransformNode);
     if (!m_node){
         m_node = new QSGSimpleTextureNode();
-        updateImagePath();
+        updateImagePath(true);
         aTransformNode->appendChildNode(m_node);
     }
     ret.push_back(m_node);
     return ret;
 }
 
-void imageObject::updateImagePath(){
-    QImage img = rea::imagePool::readCache(getPath(), true);
+void imageObject::updateImagePath(bool aForce){
+    QImage img = rea::imagePool::readCache(getPath());
     if (img.width() == 0 || img.height() == 0){
+        if (!aForce)
+            return;
         img = QImage(10, 10, QImage::Format_ARGB32);
         img.fill(QColor("transparent"));
     }
@@ -378,7 +380,7 @@ void imageObject::updateImagePath(){
 
 IUpdateQSGAttr imageObject::updateQSGAttr(const QString& aModification){
     if (aModification == "path_" || aModification == "range_")
-        return [this](){
+        return [this](QSGNode*){
             updateImagePath();
         };
     else
@@ -408,7 +410,7 @@ QJsonArray polyObject::getPoints(){
 }
 
 void polyObject::checkGeometry(){
-    auto nw = updateGeometry();
+    auto nw = updateGeometry(m_outline->parent());
     if (nw > 0){
         for (auto i = 0; i < nw; ++i){
             auto nd = m_holes[m_holes.size() - 1 - i];
@@ -431,7 +433,7 @@ std::vector<QSGNode*> polyObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* a
     return ret;
 }
 
-int polyObject::updateGeometry(){
+int polyObject::updateGeometry(QSGNode*){
     auto pts0 = getPoints();
     if (pts0.size() == 0){
         return 0;
@@ -501,15 +503,15 @@ void polyObject::transformChanged(){
 
 IUpdateQSGAttr polyObject::updateQSGAttr(const QString& aModification){
     if (aModification == "arrow_visible_")
-        return [this](){
+        return [this](QSGNode*){
             checkArrowPole();
         };
     else if (aModification == "arrow_pole_")
-        return [this](){
+        return [this](QSGNode*){
             checkArrowPole();
         };
     else if (aModification == "points_")
-        return [this](){checkGeometry();};
+        return [this](QSGNode*){checkGeometry();};
     else
         return shapeObject::updateQSGAttr(aModification);
 }
@@ -552,15 +554,15 @@ void ellipseObject::transformChanged(){
 
 IUpdateQSGAttr ellipseObject::updateQSGAttr(const QString& aModification){
     if (aModification == "arrow_visible_")
-        return [this](){
+        return [this](QSGNode*){
             checkArrowVisible(4);
         };
     else if (aModification == "center_" || aModification == "radius_")
-        return [this](){
+        return [this](QSGNode*){
             checkAngle();
         };
     else if (aModification == "ccw_")
-        return [this](){
+        return [this](QSGNode*){
             if (m_arrows.size() > 0 && m_outline)
                 updateArrowLocation();
         };
@@ -590,10 +592,10 @@ std::vector<QSGNode*> ellipseObject::getQSGNodes(QQuickWindow* aWindow, qsgModel
     return ret;
 }
 
-int ellipseObject::updateGeometry(){
+int ellipseObject::updateGeometry(QSGNode* aTransformNode){
     static const double PI = 3.14159265;
 
-    //auto mtx = aTransform->matrix().inverted();
+    //auto del = reinterpret_cast<QSGTransformNode*>(aTransformNode)->matrix().toAffine().m11();
     //auto pt = mtx.map(QPoint(0, 0)) - mtx.map(QPoint(1, 0));
     //auto del = QPoint::dotProduct(pt, pt) * 8;
     auto del = 10;
@@ -693,7 +695,7 @@ IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
         auto obj = aModification.value("obj").toString();
         if (m_objects.contains(obj)){
             auto nd = m_objects.value(obj);
-            auto mdy = overwriteAttr(*nd, aModification.value("key").toArray(), aModification.value("val"));
+            auto mdy = overwriteAttr(*nd, aModification.value("key").toArray(), aModification.value("val"), aModification.value("force").toBool());
             if (mdy != "")
                 return nd->updateQSGAttr(mdy);
         }
@@ -713,7 +715,7 @@ IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
                 }else
                     return nullptr;
                 setTransform();
-                return [this](){
+                return [this](QSGNode*){
                     WCS2SCS();
                 };
             }else if (kys[0] == "objects"){
@@ -723,7 +725,7 @@ IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
                         auto attr = aModification.value("val").toObject();
                         insert(obj, attr);
                         addObject(rea::Json(attr, "id", obj));
-                        return [this, obj](){
+                        return [this, obj](QSGNode*){
                             m_objects.value(obj)->getQSGNodes(m_window, this, m_trans_node);
                         };
                     }
@@ -731,20 +733,20 @@ IUpdateQSGAttr qsgModel::updateQSGAttr(const QJsonObject& aModification){
                     auto obj = aModification.value("tar").toString();
                     if (contains(obj)){
                         remove(obj);
-                        return [this, obj](){
+                        return [this, obj](QSGNode*){
                             m_objects.value(obj)->removeQSGNodes();
                             m_objects.remove(obj);
                         };
                     }
                 }
             }else{
-                auto mdy = overwriteAttr(*this, aModification.value("key").toArray(), aModification.value("val"));
+                auto mdy = overwriteAttr(*this, aModification.value("key").toArray(), aModification.value("val"), aModification.value("force").toBool());
                 if (mdy != "")
-                    return [this, mdy](){
+                    return [this, mdy](QSGNode* aClip){
                         for (auto i : m_objects){
                             auto up = i->updateQSGAttr(mdy);
                             if (up)
-                                up();
+                                up(aClip);
                         }
                     };
             }
@@ -803,12 +805,12 @@ void qsgModel::WCS2SCS(){
         i->transformChanged();
 }
 
-QString qsgModel::overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, const QJsonValue&& aValue){
+QString qsgModel::overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, const QJsonValue&& aValue, bool aForce){
     if (aKeys.size() == 0)
         return "";
     else if (aKeys.size() == 1){
         auto ret = aKeys[0].toString();
-        if (aObject.value(ret) == aValue)
+        if (aObject.value(ret) == aValue && !aForce)
             return "";
         else{
             aObject.insert(ret, aValue);
@@ -822,7 +824,7 @@ QString qsgModel::overwriteAttr(QJsonObject& aObject, const QJsonArray& aKeys, c
         auto key = aKeys[i].toString();
         ret += key + "_";
         if (i == aKeys.size() - 1){
-            if (org.value(key) == aValue)
+            if (org.value(key) == aValue && !aForce)
                 return "";
             objs.back().insert(key, aValue);
         }
@@ -968,7 +970,7 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
                              "objects", rea::Json(
                                             "img_2", rea::Json(
                                                          "type", "image",
-                                                         "range", rea::JArray(0, 0, 400, 300),
+                                                         "range", rea::JArray(0, 0, img.width(), img.height()),
                                                          "path", pth
                                                          ),
                                             "shp_0", rea::Json(
