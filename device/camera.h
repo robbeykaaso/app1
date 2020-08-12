@@ -24,4 +24,5 @@ public:
     rxCameras();
 private:
     QHash<QString, cameraInfo> m_cameras;
+    int m_counter = 0;
 };

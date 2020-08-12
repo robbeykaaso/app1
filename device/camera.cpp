@@ -82,28 +82,28 @@ rxCameras::rxCameras(){
         rea::pipeline::add<std::vector<ds::DsFrameData>>([](rea::stream<std::vector<ds::DsFrameData>>* aInput){
             auto dt = aInput->data();
             aInput->out();
-        }, rea::Json("name", nm + "_cameraCaptured"))
-        ->next(rea::pipeline::add<std::vector<ds::DsFrameData>>([nm](rea::stream<std::vector<ds::DsFrameData>>* aInput){
-                static int counter = 0;
+        }, rea::Json("name", nm + "_cameraCaptured"));
 
+        rea::pipeline::add<std::vector<ds::DsFrameData>>([this, nm](rea::stream<std::vector<ds::DsFrameData>>* aInput){
             auto dt = aInput->data();
             for (auto i : dt){
                 auto img = cvMat2QImage(i.image);
-                rea::imagePool::cacheImage("camera_" + QString::number(counter), img);
-                if (!counter){
+                rea::imagePool::cacheImage("camera_" + QString::number(m_counter), img);
+                if (!m_counter){
                     aInput->out<QJsonObject>(rea::Json("width", img.width(),
                                                        "height", img.height(),
                                                        "objects", rea::Json(
                                                                       "img", rea::Json(
                                                                                  "type", "image",
-                                                                                 "path", "camera_" + QString::number(counter))
+                                                                                 "path", "camera_" + QString::number(m_counter))
                                                                           )),
                                              "replaceQSGModel_" + nm);
                 }else
-                    aInput->out<QJsonObject>(rea::Json("obj", "img", "key", rea::JArray("path"), "val", "camera_" + QString::number(counter)), "updateQSGAttr_" + nm);
-                counter++;
+                    aInput->out<QJsonObject>(rea::Json("obj", "img", "key", rea::JArray("path"), "val", "camera_" + QString::number(m_counter)), "updateQSGAttr_" + nm);
+                if (m_counter++ > 10000)
+                    m_counter = 0;
             }
-        }, rea::Json("name", nm + "_cameraDemoShow", "thread", 2)))
+        }, rea::Json("name", nm + "_cameraShow", "thread", 2))
         ->nextB(0, "replaceQSGModel_" + nm, QJsonObject())
         ->next("updateQSGAttr_" + nm);
 
@@ -137,25 +137,16 @@ rxCameras::rxCameras(){
             }
             aInput->out();
         }, rea::Json("name", nm + "_setCamera"));
-
     }, rea::Json("name", "addCamera"));
 }
 
+static rxCameras cameras;
 static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
-    static rxCameras cameras;
-
-    /*const auto cam_cfg = rea::Json("name", "camera1",
-                                   "initial", rea::Json(//"directory", "./image",
-                                                         //"filepattern", "^((?!\\/\\.).)*\\.(?:png|bmp|jpg|jpeg$)",
-                                                         //"type", "cam_sim",
-                                                         //"loopable", true,
-                                                  "config", "W:/configs/MV-CE200-10GC.mfs",
-                                                  "type", "cam_hikvision",
-                                                  //"id", "MV-CE200-10GC",
-                                                  "id", "DS",
-                                                  "name", "Ds MVCE200 10 GC Camera #1"));*/
-    //rea::pipeline::run<QJsonObject>("addCamera", cam_cfg);
-    //rea::pipeline::run<QJsonObject>("turnCamera", rea::Json("name", "camera1", "on", true));
-    //rea::pipeline::run<QJsonObject>("setCamera", rea::Json("triggermode", 0));
-    //rea::pipeline::run<QJsonObject>("captureCamera", rea::Json("name", "camera1"));
+    QString nm = "camera1";
+    rea::pipeline::find(nm + "_cameraCaptured")
+    ->next(FUNCT(std::vector<ds::DsFrameData>, nm,
+        std::cout << "this is demo process!" << std::endl;
+        aInput->out<std::vector<ds::DsFrameData>>(aInput->data(), nm + "_cameraShow");
+    ))
+    ->next(nm + "_cameraShow");
 }, QJsonObject(), "unitTest");

@@ -46,54 +46,59 @@ TWindow{
                     beforeDestroy()
                 }
             }
-            Column{
+            Rectangle{
                 width: parent.width * 0.3
                 height: parent.height
-                Text{
-                    width: parent.width
-                    height: 30
-                    text: "state: offline"
-                    color: "white"
-                    font.pixelSize: 14
-                    verticalAlignment: Text.AlignVCenter
-                    horizontalAlignment: Text.AlignHCenter
+                color: "tomato"
+                Column{
+                    anchors.fill: parent
+                    Text{
+                        width: parent.width
+                        height: 30
+                        text: "state: offline"
+                        color: "white"
+                        font.pixelSize: 14
+                        verticalAlignment: Text.AlignVCenter
+                        horizontalAlignment: Text.AlignHCenter
 
-                    Component.onCompleted: {
-                        Pipeline2.add(function(aInput){
-                            text = "state: " + aInput["state"]
-                        }).previous(camera.name + "_cameraStated")
-                    }
-                }
-                Combo{
-                    width: parent.width
-                    height: 30
-                    combo.model: ["real", "sim"]
-                    caption.text: qsTr("type") + ":"
-                    caption.color: "white"
-                    ratio: 0.3
-                    combo.onCurrentTextChanged: {
-                        camera.type = combo.currentText
-                        Pipeline2.run(camera.name + "loadTreeView", {data: camera.param[camera.type]})
-                    }
-                }
-                Rectangle{
-                    width: parent.width
-                    height: parent.height - 60
-                    color: "honeydew"
-                    Column{
-                        anchors.fill: parent
-                        TreeNodeView{
-                            root: camera.name
-                            width: parent.width
-                            height: parent.height * 0.5
-                        }
-                        TreeNodeView{
-                            root: camera.name + "running"
-                            width: parent.width
-                            height: parent.height * 0.5
+                        Component.onCompleted: {
+                            Pipeline2.add(function(aInput){
+                                text = "state: " + aInput["state"]
+                            }).previous(camera.name + "_cameraStated")
                         }
                     }
+                    Combo{
+                        width: parent.width
+                        height: 30
+                        combo.model: ["real", "sim"]
+                        caption.text: qsTr("type") + ":"
+                        caption.color: "white"
+                        ratio: 0.3
+                        combo.onCurrentTextChanged: {
+                            camera.type = combo.currentText
+                            Pipeline2.run(camera.name + "loadTreeView", {data: camera.param[camera.type]})
+                        }
+                    }
+                    Rectangle{
+                        width: parent.width
+                        height: parent.height - 60
+                        color: "honeydew"
+                        Column{
+                            anchors.fill: parent
+                            TreeNodeView{
+                                root: camera.name
+                                width: parent.width
+                                height: parent.height * 0.5
+                            }
+                            TreeNodeView{
+                                root: camera.name + "running"
+                                width: parent.width
+                                height: parent.height * 0.5
+                            }
+                        }
+                    }
                 }
+
             }
         }
     }

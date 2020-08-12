@@ -31,5 +31,6 @@ nav:
             - component:
                 - log: gui/component/log.md
                 - treeNodeView: gui/component/treeNodeView.md
+                - camera: gui/component/camera.md
     - About: about.md
 theme: readthedocs
