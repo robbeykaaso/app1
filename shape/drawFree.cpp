@@ -1,13 +1,12 @@
 #include "qsgShow/qsgBoard.h"
+#include "util/cv.h"
 #include "imagePool.h"
+#include "command.h"
 #include <QPainter>
 
 class drawFree : public qsgPluginTransform{
 public:
     drawFree(const QJsonObject& aConfig) : qsgPluginTransform(aConfig){
-
-    }
-    ~drawFree() override{
 
     }
 private:
@@ -21,7 +20,7 @@ private:
         img.fill(QColor("transparent"));
         QPainter pt(&img);
         pt.setPen(QPen(QColor("transparent")));
-        pt.setBrush(QBrush(QColor("red")));
+        pt.setBrush(QBrush(QColor(255, 0, 0, 125)));
         pt.drawEllipse(0, 0, img.width(), img.height());
 
         if (m_img.isNull()){
@@ -43,8 +42,9 @@ private:
             auto n_img = QImage(n_rb.x() - n_lt.x() + 1, n_rb.y() - n_lt.y() + 1, QImage::Format_ARGB32);
             n_img.fill(QColor("transparent"));
             QPainter pt2(&n_img);
-            pt2.drawImage(m_lt - n_lt, m_img);
-            pt2.drawImage(lt - n_lt, img);
+            pt2.setCompositionMode(QPainter::CompositionMode_Xor);
+            pt2.drawImage(QRect(m_lt - n_lt, m_rb - n_lt), m_img);
+            pt2.drawImage(QRect(lt - n_lt, rb - n_lt), img);
             m_img = n_img;
             m_lt = n_lt;
             m_rb = n_rb;
@@ -72,6 +72,41 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override {
         if (event->button() == Qt::LeftButton){
             //std::cout << "ed" << std::endl;
+            rea::pipeline::run("updateQSGAttr_" + getParentName(), rea::Json("key", rea::JArray("objects"),
+                                                                             "type", "del",
+                                                                             "tar", m_shapes.back()));
+            auto pts = extractCounter({m_lt.x(), m_lt.y()}, m_img, 1);
+            QJsonArray arrs;
+            for (auto i : pts){
+                QJsonArray arr;
+                for (auto j : i){
+                    arr.push_back(j.x);
+                    arr.push_back(j.y);
+                }
+                arrs.push_back(arr);
+            }
+            m_shapes.pop_back();
+
+            auto shp = "shp_" + rea::generateUUID();
+            auto nm = getParentName();
+            m_shapes.push_back(shp);
+            rea::pipeline::run<rea::ICommand>("addCommand",
+                                              rea::ICommand([nm, shp, arrs](){
+                                                  rea::pipeline::run("updateQSGAttr_" + nm,
+                                                                      rea::Json("key", rea::JArray("objects"),
+                                                                                "type", "add",
+                                                                                "tar", shp,
+                                                                                "val", rea::Json(
+                                                                                          "type", "poly",
+                                                                                          "points", arrs,
+                                                                                          "face", 125)
+                                                                                   ));
+                                              }, [nm, shp](){
+                                                   rea::pipeline::run("updateQSGAttr_" + nm,
+                                                                       rea::Json("key", rea::JArray("objects"),
+                                                                                 "type", "del",
+                                                                                 "tar", shp));
+                                              }));
             m_img = QImage();
         }
     }
@@ -96,7 +131,7 @@ protected:
                 "center", rea::JArray(0, 0),
                 "radius", rea::JArray(m_radius, m_radius),
                 "width", 0,
-                "face", 255));
+                "face", 125));
             m_seal->getQSGNodes(m_parent->window(), &m_mdl, aBackground->parent());
             m_transnode = reinterpret_cast<QSGTransformNode*>(aBackground);
         });

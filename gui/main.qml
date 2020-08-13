@@ -367,13 +367,13 @@ ApplicationWindow {
             title: qsTr("command")
             Action{
                 text: qsTr("transform")
-                onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", {ctrls: [{type: "transform"}]})
+                onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "transform"}])
             }
             Menu{
                 title: qsTr("draw")
                 MenuItem{
                     text: qsTr("free")
-                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", {ctrls: [{type: "drawfree"}]})
+                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "drawfree"}])
                 }
                 MenuItem{
                     text: qsTr("poly")
@@ -400,10 +400,14 @@ ApplicationWindow {
             Action{
                 text: qsTr("undo")
                 shortcut: "Ctrl+Z"
+                onTriggered:
+                    Pipeline2.run("doCommand", - 1)
             }
             Action{
                 text: qsTr("redo")
                 shortcut: "Ctrl+Y"
+                onTriggered:
+                    Pipeline2.run("doCommand", 1)
             }
         }
 

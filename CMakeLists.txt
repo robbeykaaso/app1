@@ -52,10 +52,11 @@ add_executable(${PROJECT_NAME}
     "qsgShow/qsgBoard.cpp"
     "qsgShow/qsgModel.h"
     "qsgShow/qsgModel.cpp"
-    "shape/command.cpp"
     "shape/drawFree.cpp"
     "device/camera.h"
     "device/camera.cpp"
+    "util/cv.h"
+    "util/cv.cpp"
     "qml.qrc"
     #"resource/logo.rc"
     )

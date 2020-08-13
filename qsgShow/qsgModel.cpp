@@ -45,6 +45,8 @@ std::vector<QSGNode*> shapeObject::getQSGNodes(QQuickWindow* aWindow, qsgModel* 
         }
     }
     ret.push_back(m_outline);
+    for (auto i : m_holes)
+        ret.push_back(i);
     checkFaceOpacity();
     checkTextVisible();
     return ret;

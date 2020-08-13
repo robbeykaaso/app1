@@ -2,6 +2,7 @@
 a super class for customized qsgBoardPlugin. it provides all the manual mouse events for differet business
 
 # Usage
+the provided plugins includes: "transform", "drawfree"  
 _sample_:  
 ```
 //register
@@ -15,5 +16,6 @@ plugins: [{type: "transform"}]  //install it as a plugin of qsgBoard
 </br>
 
 # Test and Demo
-qsgBoard.h: qsgPluginTransform    
+* qsgBoard.h: qsgPluginTransform  
+* drawFree.cpp
 </br>

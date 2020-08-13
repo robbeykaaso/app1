@@ -18,7 +18,6 @@ nav:
             - qsgModel: qsg/qsgModel.md
             - qsgBoard: qsg/qsgBoard.md
             - qsgBoardPlugin: qsg/qsgBoardPlugin.md
-            - imagePool: qsg/imagePool.md
         - gui:
             - basic:
                 - edit: gui/basic/edit.md

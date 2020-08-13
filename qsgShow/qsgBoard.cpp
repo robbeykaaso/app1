@@ -4,11 +4,10 @@
 #include <QTransform>
 
 void qsgPluginTransform::wheelEvent(QWheelEvent *event){
-    auto cur = event->pos();
     rea::pipeline::run<QJsonObject>("updateQSGAttr_" + getParentName(), rea::Json("key", rea::JArray("transform"),
                                                                          "type", "zoom",
                                                                          "dir", event->delta() < 0 ? - 1 : 1,
-                                                                         "center", rea::JArray(cur.x(), cur.y())));
+                                                                         "center", rea::JArray(m_lastpos.x(), m_lastpos.y())));
 }
 
 void qsgPluginTransform::mouseMoveEvent(QMouseEvent *event){
@@ -67,11 +66,11 @@ void qsgBoard::setName(const QString& aName){
         }
     }, rea::Json("name", "updateQSGAttr_" + m_name));
 
-    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+    rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
         for (auto i : m_plugins)
             i->beforeDestroy();
         m_plugins.clear();
-        installPlugins(aInput->data().value("ctrls").toArray());
+        installPlugins(aInput->data());
     }, rea::Json("name", "updateQSGCtrl_" + m_name));
 }
 
