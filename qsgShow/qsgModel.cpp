@@ -8,9 +8,28 @@
 #include <QSGVertexColorMaterial>
 #include <QPainter>
 
-bool shapeObject::canBePickedUp(int aX, int aY){
-    auto bnd = getBoundBox();
-    return aX >= bnd.left() && aX <= bnd.right() && aY >= bnd.top() && aY <= bnd.bottom();
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+#include <CGAL/convex_hull_2.h>
+#include <CGAL/Polygon_2_algorithms.h>
+
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef K::Point_2 Point_2;
+
+bool shapeObject::bePointSelected(double aX, double aY){
+    /*auto bnd = getBoundBox();
+    return aX >= bnd.left() && aX <= bnd.right() && aY >= bnd.top() && aY <= bnd.bottom();*/
+
+    for (auto i = m_points.begin(); i != m_points.end(); ++i){
+        std::vector<Point_2> pts;
+        for (auto j : *i)
+            pts.push_back(Point_2(j.x(), j.y()));
+        if (i == m_points.begin()){
+            if (CGAL::bounded_side_2(pts.begin(), pts.end(), Point_2(aX, aY)) == CGAL::ON_UNBOUNDED_SIDE)
+                return false;
+        }else if (CGAL::bounded_side_2(pts.begin(), pts.end(), Point_2(aX, aY)) == CGAL::ON_BOUNDED_SIDE)
+            return false;
+    }
+    return true;
 }
 
 IUpdateQSGAttr shapeObject::updateQSGAttr(const QString& aModification){
@@ -387,6 +406,11 @@ IUpdateQSGAttr imageObject::updateQSGAttr(const QString& aModification){
         };
     else
         return qsgObject::updateQSGAttr(aModification);
+}
+
+bool imageObject::bePointSelected(double aX, double aY){
+    auto rg = getRange(QImage());
+    return rg.contains(aX, aY);
 }
 
 QRectF imageObject::getRange(const QImage& aImage){
@@ -956,7 +980,6 @@ qsgModel::~qsgModel(){
 
 static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
     rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
-        static int count = 0;
         auto pth = "F:/3M/B4DT/DF Mark/V1-1.bmp";
         QImage img(pth);
         rea::imagePool::cacheImage(pth, img);
@@ -1003,10 +1026,7 @@ static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
         for (auto i : view.keys())
             cfg.insert(i, view.value(i));
 
-        if (count)
-            aInput->out<QJsonObject>(cfg, "replaceQSGModel_testbrd");
-        else
-            aInput->out<std::shared_ptr<qsgModel>>(std::make_shared<qsgModel>(cfg), "updateQSGModel_testbrd");
-        ++count;
-    }, rea::Json("name", "testQSGShow"))->nextB(0, "replaceQSGModel_testbrd", QJsonObject())->next("updateQSGModel_testbrd");
+        aInput->out<QJsonObject>(cfg, "updateQSGModel_testbrd");
+    }, rea::Json("name", "testQSGShow"))
+    ->next("updateQSGModel_testbrd");
 }, QJsonObject(), "unitTest");

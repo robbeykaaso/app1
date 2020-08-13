@@ -63,6 +63,7 @@ protected:
     virtual void wheelEvent(QWheelEvent *event){}
     virtual void hoverMoveEvent(QHoverEvent *event){}
     QString getParentName() {return m_parent ? m_parent->getName() : "";}
+    std::shared_ptr<qsgModel> getQSGModel() {return m_parent->m_models.size() > 0 ? m_parent->m_models.back() : nullptr;}
     void updateParent(IUpdateQSGAttr aUpdate){
         m_parent->m_updates.push_back(aUpdate);
         m_parent->update();
@@ -78,7 +79,6 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void hoverMoveEvent(QHoverEvent *event) override;
-private:
     QPoint m_lastpos;
 };
 

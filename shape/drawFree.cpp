@@ -4,15 +4,15 @@
 #include "command.h"
 #include <QPainter>
 
-class drawFree : public qsgPluginTransform{
+class qsgPluginDrawFree : public qsgPluginTransform{
 public:
-    drawFree(const QJsonObject& aConfig) : qsgPluginTransform(aConfig){
+    qsgPluginDrawFree(const QJsonObject& aConfig) : qsgPluginTransform(aConfig){
 
     }
 private:
     void updateMask(){
         auto ct = m_seal->value("center").toArray();
-        auto inv =  m_transnode->matrix().inverted();
+        auto inv = m_transnode->matrix().inverted();
         auto lt = inv.map(QPoint(ct[0].toDouble() - m_radius, ct[1].toDouble() - m_radius)),
              rb = inv.map(QPoint(ct[0].toDouble() + m_radius, ct[1].toDouble() + m_radius));
 
@@ -148,6 +148,6 @@ private:
     QImage m_img;
 };
 
-static rea::regPip<QJsonObject, rea::pipePartial> command_draw_free([](rea::stream<QJsonObject>* aInput){
-    aInput->out<std::shared_ptr<qsgBoardPlugin>>(std::make_shared<drawFree>(aInput->data()));
+static rea::regPip<QJsonObject, rea::pipePartial> plugin_draw_free([](rea::stream<QJsonObject>* aInput){
+    aInput->out<std::shared_ptr<qsgBoardPlugin>>(std::make_shared<qsgPluginDrawFree>(aInput->data()));
 }, rea::Json("name", "create_qsgboardplugin_drawfree"));

@@ -385,6 +385,10 @@ ApplicationWindow {
             Menu{
                 title: qsTr("editShape")
                 MenuItem{
+                    text: qsTr("select")
+                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "select"}])
+                }
+                MenuItem{
                     text: qsTr("move")
                 }
                 MenuItem{

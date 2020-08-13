@@ -103,6 +103,12 @@ TWindow{
         }
     }
     footbuttons: [
+        /*{cap: "trans", func: function(){
+            Pipeline2.run("updateQSGCtrl_" + name, [{type: "transform"}])
+        }},
+        {cap: "draw", func: function(){
+            Pipeline2.run("updateQSGCtrl_" + name, [{type: "drawfree"}])
+        }},*/
         {cap: "start", func: function(){
             Pipeline2.run("addCamera", {name: name, initial: camera.param[camera.type]})
             Pipeline2.run(name + "_turnCamera", {on: true})

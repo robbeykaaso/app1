@@ -6,6 +6,9 @@ an app assembles some common tools based on Rea
 * *QT/QT Quick*  
 * *AWSSDK/minIO*  
 * *OpenCV*
+* *CGAL*
+* *REA*
+* *DeepsightSDK*
 
 # Download
 [get code]()

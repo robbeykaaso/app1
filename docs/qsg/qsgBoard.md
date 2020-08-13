@@ -3,10 +3,6 @@ a qtquick components for show and modify shapes or images. a container for the b
 
 # API Pipe
 * **updateQSGModel_ + name**  
-show a qsgModel outside  
-</br>
-
-* **replaceQSGModel_ + name**  
 show a qsgModel from QJsonObject  
 </br>
 

@@ -49,21 +49,19 @@ qsgBoard::qsgBoard(QQuickItem *parent) : QQuickItem(parent)
 
 void qsgBoard::setName(const QString& aName){
     m_name = aName;
-    rea::pipeline::add<std::shared_ptr<qsgModel>>([this](rea::stream<std::shared_ptr<qsgModel>>* aInput){
-        m_models.push_back(aInput->data());
-        update();
-    }, rea::Json("name", "updateQSGModel_" + m_name));
 
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
         m_models.push_back(std::make_shared<qsgModel>(aInput->data()));
         update();
-    }, rea::Json("name", "replaceQSGModel_" + m_name));
+        aInput->out<std::shared_ptr<qsgModel>>(m_models.back());
+    }, rea::Json("name", "updateQSGModel_" + m_name));
 
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
         if (m_models.size() > 0){
             m_updates.push_back(m_models.front()->updateQSGAttr(aInput->data()));
             update();
         }
+        aInput->out();
     }, rea::Json("name", "updateQSGAttr_" + m_name));
 
     rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){

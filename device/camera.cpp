@@ -1,9 +1,33 @@
-#include "camera.h"
+#include "reactive2.h"
 #include "imagePool.h"
 #include "util/cv.h"
-#include <QImage>
+#include <ds_rx_camera.h>
+#include <QJsonObject>
+#include <QJsonDocument>
 
 using camCommandSubject = rx::subjects::subject<ds::DsCameraCommand>;
+
+class rxCameras{
+private:
+    class cameraInfo{
+    public:
+        cameraInfo(){}
+        cameraInfo(std::shared_ptr<ds::DsRxCamera> aCamera, std::shared_ptr<camCommandSubject> aTrigger){
+            m_camera = aCamera;
+            trigger = aTrigger;
+            m_camera->SetCommandObservable(trigger->get_observable().observe_on(rxcpp::synchronize_new_thread()));
+        }
+    private:
+        std::shared_ptr<camCommandSubject> trigger;
+        std::shared_ptr<ds::DsRxCamera> m_camera;
+        friend rxCameras;
+    };
+public:
+    rxCameras();
+private:
+    QHash<QString, cameraInfo> m_cameras;
+    QSet<QString> m_model_init;
+};
 
 rxCameras::rxCameras(){
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
@@ -56,7 +80,7 @@ rxCameras::rxCameras(){
                                                                                  "type", "image",
                                                                                  "path", "camera_" + nm)
                                                                           )),
-                                             "replaceQSGModel_" + nm);
+                                             "updateQSGModel_" + nm);
                 }else
                     aInput->out<QJsonObject>(rea::Json("obj", "img",
                                                        "key", rea::JArray("path"),
@@ -65,7 +89,7 @@ rxCameras::rxCameras(){
                                              "updateQSGAttr_" + nm);
             }
         }, rea::Json("name", nm + "_cameraShow", "thread", 2))
-        ->nextB(0, "replaceQSGModel_" + nm, QJsonObject())
+        ->nextB(0, "updateQSGModel_" + nm, QJsonObject())
         ->next("updateQSGAttr_" + nm);
 
         rea::pipeline::add<QJsonObject>([this, nm](rea::stream<QJsonObject>* aInput){

@@ -37,6 +37,7 @@ public:
     }
     virtual void transformChanged() {}
     virtual IUpdateQSGAttr updateQSGAttr(const QString& aModification){return nullptr;}
+    virtual bool bePointSelected(double aX, double aY) {return false;}
 protected:
     QQuickWindow* m_window;
     qsgModel* m_parent;
@@ -53,6 +54,7 @@ public:
         m_node = nullptr;
     }
     IUpdateQSGAttr updateQSGAttr(const QString& aModification) override;
+    bool bePointSelected(double aX, double aY) override;
 private:
     void updateImagePath(bool aForce = false);
     QString getPath();
@@ -66,7 +68,7 @@ public:
 
     }
     QRectF getBoundBox() {return m_bound;}
-    virtual bool canBePickedUp(int aX, int aY);
+    bool bePointSelected(double aX, double aY) override;
     std::vector<QSGNode*> getQSGNodes(QQuickWindow* aWindow = nullptr, qsgModel* aParent = nullptr, QSGNode* aTransformNode = nullptr) override;
     void removeQSGNodes() override;
     void transformChanged() override;
@@ -154,6 +156,7 @@ public:
     ~qsgModel();
 
     void clearQSGObjects();
+    QMap<QString, std::shared_ptr<qsgObject>> getQSGObjects() {return m_objects;}
     void show(QSGTransformNode* aTransform, QQuickWindow* aWindow, const QPointF& aSize);
     IUpdateQSGAttr updateQSGAttr(const QJsonObject& aModification);
 private:
