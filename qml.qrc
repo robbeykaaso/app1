@@ -17,5 +17,6 @@
         <file>gui/Basic/AutoSize.qml</file>
         <file>gui/Basic/Radio.ui.qml</file>
         <file>gui/Component/Camera.qml</file>
+        <file>gui/Component/IO.qml</file>
     </qresource>
 </RCC>

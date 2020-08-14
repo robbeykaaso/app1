@@ -2,7 +2,7 @@
 #define REAL_FRAMEWORK_CV_H_
 
 #include "opencv2/opencv.hpp"
-#include "qsgShow/qsgModel.h"
+#include "qsgModel.h"
 #include <QImage>
 
 QImage cvMat2QImage(const cv::Mat& mat);

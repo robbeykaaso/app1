@@ -14,10 +14,6 @@ nav:
             - normalClient: socket/normalClient.md
         - serial:
             - modbusMaster: serial/modbusMaster.md
-        - qsgShow:
-            - qsgModel: qsg/qsgModel.md
-            - qsgBoard: qsg/qsgBoard.md
-            - qsgBoardPlugin: qsg/qsgBoardPlugin.md
         - gui:
             - basic:
                 - edit: gui/basic/edit.md
@@ -31,5 +27,6 @@ nav:
                 - log: gui/component/log.md
                 - treeNodeView: gui/component/treeNodeView.md
                 - camera: gui/component/camera.md
+                - io: gui/component/io.md
     - About: about.md
 theme: readthedocs

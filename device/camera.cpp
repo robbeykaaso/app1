@@ -47,7 +47,7 @@ rxCameras::rxCameras(){
         m_cameras.insert(nm, cameraInfo(cam, std::make_shared<camCommandSubject>()));
 
         cam->GetStateObservable().subscribe([nm](ds::DsCameraState aState) {
-            rea::pipeline::run<QJsonObject>(nm + "_cameraStated", rea::Json("state", QString::fromStdString(ds::DsCameraStateTypeString[aState.type])));
+            rea::pipeline::run<QString>(nm + "_cameraStated", QString::fromStdString(ds::DsCameraStateTypeString[aState.type]));
         });
 
         cam->GetFrameObservable()
@@ -57,12 +57,11 @@ rxCameras::rxCameras(){
                 rea::pipeline::run<std::vector<ds::DsFrameData>>(nm + "_cameraCaptured", aFrames);
             });
 
-        rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+        rea::pipeline::add<QString>([](rea::stream<QString>* aInput){
             aInput->out();
         }, rea::Json("name", nm + "_cameraStated"));
 
         rea::pipeline::add<std::vector<ds::DsFrameData>>([](rea::stream<std::vector<ds::DsFrameData>>* aInput){
-            auto dt = aInput->data();
             aInput->out();
         }, rea::Json("name", nm + "_cameraCaptured"));
 

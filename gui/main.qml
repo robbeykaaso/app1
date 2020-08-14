@@ -360,6 +360,7 @@ ApplicationWindow {
             }
             Action{
                 text: qsTr("io")
+                onTriggered: io.show()
             }
         }
 
@@ -599,6 +600,10 @@ ApplicationWindow {
             .nextL("json2stg")
             .nextL("writeJson")
         }
+    }
+    IO{
+        id: io
+        name: "io1"
     }
     Camera{
         id: camera

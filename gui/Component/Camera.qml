@@ -63,8 +63,8 @@ TWindow{
 
                         Component.onCompleted: {
                             Pipeline2.add(function(aInput){
-                                text = "state: " + aInput["state"]
-                            }).previous(camera.name + "_cameraStated")
+                                text = aInput
+                            }, {vtype: ""}).previous(camera.name + "_cameraStated")
                         }
                     }
                     Combo{

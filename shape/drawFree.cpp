@@ -1,10 +1,10 @@
-#include "qsgShow/qsgBoard.h"
+#include "qsgBoard.h"
 #include "util/cv.h"
 #include "imagePool.h"
 #include "command.h"
 #include <QPainter>
 
-class qsgPluginDrawFree : public qsgPluginTransform{
+class qsgPluginDrawFree : public rea::qsgPluginTransform{
 public:
     qsgPluginDrawFree(const QJsonObject& aConfig) : qsgPluginTransform(aConfig){
 
@@ -24,14 +24,14 @@ private:
         pt.drawEllipse(0, 0, img.width(), img.height());
 
         if (m_img.isNull()){
-            m_shapes.push_back("shp_" + rea::generateUUID());
+            m_shape = "shp_" + rea::generateUUID();
             m_img = img;
             m_lt = lt;
             m_rb = rb;
             rea::imagePool::cacheImage("drawFree", m_img);
             rea::pipeline::run("updateQSGAttr_" + getParentName(), rea::Json("key", rea::JArray("objects"),
                                                                              "type", "add",
-                                                                             "tar", m_shapes.back(),
+                                                                             "tar", m_shape,
                                                                              "val", rea::Json(
                                                                                         "type", "image",
                                                                                         "path", "drawFree",
@@ -50,14 +50,14 @@ private:
             m_rb = n_rb;
             rea::imagePool::cacheImage("drawFree", m_img);
             rea::pipeline::run("updateQSGAttr_" + getParentName(), rea::Json("key", rea::JArray("range"),
-                                                                             "obj", m_shapes.back(),
+                                                                             "obj", m_shape,
                                                                              "val", rea::JArray(m_lt.x(), m_lt.y(), m_rb.x() + 1, m_rb.y() + 1),
                                                                              "force", true));
         }
     }
     QPoint m_lt, m_rb;
     const int m_radius = 10;
-    std::vector<QString> m_shapes;
+    QString m_shape;
 protected:
     void beforeDestroy() override{
         m_seal->removeQSGNodes();
@@ -74,7 +74,7 @@ protected:
             //std::cout << "ed" << std::endl;
             rea::pipeline::run("updateQSGAttr_" + getParentName(), rea::Json("key", rea::JArray("objects"),
                                                                              "type", "del",
-                                                                             "tar", m_shapes.back()));
+                                                                             "tar", m_shape));
             auto pts = extractCounter({m_lt.x(), m_lt.y()}, m_img, 1);
             QJsonArray arrs;
             for (auto i : pts){
@@ -85,27 +85,28 @@ protected:
                 }
                 arrs.push_back(arr);
             }
-            m_shapes.pop_back();
 
-            auto shp = "shp_" + rea::generateUUID();
+            auto m_shape = "shp_" + rea::generateUUID();
             auto nm = getParentName();
-            m_shapes.push_back(shp);
+
+            auto redo = [nm, m_shape, arrs](){
+                rea::pipeline::run("updateQSGAttr_" + nm,
+                                   rea::Json("key", rea::JArray("objects"),
+                                             "type", "add",
+                                             "tar", m_shape,
+                                             "val", rea::Json(
+                                                        "type", "poly",
+                                                        "points", arrs,
+                                                        "face", 125)
+                                                                                                                                    ));
+            };
+            redo();
             rea::pipeline::run<rea::ICommand>("addCommand",
-                                              rea::ICommand([nm, shp, arrs](){
-                                                  rea::pipeline::run("updateQSGAttr_" + nm,
-                                                                      rea::Json("key", rea::JArray("objects"),
-                                                                                "type", "add",
-                                                                                "tar", shp,
-                                                                                "val", rea::Json(
-                                                                                          "type", "poly",
-                                                                                          "points", arrs,
-                                                                                          "face", 125)
-                                                                                   ));
-                                              }, [nm, shp](){
+                                              rea::ICommand(redo, [nm, m_shape](){
                                                    rea::pipeline::run("updateQSGAttr_" + nm,
                                                                        rea::Json("key", rea::JArray("objects"),
                                                                                  "type", "del",
-                                                                                 "tar", shp));
+                                                                                 "tar", m_shape));
                                               }));
             m_img = QImage();
         }
@@ -123,10 +124,10 @@ protected:
         qsgPluginTransform::hoverMoveEvent(event);
         updateSeal(event->pos());
     }
-    QString getName(qsgBoard* aParent = nullptr) override{
+    QString getName(rea::qsgBoard* aParent = nullptr) override{
         qsgPluginTransform::getName(aParent);
         updateParent([this](QSGNode* aBackground){
-            m_seal = std::make_shared<ellipseObject>(rea::Json(
+            m_seal = std::make_shared<rea::ellipseObject>(rea::Json(
                 "type", "ellipse",
                 "center", rea::JArray(0, 0),
                 "radius", rea::JArray(m_radius, m_radius),
@@ -142,12 +143,12 @@ private:
         m_seal->insert("center", rea::JArray(aPos.x(), aPos.y()));
         updateParent(m_seal->updateQSGAttr("center_"));
     }
-    std::shared_ptr<ellipseObject> m_seal;
-    qsgModel m_mdl;
+    std::shared_ptr<rea::ellipseObject> m_seal;
+    rea::qsgModel m_mdl;
     QSGTransformNode* m_transnode;
     QImage m_img;
 };
 
 static rea::regPip<QJsonObject, rea::pipePartial> plugin_draw_free([](rea::stream<QJsonObject>* aInput){
-    aInput->out<std::shared_ptr<qsgBoardPlugin>>(std::make_shared<qsgPluginDrawFree>(aInput->data()));
+    aInput->out<std::shared_ptr<rea::qsgBoardPlugin>>(std::make_shared<qsgPluginDrawFree>(aInput->data()));
 }, rea::Json("name", "create_qsgboardplugin_drawfree"));
