@@ -11,10 +11,10 @@ public:
     }
 private:
     void updateMask(){
-        auto ct = m_seal->value("center").toArray();
+        auto bnd = m_handles[0]->getBoundBox();
         auto inv = m_transnode->matrix().inverted();
-        auto lt = inv.map(QPoint(ct[0].toDouble() - m_radius, ct[1].toDouble() - m_radius)),
-             rb = inv.map(QPoint(ct[0].toDouble() + m_radius, ct[1].toDouble() + m_radius));
+        auto lt = inv.map(bnd.topLeft()).toPoint(),
+             rb = inv.map(bnd.bottomRight()).toPoint();
 
         auto img = QImage(rb.x() - lt.x() + 1, rb.y() - lt.y() + 1, QImage::Format_ARGB32);
         img.fill(QColor("transparent"));
@@ -56,13 +56,8 @@ private:
         }
     }
     QPoint m_lt, m_rb;
-    const int m_radius = 10;
     QString m_shape;
 protected:
-    void beforeDestroy() override{
-        m_seal->removeQSGNodes();
-        m_seal = nullptr;
-    }
     void mousePressEvent(QMouseEvent *event) override {
         if (event->button() == Qt::LeftButton){
             //std::cout << "st" << std::endl;
@@ -113,7 +108,7 @@ protected:
     }
     void mouseMoveEvent(QMouseEvent *event) override {
         qsgPluginTransform::mouseMoveEvent(event);
-        updateSeal(event->pos());
+        updateHandlePos(0, event->pos());
         if (event->buttons().testFlag(Qt::LeftButton)){
             //std::cout << "st" << std::endl;
             updateMask();
@@ -122,29 +117,17 @@ protected:
     }
     void hoverMoveEvent(QHoverEvent *event) override {
         qsgPluginTransform::hoverMoveEvent(event);
-        updateSeal(event->pos());
+        updateHandlePos(0, event->pos());
     }
     QString getName(rea::qsgBoard* aParent = nullptr) override{
         qsgPluginTransform::getName(aParent);
         updateParent([this](QSGNode* aBackground){
-            m_seal = std::make_shared<rea::ellipseObject>(rea::Json(
-                "type", "ellipse",
-                "center", rea::JArray(0, 0),
-                "radius", rea::JArray(m_radius, m_radius),
-                "width", 0,
-                "face", 125));
-            m_seal->getQSGNodes(m_parent->window(), &m_mdl, aBackground->parent());
+            createEllipseHandle(aBackground, 10, 125);
             m_transnode = reinterpret_cast<QSGTransformNode*>(aBackground);
         });
         return m_name;
     }
 private:
-    void updateSeal(const QPoint& aPos){
-        m_seal->insert("center", rea::JArray(aPos.x(), aPos.y()));
-        updateParent(m_seal->updateQSGAttr("center_"));
-    }
-    std::shared_ptr<rea::ellipseObject> m_seal;
-    rea::qsgModel m_mdl;
     QSGTransformNode* m_transnode;
     QImage m_img;
 };
