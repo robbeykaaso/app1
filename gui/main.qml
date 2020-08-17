@@ -177,7 +177,7 @@ ApplicationWindow {
                         checked != checked
                         Pipeline2.run("updateQSGAttr_testbrd", {key: ["objects"], type: checked ? "add" : "del", tar: "shp_3", val: {
                                                                                                          type: "poly",
-                                                                                                         points: [500, 300, 700, 300, 700, 500, 500, 300],
+                                                                                                         points: [[500, 300, 700, 300, 700, 500, 500, 300]],
                                                                                                          color: "pink",
                                                                                                          caption: "new_obj",
                                                                                                          face: 200
@@ -247,18 +247,18 @@ ApplicationWindow {
                 }
                 MenuItem{
                     checkable: true
-                    text: qsTr("polyAngle")
-                    onClicked: {
-                        checked != checked
-                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["angle"], val: checked ? 90 : 20})
-                    }
-                }
-                MenuItem{
-                    checkable: true
                     text: qsTr("polyPoints")
                     onClicked: {
                         checked != checked
                         Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_0", key: ["points"], val: checked ? [[50, 50, 200, 50, 200, 200, 50, 200, 50, 50], [80, 70, 120, 100, 120, 70, 80, 70]] : [[50, 50, 200, 200, 200, 50, 50, 50]]})
+                    }
+                }
+                MenuItem{
+                    checkable: true
+                    text: qsTr("ellipseAngle")
+                    onClicked: {
+                        checked != checked
+                        Pipeline2.run("updateQSGAttr_testbrd", {obj: "shp_1", key: ["angle"], val: checked ? 90 : 20})
                     }
                 }
                 MenuItem{
@@ -399,7 +399,8 @@ ApplicationWindow {
                     text: qsTr("rotate")
                 }
                 MenuItem{
-                    text: qsTr("moveNode")
+                    text: qsTr("editNode")
+                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "editnode"}])
                 }
             }
             Action{
