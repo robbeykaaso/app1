@@ -11,6 +11,30 @@ _sample_:
 ```  
 </br>
 
+* param: the parameter for camera  
+_sample_:    
+```
+    property var param: {
+        "real":{  //the real camera parameter
+            "id": "DS",
+            "config": "W:/configs/MV-CE200-10GC.mfs",
+            "type": "cam_hikvision",
+            "name": "Ds MVCE200 10 GC Camera #1"
+        },
+        "sim":{  //the simulating camera parameter
+            "id": "MV-CE200-10GC",
+            "directory": "./image",
+            "filepattern": "^((?!\\/\\.).)*\\.(?:png|bmp|jpg|jpeg$)",
+            "type": "cam_sim",
+            "loopable": true
+        },
+        "running": {  //the running parameter
+            "triggermode": 1
+        }
+    }
+```  
+</br>
+
 # API Pipe
 * **name + "_captureCamera"**  
 trig the camera to capture image once. it is a pipeDelegate of "_cameraCaptured"  
@@ -25,7 +49,7 @@ turn on/off camera. the parameter "on" is boolean
 </br>
 
 * **name + "_cameraStated"**  
-output a QJsonObject of the camera. the parameter "state" is the camera state  
+output a string state of the camera  
 </br>
 
 * **name + "_cameraCaptured"**  

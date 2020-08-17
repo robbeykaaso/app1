@@ -21,8 +21,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt5 COMPONENTS Widgets Core Quick Sql SerialPort SerialBus REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(AWSSDK REQUIRED COMPONENTS core s3)
-#https://github.com/CGAL/cgal/wiki/How-to-use-CGAL-with-CMake-or-your-own-build-system
-find_package(CGAL REQUIRED COMPONENTS Core)
 set(REA_DIR ${CMAKE_CURRENT_LIST_DIR}/../frm/cmake)
 #message("xxx: ${CMAKE_CURRENT_LIST_DIR}")
 find_package(REA)
@@ -50,9 +48,6 @@ add_executable(${PROJECT_NAME}
     "socket/unitTest.cpp"
     "serial/modbusMaster.h"
     "serial/modbusMaster.cpp"
-    "shape/drawFree.cpp"
-    "shape/shape.cpp"
-    "shape/select.cpp"
     "device/camera.cpp"
     "device/io.cpp"
     "util/cv.h"
@@ -65,7 +60,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONF
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Core Qt5::Quick Qt5::Widgets Qt5::Sql Qt5::SerialPort Qt5::SerialBus
     ${OpenCV_LIBS}
-    CGAL::CGAL CGAL::CGAL_Core
     ${AWSSDK_LINK_LIBRARIES}
     ${REA_LIBS}
     ${DeepInspectSDK_LIBS})# ${VTK_LIBRARIES})# ${PYTHON_LIBRARIES})#  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
