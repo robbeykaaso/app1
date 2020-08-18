@@ -24,6 +24,7 @@ nav:
                 - twindow: gui/basic/twindow.md
                 - msgdialog: gui/basic/msgdialog.md
             - component:
+                - progress: gui/component/progress.md
                 - log: gui/component/log.md
                 - treeNodeView: gui/component/treeNodeView.md
                 - camera: gui/component/camera.md

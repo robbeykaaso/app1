@@ -82,13 +82,13 @@ Window{
         Item{
             id: mid
             width: parent.width
-            height: parent.height - Screen.desktopAvailableHeight * 0.075
+            height: parent.height - Screen.desktopAvailableHeight * (0.045 + (footbuttons ? 0.03 : 0))
         }
         Row{
             anchors.right: parent.right
             anchors.rightMargin: height * 0.4
             width: childrenRect.width
-            height: Screen.desktopAvailableHeight * 0.045
+            height: footbuttons ? Screen.desktopAvailableHeight * 0.045 : 0
             spacing: 5
 
             Repeater{

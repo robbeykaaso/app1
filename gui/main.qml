@@ -349,6 +349,38 @@ ApplicationWindow {
                     treeview.show()
                 }
             }
+            MenuItem{
+                property var tag: {"tag": "testProgress"}
+                property int cnt: 0
+                property double hope
+                text: qsTr("progress")
+                onClicked: {
+                    if (cnt % 10 == 0){
+                        hope = 0.0
+                        Pipeline2.run("updateProgress", {title: "demo: ", sum: 10}, tag)
+                        hope = 0.1
+                        Pipeline2.run("updateProgress", {}, tag)
+                        ++cnt
+                    }else if (cnt % 10 == 1){
+                        hope = 0.2
+                        Pipeline2.run("updateProgress", {}, tag)
+                        ++cnt
+                    }else if (cnt % 10 == 2){
+                        hope = 0.9
+                        Pipeline2.run("updateProgress", {step: 7}, tag)
+                        cnt += 7
+                    }else if (cnt % 10 == 9){
+                        hope = 1.0
+                        Pipeline2.run("updateProgress", {}, tag)
+                        ++cnt
+                    }
+                }
+                Component.onCompleted: {
+                    Pipeline2.find("updateProgress").next(function(aInput){
+                        console.assert(aInput === hope)
+                    }, tag, {vtype: 0.1})
+                }
+            }
 
         }
 
@@ -610,7 +642,9 @@ ApplicationWindow {
         id: camera
         name: "camera1"
     }
+    Progress{
 
+    }
     MsgDialog{
 
     }
