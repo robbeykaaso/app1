@@ -409,10 +409,12 @@ ApplicationWindow {
                     onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "drawfree"}])
                 }
                 MenuItem{
-                    text: qsTr("poly")
+                    text: qsTr("rect")
+                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "drawrect"}])
                 }
                 MenuItem{
                     text: qsTr("ellipse")
+                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "drawellipse"}])
                 }
             }
             Menu{
@@ -423,6 +425,7 @@ ApplicationWindow {
                 }
                 MenuItem{
                     text: qsTr("move")
+                    onTriggered: Pipeline2.run("testbrd_moveShapes", {shapes: ["shp_0", "shp_1"], del: [500, 500]})
                 }
                 MenuItem{
                     text: qsTr("zoom")
