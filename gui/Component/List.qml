@@ -133,15 +133,16 @@ Column {
             if (aInput["index"]){
                 var idxes = aInput["index"]
                 for (var j in entries){
+                    var mdy = {entry: {},
+                               clr: (selects.indexOf(idxes[j]) > 0) ? selcolor : dfltcolor,
+                               fontclr: fontclr}
                     var nw_ent = entries[j]["entry"]
                     if (nw_ent){
-                        var mdy = {entry: {},
-                                   clr: (selects.indexOf(idxes[j]) > 0) ? selcolor : dfltcolor,
-                                   fontclr: fontclr}
                         for (var l in nw_ent)
                             mdy["entry"][l] = nw_ent[l]
-                        mdl.set(idxes[j], mdy)
-                    }
+                    }else
+                        mdy["entry"] = mdl.get(idxes[j]).entry
+                    mdl.set(idxes[j], mdy)
                 }
 
             }else{

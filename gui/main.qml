@@ -350,8 +350,8 @@ ApplicationWindow {
                                                           fontclr: "red",
                                                           data: [
                                                             {entry: [1, 3, 2, 3]},
-                                                            {entry: [3, 5, 2, 3]},
-                                                            {entry: [4, 6, 2, 3]}
+                                                            {},
+                                                            {entry: [2, 3, 2, 3]}
                                                           ]})
                     }
                 }
