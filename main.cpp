@@ -21,7 +21,8 @@ int main(int argc, char *argv[])
     std::vector<QObject*> objs;
     QQmlApplicationEngine engine;
     engine.connect(&engine, &QQmlApplicationEngine::objectCreated, [&objs](QObject *object, const QUrl &url){
-        objs.push_back(object);
+        if (object)
+            objs.push_back(object);
     });
     engine.rootContext()->setContextProperty("applicationDirPath", QGuiApplication::applicationDirPath()); //https://recalll.co/ask/v/topic/qt-QML%3A-how-to-specify-image-file-path-relative-to-application-folder/55928bae7d3563c7088b7db1
 

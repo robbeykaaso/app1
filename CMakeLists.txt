@@ -52,6 +52,7 @@ add_executable(${PROJECT_NAME}
     "device/io.cpp"
     "util/cv.h"
     "util/cv.cpp"
+    "util/pack.cpp"
     "qml.qrc"
     #"resource/logo.rc"
     )

@@ -100,7 +100,7 @@ ApplicationWindow {
                 Action {
                     text: qsTr("face")
                     checkable: true
-                    shortcut: "Ctrl+V"
+                    shortcut: "Ctrl+F"
                     onTriggered: {
                         view_cfg["face"] = 100 - view_cfg["face"]
                         Pipeline2.run("testQSGShow", view_cfg)
@@ -322,10 +322,47 @@ ApplicationWindow {
                 MenuItem{
                     text: qsTr("showLogPanel")
                     onClicked:{
-                        Pipeline2.run("showLogPanel")
+                        Pipeline2.run("showLogPanel", {})
                     }
                 }
             }
+            Menu{
+                title: qsTr("list")
+                MenuItem{
+                    text: qsTr("updateListView")
+                    onClicked: {
+                        Pipeline2.run("_updateListView", {title: ["cat", "dog", "sheep", "rat"],
+                                                          selects: [1, 3, 5],
+                                                          data: [
+                                                            {entry: [4, 6, 2, 3]},
+                                                            {entry: [4, 6, 2, 3]},
+                                                            {entry: [4, 6, 2, 3]},
+                                                            {entry: [4, 6, 2, 3]},
+                                                            {entry: [4, 6, 2, 3]},
+                                                            {entry: [4, 6, 2, 3]}
+                                                          ]})
+                    }
+                }
+                MenuItem{
+                    text: qsTr("modifyListView")
+                    onClicked: {
+                        Pipeline2.run("_updateListView", {index: [2, 4, 5],
+                                                          fontclr: "red",
+                                                          data: [
+                                                            {entry: [1, 3, 2, 3]},
+                                                            {entry: [3, 5, 2, 3]},
+                                                            {entry: [4, 6, 2, 3]}
+                                                          ]})
+                    }
+                }
+
+                Component.onCompleted: {
+                    Pipeline2.find("_listViewSelected").next(function(aInput){
+                        console.log(aInput)
+                    }, {tag: "manual"}, {vtype: []})
+                }
+            }
+
             MenuItem{
                 text: qsTr("TWindow")
                 onClicked: {
@@ -433,6 +470,16 @@ ApplicationWindow {
                 MenuItem{
                     text: qsTr("rotate")
                 }
+                Action{
+                    text: qsTr("copy")
+                    shortcut: "Ctrl+C"
+                    onTriggered: Pipeline2.run("testbrd_copyShapes", {})
+                }
+                Action{
+                    text: qsTr("paste")
+                    shortcut: "Ctrl+V"
+                    onTriggered: Pipeline2.run("testbrd_pasteShapes", {})
+                }
                 MenuItem{
                     text: qsTr("editNode")
                     onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "editnode"}])
@@ -449,6 +496,12 @@ ApplicationWindow {
                 shortcut: "Ctrl+Y"
                 onTriggered:
                     Pipeline2.run("doCommand", 1)
+            }
+            Action{
+                text: qsTr("pack")
+                onTriggered:
+                    //Pipeline2.run("showPackWindow", {})
+                    Pipeline2.run("packExe", {})
             }
         }
 
@@ -467,22 +520,34 @@ ApplicationWindow {
         }
     }
     contentData:
-        Column{
-        anchors.fill: parent
-            QSGBoard{
-                id: testbrd
-                name: "testbrd"
-                plugins: [{type: "transform"}]
-                width: parent.width
-                height: parent.height * 0.7
-                Component.onDestruction: {
-                    beforeDestroy()
+        Row{
+            anchors.fill: parent
+            Rectangle{
+                width: parent.width * 0.3
+                height: parent.height
+                color: "white"
+                List{
+                    anchors.fill: parent
                 }
             }
+            Column{
+                width: parent.width * 0.7
+                height: parent.height
+                QSGBoard{
+                    id: testbrd
+                    name: "testbrd"
+                    plugins: [{type: "transform"}]
+                    width: parent.width
+                    height: parent.height * 0.7
+                    Component.onDestruction: {
+                        beforeDestroy()
+                    }
+                }
 
-            Log{
-                width: parent.width
-                height: parent.height * 0.3
+                Log{
+                    width: parent.width
+                    height: parent.height * 0.3
+                }
             }
         }
     TWindow{
