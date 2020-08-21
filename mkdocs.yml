@@ -20,6 +20,7 @@ nav:
                 - check: gui/basic/check.md
                 - combo: gui/basic/combo.md
                 - radio: gui/basic/radio.md
+                - swipe: gui/basic/swipe.md
                 - autosize: gui/basic/autosize.md
                 - twindow: gui/basic/twindow.md
                 - msgdialog: gui/basic/msgdialog.md

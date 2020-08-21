@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Window 2.12
+import QtQuick.Controls 1.4
 import QtQuick.Controls 2.5
 import QtQuick.Controls.Universal 2.3
 import "Basic"
@@ -418,6 +419,10 @@ ApplicationWindow {
                     }, tag, {vtype: 0.1})
                 }
             }
+            MenuItem{
+                text: qsTr("swipe")
+                onClicked: swipe.show()
+            }
 
         }
 
@@ -606,6 +611,32 @@ ApplicationWindow {
             }
         }
         footbuttons: [{cap: "OK", func: function(){close()}}]
+    }
+
+    TWindow{
+        id: swipe
+        caption: qsTr("swipeview")
+        content: TabView{
+            anchors.fill: parent
+            Tab{
+                title: qsTr("Red")
+                Rectangle{
+                    color: "red"
+                }
+            }
+            Tab{
+                title: qsTr("Blue")
+                Rectangle{
+                    color: "blue"
+                }
+            }
+            Tab{
+                title: qsTr("Swipe")
+                Swipe{
+
+                }
+            }
+        }
     }
 
     TWindow{
