@@ -21,6 +21,7 @@ nav:
                 - combo: gui/basic/combo.md
                 - radio: gui/basic/radio.md
                 - swipe: gui/basic/swipe.md
+                - gridder: gui/basic/gridder.md
                 - autosize: gui/basic/autosize.md
                 - twindow: gui/basic/twindow.md
                 - msgdialog: gui/basic/msgdialog.md

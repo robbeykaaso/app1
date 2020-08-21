@@ -424,7 +424,10 @@ ApplicationWindow {
                 text: qsTr("swipe")
                 onClicked: swipe.show()
             }
-
+            MenuItem{
+                text: qsTr("gridder")
+                onClicked: gridder.show()
+            }
         }
 
         Menu{
@@ -628,6 +631,61 @@ ApplicationWindow {
             }
         }
         footbuttons: [{cap: "OK", func: function(){close()}}]
+    }
+
+    TWindow{
+        id: gridder
+        caption: qsTr("gridder")
+        content: Gridder{
+            id: gridder_cld
+
+            name: qsTr("demo")
+            size: [2, 2]
+            com: Component{
+                Rectangle{
+                    property string name
+                    width: parent.width / parent.columns
+                    height: parent.height / parent.rows
+
+                    color: "transparent"
+                    border.color: "red"
+                    Component.onCompleted: {
+                        console.log(name)
+                    }
+                }
+            }
+
+            padding: parent.width * 0.05
+            width: parent.width * 0.9
+            height: parent.height * 0.9
+        }
+        footbuttons: [
+            {
+                cap: "6",
+                func: function(){
+                    Pipeline2.run(gridder_cld.name + "_updateViewCount", {size: 6})
+                }
+            },
+            {
+                cap: "10",
+                func: function(){
+                    gridder_cld.updateViewCount(10)
+                }
+            },
+            {
+                cap: "1",
+                func: function(){
+                    Pipeline2.run(gridder_cld.name + "_updateViewCount", {size: 1})
+                }
+            },
+            {
+                cap: "5x5",
+                func: function(){
+                    Pipeline2.run(gridder_cld.name + "_updateViewCount", {size: [5, 5]})
+                }
+            }
+
+        ]
     }
 
     TWindow{
