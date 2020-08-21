@@ -2,7 +2,7 @@
 an IO window component based on deepsight sdk  
 
 # Attribute
-* name: the default is "io1", it should be noticed that different io instance should have different name  
+* name: the default is `io1`, it should be noticed that different io instance should have different name  
 _sample_:  
 ```
     IO{

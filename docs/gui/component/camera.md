@@ -2,7 +2,7 @@
 a camera window component based on deepsight sdk  
 
 # Attribute
-* name: the default is "camera1", it should be noticed that different camera instance should have different name  
+* name: the default is `camera1`, it should be noticed that different camera instance should have different name  
 _sample_:  
 ```
     Camera{

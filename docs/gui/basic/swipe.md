@@ -1,5 +1,5 @@
 # Abstract
-the swipe component for qml. see also "TabView, StackLayout"  
+the swipe component for qml. see also `TabView`, `StackLayout`  
 
 # Attribute
 * tabs: the alias tabbar  

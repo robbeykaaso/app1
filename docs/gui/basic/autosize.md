@@ -1,5 +1,5 @@
 # Abstract
-the autosize logic for Edit, Check and Combo  
+the autosize logic for `Edit`, `Check` and `Combo`  
 
 # Sample 
 ```

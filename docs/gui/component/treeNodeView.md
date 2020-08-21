@@ -3,7 +3,7 @@ a gui generator by json for qml
 
 # API Pipe
 * **rootkey + loadTreeView**  
-generate the gui by "data" json and "style" json. its type is pipePartial  
+generate the gui by `data` json and `style` json. its type is pipePartial  
 _sample_:  
 ```
 Pipeline2.run("loadTreeView", {data: sample}, {tag: "testTreeView"})

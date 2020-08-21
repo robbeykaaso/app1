@@ -365,12 +365,24 @@ ApplicationWindow {
                 }
             }
 
-            MenuItem{
-                text: qsTr("TWindow")
-                onClicked: {
-                    twin.show()
+            Menu{
+                title: qsTr("container")
+                MenuItem{
+                    text: qsTr("TWindow")
+                    onClicked: {
+                        twin.show()
+                    }
+                }
+                MenuItem{
+                    text: qsTr("swipe")
+                    onClicked: swipe.show()
+                }
+                MenuItem{
+                    text: qsTr("gridder")
+                    onClicked: gridder.show()
                 }
             }
+
             MenuItem{
                 text: qsTr("MsgDialog")
                 onClicked:
@@ -419,14 +431,6 @@ ApplicationWindow {
                         console.assert(aInput === hope)
                     }, tag, {vtype: 0.1})
                 }
-            }
-            MenuItem{
-                text: qsTr("swipe")
-                onClicked: swipe.show()
-            }
-            MenuItem{
-                text: qsTr("gridder")
-                onClicked: gridder.show()
             }
         }
 
