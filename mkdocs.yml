@@ -24,6 +24,7 @@ nav:
                 - autosize: gui/basic/autosize.md
                 - twindow: gui/basic/twindow.md
                 - msgdialog: gui/basic/msgdialog.md
+                - dynamicQML: gui/basic/dynamicQML.md
             - component:
                 - progress: gui/component/progress.md
                 - log: gui/component/log.md

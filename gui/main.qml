@@ -24,6 +24,7 @@ ApplicationWindow {
     //Universal.background: Universal.Cyan
 
     menuBar: MenuBar{
+        id: mainmenu
         Menu{
             title: qsTr("qsgShow")
 
@@ -437,9 +438,14 @@ ApplicationWindow {
                 onTriggered: io.show()
             }
         }
-
+       /* Loader{
+            onLoaded: {
+                mainmenu.addMenu(item)
+            }
+        }*/
+/*
         Menu{
-            title: qsTr("command")
+            title: qsTr("shape")
             Action{
                 text: qsTr("transform")
                 onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "transform"}])
@@ -502,11 +508,22 @@ ApplicationWindow {
                 onTriggered:
                     Pipeline2.run("doCommand", 1)
             }
+        }
+*/
+        Menu{
+            title: qsTr("integrate")
             Action{
                 text: qsTr("pack")
                 onTriggered:
                     //Pipeline2.run("showPackWindow", {})
                     Pipeline2.run("packExe", {})
+            }
+        }
+
+        DynamicQML{
+            name: "menu"
+            onLoaded: function(aItem){
+                mainmenu.addMenu(aItem)
             }
         }
 
