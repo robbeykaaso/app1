@@ -409,6 +409,12 @@ ApplicationWindow {
             }
 
             MenuItem{
+                text: qsTr("status")
+                onClicked:
+                    Pipeline2.run("_updateStatus", ["hello", "world"])
+            }
+
+            MenuItem{
                 text: qsTr("search")
                 onClicked:
                     Pipeline2.run("_Searched", "", {tag: "manual"})
@@ -580,53 +586,62 @@ ApplicationWindow {
         }
     }
     contentData:
-        Row{
+        Column{
             anchors.fill: parent
-            Column{
-                width: parent.width * 0.3
-                height: parent.height
-                Search {
-                    text: qsTr("search")
-                    width: parent.width
-                    height: 30
-                    prefix: "#"
-                }
-                Rectangle{
-                    width: parent.width
-                    height: parent.height - 30
-                    color: "white"
-                    List{
-                        anchors.fill: parent
+            Row{
+                width: parent.width
+                height: parent.height - 30
+                Column{
+                    width: parent.width * 0.3
+                    height: parent.height
+                    Search {
+                        text: qsTr("search")
+                        width: parent.width
+                        height: 30
+                        prefix: "#"
+                    }
+                    Rectangle{
+                        width: parent.width
+                        height: parent.height - 30
+                        color: "white"
+                        List{
+                            anchors.fill: parent
+                        }
+                    }
+                    Component.onCompleted: {
+                        Pipeline2.find("_Searched")
+                        .next(function(aInput){
+                            console.assert(aInput === qsTr("search"))
+                            console.log(aInput + " is searched")
+                        }, {tag: "manual"}, {vtype: ""})
                     }
                 }
-                Component.onCompleted: {
-                    Pipeline2.find("_Searched")
-                    .next(function(aInput){
-                        console.assert(aInput === qsTr("search"))
-                        console.log(aInput + " is searched")
-                    }, {tag: "manual"}, {vtype: ""})
+                Column{
+                    width: parent.width * 0.7
+                    height: parent.height
+                    QSGBoard{
+                        id: testbrd
+                        name: "testbrd"
+                        plugins: [{type: "transform"}]
+                        width: parent.width
+                        height: parent.height * 0.7
+                        Component.onDestruction: {
+                            beforeDestroy()
+                        }
+                    }
+
+                    Log{
+                        width: parent.width
+                        height: parent.height * 0.3
+                    }
                 }
             }
-            Column{
-                width: parent.width * 0.7
-                height: parent.height
-                QSGBoard{
-                    id: testbrd
-                    name: "testbrd"
-                    plugins: [{type: "transform"}]
-                    width: parent.width
-                    height: parent.height * 0.7
-                    Component.onDestruction: {
-                        beforeDestroy()
-                    }
-                }
-
-                Log{
-                    width: parent.width
-                    height: parent.height * 0.3
-                }
+            Status{
+                width: parent.width
+                height: 30
             }
         }
+
     TWindow{
         id: twin
         caption: qsTr("TWindow")

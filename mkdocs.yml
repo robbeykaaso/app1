@@ -34,6 +34,7 @@ nav:
             - component:
                 - progress: gui/component/progress.md
                 - log: gui/component/log.md
+                - status: gui/component/status.md
                 - list: gui/component/list.md
                 - treeNodeView: gui/component/treeNodeView.md
                 - camera: gui/component/camera.md
