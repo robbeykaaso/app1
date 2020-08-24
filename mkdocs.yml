@@ -19,11 +19,13 @@ nav:
                 - edit: gui/basic/edit.md
                 - check: gui/basic/check.md
                 - combo: gui/basic/combo.md
+                - track: gui/basic/track.md
                 - radio: gui/basic/radio.md
                 - autosize: gui/basic/autosize.md
                 - msgdialog: gui/basic/msgdialog.md
                 - dynamicQML: gui/basic/dynamicQML.md
                 - search: gui/basic/search.md
+                - file: gui/basic/file.md
                 - container:
                     - twindow: gui/basic/twindow.md
                     - swipe: gui/basic/swipe.md

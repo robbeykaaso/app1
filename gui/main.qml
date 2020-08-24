@@ -387,8 +387,29 @@ ApplicationWindow {
                 }
             }
 
+            Menu{
+                title: qsTr("file")
+                MenuItem{
+                    text: qsTr("files")
+                    onClicked: {
+                        Pipeline2.run("_selectFile", {folder: false, filter: ["Image files (*.jpg *.png *.jpeg *.bmp)"]})
+                    }
+                }
+                MenuItem{
+                    text: qsTr("directory")
+                    onClicked: {
+                        Pipeline2.run("_selectFile", {folder: true, tag: {tag: "manual2"}})
+                    }
+                }
+                Component.onCompleted: {
+                    Pipeline2.find("_selectFile").next(function(aInput){
+                        console.log(aInput)
+                    }, {tag: "manual2"}, {vtype: []})
+                }
+            }
+
             MenuItem{
-                text: qsTr("Search")
+                text: qsTr("search")
                 onClicked:
                     Pipeline2.run("_Searched", "", {tag: "manual"})
             }
@@ -652,10 +673,17 @@ ApplicationWindow {
                     caption.text: qsTr("attribute3") + ":"
                     ratio: 0.4
                 }
+                Track{
+                    width: 180
+                    caption.text: qsTr("attri4") + ":"
+                    ratio: 0.4
+                    onIndexChanged: function(aIndex){
+                        console.log("track index: " + aIndex)
+                    }
+                }
                 Radio{
                     text: qsTr("attribute4")
-                }
-
+                }                
                 AutoSize{
 
                 }
@@ -876,6 +904,9 @@ ApplicationWindow {
 
     }
     MsgDialog{
+
+    }
+    File{
 
     }
 }

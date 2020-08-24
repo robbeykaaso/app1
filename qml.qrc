@@ -26,5 +26,7 @@
         <file>resource/icon-search.png</file>
         <file>gui/Basic/Search.qml</file>
         <file>gui/Basic/Flip.qml</file>
+        <file>gui/Basic/File.qml</file>
+        <file>gui/Basic/Track.qml</file>
     </qresource>
 </RCC>
