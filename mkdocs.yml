@@ -23,10 +23,12 @@ nav:
                 - autosize: gui/basic/autosize.md
                 - msgdialog: gui/basic/msgdialog.md
                 - dynamicQML: gui/basic/dynamicQML.md
+                - search: gui/basic/search.md
                 - container:
                     - twindow: gui/basic/twindow.md
                     - swipe: gui/basic/swipe.md
                     - gridder: gui/basic/gridder.md
+                    - flip: gui/basic/flip.md
             - component:
                 - progress: gui/component/progress.md
                 - log: gui/component/log.md

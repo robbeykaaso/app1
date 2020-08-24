@@ -381,6 +381,16 @@ ApplicationWindow {
                     text: qsTr("gridder")
                     onClicked: gridder.show()
                 }
+                MenuItem{
+                    text: qsTr("flip")
+                    onClicked: flip.show()
+                }
+            }
+
+            MenuItem{
+                text: qsTr("Search")
+                onClicked:
+                    Pipeline2.run("_Searched", "", {tag: "manual"})
             }
 
             MenuItem{
@@ -551,12 +561,29 @@ ApplicationWindow {
     contentData:
         Row{
             anchors.fill: parent
-            Rectangle{
+            Column{
                 width: parent.width * 0.3
                 height: parent.height
-                color: "white"
-                List{
-                    anchors.fill: parent
+                Search {
+                    text: qsTr("search")
+                    width: parent.width
+                    height: 30
+                    prefix: "#"
+                }
+                Rectangle{
+                    width: parent.width
+                    height: parent.height - 30
+                    color: "white"
+                    List{
+                        anchors.fill: parent
+                    }
+                }
+                Component.onCompleted: {
+                    Pipeline2.find("_Searched")
+                    .next(function(aInput){
+                        console.assert(aInput === qsTr("search"))
+                        console.log(aInput + " is searched")
+                    }, {tag: "manual"}, {vtype: ""})
                 }
             }
             Column{
@@ -713,6 +740,31 @@ ApplicationWindow {
                 title: qsTr("Swipe")
                 Swipe{
 
+                }
+            }
+        }
+    }
+
+    TWindow{
+        id: flip
+        caption: qsTr("flipView")
+        content: Flip{
+            id: flipview
+            anchors.fill: parent
+            front: Rectangle{
+                anchors.fill: parent
+                color: "red"
+                MouseArea{
+                    anchors.fill: parent
+                    onClicked: flipview.flipUp()
+                }
+            }
+            back: Rectangle{
+                anchors.fill: parent
+                color: "blue"
+                MouseArea{
+                    anchors.fill: parent
+                    onClicked: flipview.flipDown()
                 }
             }
         }

@@ -23,5 +23,8 @@
         <file>gui/Basic/Swipe.ui.qml</file>
         <file>gui/Basic/Gridder.qml</file>
         <file>gui/Basic/DynamicQML.qml</file>
+        <file>resource/icon-search.png</file>
+        <file>gui/Basic/Search.qml</file>
+        <file>gui/Basic/Flip.qml</file>
     </qresource>
 </RCC>

@@ -1,5 +1,5 @@
 # Abstract
-a automatic grid component for qml  
+an automatic grid component for qml  
 
 # Attribute
 * name: a grid name and also the prefix of its item name, the item name is `name + "_gridder" + index`  
