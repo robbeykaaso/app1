@@ -15,5 +15,5 @@ show front view
 </br>
 
 # Test and Demo
-main.qml: qsTr("flipView)  
+main.qml: qsTr("flipView")  
 </br>

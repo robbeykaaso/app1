@@ -30,5 +30,7 @@
         <file>gui/Basic/Track.qml</file>
         <file>gui/Component/Status0.ui.qml</file>
         <file>gui/Component/Status.qml</file>
+        <file>gui/Component/Matrix.qml</file>
+        <file>gui/Basic/Nest.qml</file>
     </qresource>
 </RCC>

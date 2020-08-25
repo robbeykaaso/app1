@@ -2,6 +2,7 @@ import QtQuick 2.12
 import QtQuick.Window 2.12
 import QtQuick.Controls 1.4
 import QtQuick.Controls 2.5
+import QtQuick.Layouts 1.12
 import QtQuick.Controls.Universal 2.3
 import "Basic"
 import "Component"
@@ -385,6 +386,11 @@ ApplicationWindow {
                     text: qsTr("flip")
                     onClicked: flip.show()
                 }
+                MenuItem{
+                    text: qsTr("nest")
+                    onClicked:
+                        nest.show()
+                }
             }
 
             Menu{
@@ -482,78 +488,7 @@ ApplicationWindow {
                 onTriggered: io.show()
             }
         }
-       /* Loader{
-            onLoaded: {
-                mainmenu.addMenu(item)
-            }
-        }*/
-/*
-        Menu{
-            title: qsTr("shape")
-            Action{
-                text: qsTr("transform")
-                onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "transform"}])
-            }
-            Menu{
-                title: qsTr("draw")
-                MenuItem{
-                    text: qsTr("free")
-                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "drawfree"}])
-                }
-                MenuItem{
-                    text: qsTr("rect")
-                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "drawrect"}])
-                }
-                MenuItem{
-                    text: qsTr("ellipse")
-                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "drawellipse"}])
-                }
-            }
-            Menu{
-                title: qsTr("editShape")
-                MenuItem{
-                    text: qsTr("select")
-                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "select"}])
-                }
-                MenuItem{
-                    text: qsTr("move")
-                    onTriggered: Pipeline2.run("testbrd_moveShapes", {shapes: ["shp_0", "shp_1"], del: [500, 500]})
-                }
-                MenuItem{
-                    text: qsTr("zoom")
-                }
-                MenuItem{
-                    text: qsTr("rotate")
-                }
-                Action{
-                    text: qsTr("copy")
-                    shortcut: "Ctrl+C"
-                    onTriggered: Pipeline2.run("testbrd_copyShapes", {})
-                }
-                Action{
-                    text: qsTr("paste")
-                    shortcut: "Ctrl+V"
-                    onTriggered: Pipeline2.run("testbrd_pasteShapes", {})
-                }
-                MenuItem{
-                    text: qsTr("editNode")
-                    onTriggered: Pipeline2.run("updateQSGCtrl_testbrd", [{type: "editnode"}])
-                }
-            }
-            Action{
-                text: qsTr("undo")
-                shortcut: "Ctrl+Z"
-                onTriggered:
-                    Pipeline2.run("doCommand", - 1)
-            }
-            Action{
-                text: qsTr("redo")
-                shortcut: "Ctrl+Y"
-                onTriggered:
-                    Pipeline2.run("doCommand", 1)
-            }
-        }
-*/
+
         Menu{
             title: qsTr("integrate")
             Action{
@@ -809,6 +744,31 @@ ApplicationWindow {
                     anchors.fill: parent
                     onClicked: flipview.flipDown()
                 }
+            }
+        }
+    }
+
+    TWindow{
+        id: nest
+        caption: qsTr("nestView")
+        content: Nest{
+            rows: 10
+            columns: 10
+            size: [1, 2, 7, 8, 8, 2, 2, 8, 1, 10]
+            Rectangle {
+                color: "red"
+            }
+            Rectangle {
+                color: "green"
+            }
+            Rectangle {
+                color: "blue"
+            }
+            Rectangle {
+                color: "yellow"
+            }
+            Rectangle {
+                color: "black"
             }
         }
     }

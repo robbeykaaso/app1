@@ -31,6 +31,7 @@ nav:
                     - swipe: gui/basic/swipe.md
                     - gridder: gui/basic/gridder.md
                     - flip: gui/basic/flip.md
+                    - nest: gui/basic/nest.md
             - component:
                 - progress: gui/component/progress.md
                 - log: gui/component/log.md
