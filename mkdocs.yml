@@ -22,6 +22,7 @@ nav:
                 - track: gui/basic/track.md
                 - radio: gui/basic/radio.md
                 - autosize: gui/basic/autosize.md
+                - linechart: gui/basic/linechart.md
                 - msgdialog: gui/basic/msgdialog.md
                 - dynamicQML: gui/basic/dynamicQML.md
                 - search: gui/basic/search.md

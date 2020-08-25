@@ -481,6 +481,12 @@ ApplicationWindow {
                     matrix.show()
                 }
             }
+            MenuItem{
+                text: qsTr("linechart")
+                onClicked: {
+                    linechart.show()
+                }
+            }
         }
 
         Menu{
@@ -918,6 +924,23 @@ ApplicationWindow {
             .nextL("writeJson")
         }
     }
+
+    TWindow{
+        id: linechart
+        caption: qsTr("lineChart")
+        content: LineChart{
+            anchors.fill: parent
+        }
+        footbuttons: [
+            {
+                cap: "test",
+                func: function(){
+                    Pipeline2.run("_updateLineChart", [20, 30, 100, 125, 30, 10, 12, 30, 50])
+                }
+            }
+        ]
+    }
+
     IO{
         id: io
         name: "io1"
