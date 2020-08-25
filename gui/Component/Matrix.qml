@@ -1,24 +1,99 @@
 import QtQuick 2.12
+import QtQuick.Controls 2.5
 import QtQuick.Layouts 1.12
-//https://stackoverflow.com/questions/34027727/how-can-i-create-a-qml-gridlayout-with-items-of-proportionate-sizes
-GridLayout{
-    property var size: []
-    anchors.fill: parent
+import Pipeline2 1.0
+import "../Basic"
 
-    function fitLayout(){
-        if (width > 0 && height > 0)
-            for (var i = 0; i < children.length; ++i){
-                children[i].Layout.rowSpan = size[2 * i]
-                children[i].Layout.columnSpan = size[2 * i + 1]
-                children[i].Layout.preferredWidth = children[i].Layout.columnSpan * width / columns
-                children[i].Layout.preferredHeight = children[i].Layout.rowSpan * height / rows
+Nest{
+    property string name
+    property alias rowcap: rowcap
+    property alias colcap: colcap
+    property var content: []
+    rows: 5
+    columns: 5
+    size: [1, 1, 1, 4, 4, 1, 2, 2, 2, 2, 2, 2, 2, 2]
+    Item {
+
+    }
+
+    Label {
+        id: rowcap
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+    }
+
+    Label {
+        id: colcap
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+    }
+
+    Repeater{
+        model: ListModel{
+            id: mdl
+            ListElement{
+                cap: "0"
             }
+            ListElement{
+                cap: "1"
+            }
+            ListElement{
+                cap: "2"
+            }
+            ListElement{
+                cap: "3"
+            }
+        }
+        delegate: Label{
+            text: cap
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            MouseArea{
+                anchors.fill: parent
+                onClicked: {
+                    Pipeline2.run(name + "_matrixSelected", index, {tag: "manual"})
+                }
+            }
+        }
     }
 
-    onWidthChanged: {
-        fitLayout()
+    function updateGUI(aFit){
+        size = [1, 1, 1]
+        columns = 2 * content[0].length + 1
+        size.push(2 * content[0].length)
+        rows = 2 * content.length + 1
+        size.push(2 * content.length)
+        size.push(1)
+        var sum = content[0].length * content.length
+        for (var i = 0; i < sum; ++i){
+            size.push(2)
+            size.push(2)
+        }
+        mdl.clear()
+        for (var j in content)
+            for (var k in content[j]){
+                mdl.append({cap: content[j][k].toString()})
+            }
+        if (aFit)
+            fitLayout()
     }
-    onHeightChanged: {
-        fitLayout()
+
+    Component.onCompleted: {
+        updateGUI(false)
+
+        Pipeline2.add(function(aInput){
+            return {out: {}}
+        }, {name: name + "_matrixSelected", type: "Partial", vtype: 0})
+
+        Pipeline2.add(function(aInput){
+            if (aInput["rowcap"])
+                rowcap.text = aInput["rowcap"]
+            if (aInput["colcap"])
+                colcap.text = aInput["colcap"]
+            if (aInput["content"]){
+                content = aInput["content"]
+                updateGUI(true)
+            }
+        }, {name: name + "_updateMatrix"})
     }
 }

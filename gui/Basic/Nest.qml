@@ -8,13 +8,15 @@ GridLayout{
     columnSpacing: 0
 
     function fitLayout(){
-        if (width > 0 && height > 0)
-            for (var i = 0; i < children.length; ++i){
-                children[i].Layout.rowSpan = size[2 * i]
-                children[i].Layout.columnSpan = size[2 * i + 1]
-                children[i].Layout.preferredWidth = children[i].Layout.columnSpan * width / columns
-                children[i].Layout.preferredHeight = children[i].Layout.rowSpan * height / rows
-            }
+        if (width > 0 && height > 0){
+            for (var i = 0; i < children.length; ++i)
+                if (2 * i + 1 < size.length){
+                    children[i].Layout.rowSpan = size[2 * i]
+                    children[i].Layout.columnSpan = size[2 * i + 1]
+                    children[i].Layout.preferredWidth = children[i].Layout.columnSpan * width / columns
+                    children[i].Layout.preferredHeight = children[i].Layout.rowSpan * height / rows
+                }
+        }
     }
 
     onWidthChanged: {

@@ -475,6 +475,12 @@ ApplicationWindow {
                     }, tag, {vtype: 0.1})
                 }
             }
+            MenuItem{
+                text: qsTr("matrix")
+                onClicked: {
+                    matrix.show()
+                }
+            }
         }
 
         Menu{
@@ -770,6 +776,51 @@ ApplicationWindow {
             Rectangle {
                 color: "black"
             }
+        }
+    }
+
+    TWindow{
+        id: matrix
+        caption: qsTr("matrix")
+        content: Matrix{
+            id: mtx
+            rowcap.text: "hello"
+            colcap.text: "world"
+            content: [[1, 2], [3, 4], [5, 6]]
+        }
+        footbuttons: [
+            {
+                cap: "3x3",
+                func: function(){
+                    mtx.content = [[1, 2, 3], [4, 5, 6], [7, "8", 9]]
+                    mtx.updateGUI(true)
+                }
+            },
+            {
+                cap: "2x2",
+                func: function(){
+                    mtx.content = [[1, 2], [3, 4]]
+                    mtx.updateGUI(true)
+                }
+            },
+            {
+                cap: "5x4",
+                func: function(){
+                    Pipeline2.run("_updateMatrix", {rowcap: "hello2",
+                                                    colcap: "world2",
+                                                    content: [[1, 2, 3, 4],
+                                                              [5, 6, 7, 8],
+                                                              [9, 10, 11, 12],
+                                                              [13, 14, 15, 16],
+                                                              [17, 18, 19, 20]]})
+                }
+            }
+
+        ]
+        Component.onCompleted: {
+            Pipeline2.find("_matrixSelected").next(function(aInput){
+                console.log("_matrixSelected: " + aInput)
+            }, {tag: "manual"}, {vtype: 0})
         }
     }
 
