@@ -8,7 +8,9 @@ Item{
     Component{
         id: loader
         Loader{
-
+            Component.onDestruction: {
+                console.log("hi2")
+            }
         }
     }
 
@@ -16,9 +18,13 @@ Item{
         Pipeline2.find("loadDynamicQMLs").next(function(aInput){
             for (var i in aInput){
                 var ld = loader.createObject(parent)
-                ld.loaded.connect(function(){
-                    loaded(ld.item)
-                })
+                ld.loaded.connect(
+                    function(aLoader){
+                        return function(){
+                            loaded(aLoader.item)
+                        }
+                    }(ld)
+                )
                 ld.source = aInput[i]
             }
         }, {tag: name}, {vtype: []})

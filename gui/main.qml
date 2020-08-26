@@ -549,6 +549,13 @@ ApplicationWindow {
             }
         }
 
+        /*Loader{
+            source: "file:D:/mywork/build-app-Desktop_Qt_5_12_2_MSVC2015_64bit-Default/plugin/menu/shape.qml"
+            onLoaded: {
+                mainmenu.addMenu(item)
+            }
+        }*/
+
         DynamicQML{
             name: "menu"
             onLoaded: function(aItem){
