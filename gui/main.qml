@@ -394,23 +394,78 @@ ApplicationWindow {
             }
 
             Menu{
-                title: qsTr("file")
-                MenuItem{
-                    text: qsTr("files")
-                    onClicked: {
-                        Pipeline2.run("_selectFile", {folder: false, filter: ["Image files (*.jpg *.png *.jpeg *.bmp)"]})
+                title: qsTr("dialog")
+
+                Menu{
+                    title: qsTr("file")
+                    MenuItem{
+                        text: qsTr("files")
+                        onClicked: {
+                            Pipeline2.run("_selectFile", {folder: false, filter: ["Image files (*.jpg *.png *.jpeg *.bmp)"]})
+                        }
+                    }
+                    MenuItem{
+                        text: qsTr("directory")
+                        onClicked: {
+                            Pipeline2.run("_selectFile", {folder: true, tag: {tag: "manual2"}})
+                        }
+                    }
+                    Component.onCompleted: {
+                        Pipeline2.find("_selectFile").next(function(aInput){
+                            console.log(aInput)
+                        }, {tag: "manual2"}, {vtype: []})
                     }
                 }
+
                 MenuItem{
-                    text: qsTr("directory")
+                    text: qsTr("color")
                     onClicked: {
-                        Pipeline2.run("_selectFile", {folder: true, tag: {tag: "manual2"}})
+                        Pipeline2.run("_selectColor", {tag: {tag: "manual2"}})
+                    }
+                    Component.onCompleted: {
+                        Pipeline2.find("_selectColor").next(function(aInput){
+                            console.log(aInput)
+                        }, {tag: "manual2"}, {vtype: ""})
                     }
                 }
-                Component.onCompleted: {
-                    Pipeline2.find("_selectFile").next(function(aInput){
-                        console.log(aInput)
-                    }, {tag: "manual2"}, {vtype: []})
+
+                MenuItem{
+                    text: qsTr("MsgDialog")
+                    onClicked:
+                        Pipeline2.run("popMessage", {title: "hello4", text: "world"})
+                }
+
+            }
+
+            Menu{
+                title: qsTr("diagram")
+
+                MenuItem{
+                    text: qsTr("linechart")
+                    onClicked: {
+                        linechart.show()
+                    }
+                }
+
+                MenuItem{
+                    text: qsTr("histogram")
+                    onClicked: {
+                        histogram.show()
+                    }
+                }
+
+                MenuItem{
+                    text: qsTr("thistogram")
+                    onClicked: {
+                        thistogram.show()
+                    }
+                }
+            }
+
+            MenuItem{
+                text: qsTr("matrix")
+                onClicked: {
+                    matrix.show()
                 }
             }
 
@@ -426,11 +481,6 @@ ApplicationWindow {
                     Pipeline2.run("_Searched", "", {tag: "manual"})
             }
 
-            MenuItem{
-                text: qsTr("MsgDialog")
-                onClicked:
-                    Pipeline2.run("popMessage", {title: "hello4", text: "world"})
-            }
             MenuItem{
                 text: qsTr("baseCtrl")
                 onClicked: {
@@ -473,18 +523,6 @@ ApplicationWindow {
                     Pipeline2.find("updateProgress").next(function(aInput){
                         console.assert(aInput === hope)
                     }, tag, {vtype: 0.1})
-                }
-            }
-            MenuItem{
-                text: qsTr("matrix")
-                onClicked: {
-                    matrix.show()
-                }
-            }
-            MenuItem{
-                text: qsTr("linechart")
-                onClicked: {
-                    linechart.show()
                 }
             }
         }
@@ -941,6 +979,102 @@ ApplicationWindow {
         ]
     }
 
+    TWindow{
+        id: histogram
+        caption: qsTr("histogram")
+        content: Histogram{
+            anchors.fill: parent
+        }
+        footbuttons: [
+            {
+                cap: "test",
+                func: function(){
+                    Pipeline2.run("_updateHistogramGUI", {histogram: [40, 20, 15, 25, 14, 16, 13, 30]})
+                }
+            }
+
+        ]
+    }
+
+    TWindow{
+        id: thistogram
+        caption: qsTr("thistogram")
+        content: Column{
+            anchors.fill: parent
+            spacing: 5
+            THistogram{
+                id: histo
+                width: parent.width
+                height: parent.height * 0.9
+                //oneThreshold: true
+            }
+            Track{
+                property var intervals: []
+                property var histogramdata: []
+                property double value: 0.1
+                property int idx: 0
+                anchors.horizontalCenter: parent.horizontalCenter
+                height: parent.height * 0.05
+                width: parent.width * 0.8
+                interval: 100
+                caption.text: qsTr("Interval") + ":"
+                ratio: 0.2
+
+                function updateInterval(){
+                    if (intervals.length > 1 && histogramdata.length > 1){
+                        histo.drawHistoGram(histogramdata[idx])
+                    }
+                }
+
+                onIndexChanged: function(aIndex){
+                    idx = aIndex
+                    updateInterval()
+                }
+                Component.onCompleted: {
+                    Pipeline2.add(function(aInput){
+                        intervals = []
+                        histogramdata = []
+                        interval = Object.keys(aInput["histogram"]).length - 1
+                        for (var i in aInput["histogram"]){
+                            intervals.push(i)
+                            histogramdata.push(aInput["histogram"][i])
+                        }
+                        updateInterval()
+                        return {out: {}}
+                    }, {name: "_updateTHistogramGUI"})
+                }
+            }
+
+            Track{
+                property double value: 0
+                anchors.horizontalCenter: parent.horizontalCenter
+                height: parent.height * 0.05
+                width: parent.width * 0.8
+                interval: 100
+                caption.text: qsTr("IOU") + ":"
+                ratio: 0.2
+
+                onIndexChanged: function(aIndex){
+                    value = aIndex / 100
+                    //thresholdChanged(maxthreshold.x, minthreshold.x)
+                }
+            }
+        }
+        footbuttons: [
+            {
+                cap: "test",
+                func: function(){
+                    Pipeline2.run("_updateTHistogramGUI", {histogram: {
+                                      5: [10, 20, 15, 30, 25],
+                                      10: [10, 20, 15, 30, 25, 20, 21, 23, 42, 12],
+                                      20: [10, 20, 15, 30, 25, 20, 21, 23, 42, 12, 12, 10, 20, 42, 30, 15, 25, 20, 21, 23]
+                                  }})
+                }
+            }
+
+        ]
+    }
+
     IO{
         id: io
         name: "io1"
@@ -956,6 +1090,9 @@ ApplicationWindow {
 
     }
     File{
+
+    }
+    ColorSelect{
 
     }
 }

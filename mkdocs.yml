@@ -23,10 +23,14 @@ nav:
                 - radio: gui/basic/radio.md
                 - autosize: gui/basic/autosize.md
                 - linechart: gui/basic/linechart.md
-                - msgdialog: gui/basic/msgdialog.md
                 - dynamicQML: gui/basic/dynamicQML.md
                 - search: gui/basic/search.md
-                - file: gui/basic/file.md
+                - histogram: gui/basic/histogram.md
+                - thistogram: gui/basic/thistogram.md
+                - dialog:
+                    - msgdialog: gui/basic/msgdialog.md
+                    - file: gui/basic/file.md
+                    - colorSelect: gui/basic/colorSelect.md
                 - container:
                     - twindow: gui/basic/twindow.md
                     - swipe: gui/basic/swipe.md

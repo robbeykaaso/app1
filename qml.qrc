@@ -33,5 +33,8 @@
         <file>gui/Component/Matrix.qml</file>
         <file>gui/Basic/Nest.qml</file>
         <file>gui/Basic/LineChart.qml</file>
+        <file>gui/Basic/ColorSelect.qml</file>
+        <file>gui/Basic/THistogram.qml</file>
+        <file>gui/Basic/Histogram.qml</file>
     </qresource>
 </RCC>

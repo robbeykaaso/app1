@@ -10,8 +10,18 @@
 #include <Windows.h>
 #include <QWindow>
 
+void myMessageOutput(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    //https://stackoverflow.com/questions/54307407/why-am-i-getting-qwindowswindowsetgeometry-unable-to-set-geometry-warning-wit
+    if (type != QtWarningMsg || !msg.startsWith("QWindowsWindow::setGeometry")) {
+        QByteArray localMsg = msg.toLocal8Bit();
+        fprintf(stdout, localMsg.constData());
+    }
+}
+
 int main(int argc, char *argv[])
 {
+    qInstallMessageHandler(myMessageOutput);
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication app(argc, argv);
     app.setWindowIcon(QIcon(rea::getCWD("/favicon.png")));

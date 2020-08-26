@@ -4,8 +4,8 @@ import Pipeline2 1.0
 
 FileDialog {
     property string name
-
     property var service_tag
+
     title: qsTr("Please choose files")
     selectMultiple: true
     selectFolder: false

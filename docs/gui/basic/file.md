@@ -3,6 +3,7 @@ a file dialog component for qml
 
 # Attribute
 * name: the instance name  
+</br>
 
 # API Pipe
 * **name + _selectFile**  
