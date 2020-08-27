@@ -96,7 +96,7 @@ Column {
                         view.currentIndex = index
                         selects = [index]
                     }
-                    Pipeline2.run(name + "_listViewSelected", selects, {tag: "manual"})
+                    Pipeline2.run(name + "_listViewSelected", [], {tag: "manual"})
                 }
             }
         }
@@ -119,7 +119,7 @@ Column {
     Component.onCompleted: {
 
         Pipeline2.add(function(aInput){
-            return {out: {}}
+            return {data: selects, out: {}}
         }, {name: name + "_listViewSelected", type: "Partial", vtype: []})
 
         Pipeline2.add(function(aInput){

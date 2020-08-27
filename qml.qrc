@@ -36,5 +36,9 @@
         <file>gui/Basic/ColorSelect.qml</file>
         <file>gui/Basic/THistogram.qml</file>
         <file>gui/Basic/Histogram.qml</file>
+        <file>gui/deepsight_anno.qml</file>
+        <file>gui/Deepsight/Page/Project.qml</file>
+        <file>gui/Deepsight/Page/Task.qml</file>
+        <file>gui/Deepsight/Page/User.qml</file>
     </qresource>
 </RCC>

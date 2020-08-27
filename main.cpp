@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
     rea::pipeline::run<QQmlApplicationEngine*>("regQML", &engine);
 
-    rea::pipeline::run<int>("unitTest", 0);
+    //rea::pipeline::run<int>("unitTest", 0);
 
     /*QJsonObject lan;
     dst::configObject::loadJsonFileConfig("lanInfo", lan);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
         translator.load(ln);
     QCoreApplication::installTranslator(&translator);*/
 
-    engine.load(QUrl(QStringLiteral("qrc:/gui/main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/gui/deepsight_anno.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
 

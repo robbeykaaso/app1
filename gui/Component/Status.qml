@@ -11,6 +11,7 @@ Status0{
             statuslist.clear()
             for (var i in aInput)
                 statuslist.append({cap: aInput[i]})
+            return {out: {}}
         }
     }
 }

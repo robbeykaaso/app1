@@ -34,6 +34,7 @@ StatusBar {
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 ToolSeparator {
+                    //height: parent.height
                     anchors.verticalCenter: parent.verticalCenter
                 }
             }
