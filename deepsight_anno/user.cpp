@@ -1,13 +1,15 @@
 #include "../storage/storage.h"
 #include "util.h"
+#include "model.h"
 #include "reactive2.h"
 #include <QDateTime>
 
-class user : public QJsonObject{
+class user : public model{
+protected:
+    ABSTRACT(Project)
 public:
     user(){
         rea::pipeline::add<double>([this](rea::stream<double>* aInput){  //open user
-            aInput->out<double>(0, "switchPage");
             aInput->out<QJsonArray>(QJsonArray({"User1"}), "title_updateStatus");
             auto projs = getProjects();
             aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
@@ -15,21 +17,18 @@ public:
                 aInput->out<QJsonObject>(projs.begin().value().toObject(), "updateProjectGUI");
         }, rea::Json("name", "openUser"))
         ->nextB(0, "updateProjectGUI", QJsonObject())
-        ->nextB(0, "switchPage", QJsonObject())
         ->nextB(0, "title_updateStatus", QJsonObject())
         ->next("user_updateListView");
 
         rea::pipeline::find("user_listViewSelected")  //open project
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
             auto dt = aInput->data();
-            aInput->out<double>(1, "switchPage");
             aInput->out<QJsonArray>(QJsonArray({"User1", "Project1"}), "title_updateStatus");
             if (dt.size() > 0){
                 auto projs = getProjects();
                 aInput->out<QString>(projs.keys()[dt[0].toInt()], "openProject");
             }
         }), rea::Json("tag", "openProject"))
-        ->nextB(0, "switchPage", QJsonObject())
         ->nextB(0, "title_updateStatus", QJsonObject())
         ->next("openProject");
 
@@ -79,12 +78,16 @@ public:
                 aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid name!"), "popMessage");
             else{
                 insertProject(proj);
-                aInput->out<QJsonObject>(prepareProjectListGUI(getProjects()), "user_updateListView");
+                auto projs = getProjects();
+                aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
                 aInput->out<stgJson>(stgJson(*this, "userInfo/" + rea::GetMachineFingerPrint() + ".json"), "deepsightwriteJson");
+                if (projs.size() == 1)
+                    aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
             }
         }), rea::Json("tag", "newProject"))
         ->nextB(0, "popMessage", QJsonObject())
         ->nextB(0, "user_updateListView", QJsonObject())
+        ->nextB(0, "user_listViewSelected", rea::Json("tag", "manual"))
         ->next("deepsightwriteJson");
 
         const QString loaduser = "loadUser";
@@ -93,18 +96,13 @@ public:
         }, rea::Json("name", loaduser))
         ->next(rea::local("deepsightreadJson"), rea::Json("tag", loaduser))
         ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
-            auto kys = this->keys();
-            for (auto i : kys)
-                this->remove(i);
-            auto dt = aInput->data().getData();
-            for (auto i : dt.keys())
-                this->insert(i, dt.value(i));
+            replaceModel(aInput->data().getData());
             aInput->out<double>(0, "openUser");
         }))
         ->next("openUser");
     }
 private:
-    QJsonObject getProjects(){
+    /*QJsonObject getProjects(){
         return value("project_abstract").toObject();
     }
     void setProjects(const QJsonObject& aProjects){
@@ -125,7 +123,7 @@ private:
         return rea::Json("title", rea::JArray("name"),
                          "selects", aProjects.size() > 0 ? rea::JArray("0") : QJsonArray(),
                          "data", data);
-    }
+    }*/
 };
 
 static rea::regPip<QQmlApplicationEngine*> init_user([](rea::stream<QQmlApplicationEngine*>* aInput){

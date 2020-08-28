@@ -53,6 +53,7 @@ add_executable(${PROJECT_NAME}
     "util/cv.h"
     "util/cv.cpp"
     "util/pack.cpp"
+    "deepsight_anno/model.h"
     "deepsight_anno/user.cpp"
     "deepsight_anno/project.cpp"
     "deepsight_anno/task.cpp"

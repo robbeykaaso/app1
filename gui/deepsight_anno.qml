@@ -16,31 +16,28 @@ ApplicationWindow {
     Column{
         anchors.fill: parent
         Status{
+            id: status
             name: "title"
             width: parent.width
             height: 60
             Button{
-                property string lastState
-                id: back
                 visible: false
                 anchors.right: parent.right
                 text: qsTr("Back")
                 height: parent.height
                 width: height * 2
                 onClicked: {
-                    if (lastState == "User")
-                        Pipeline2.run("openUser", 0)
-                    else
-                        Pipeline2.run("user_listViewSelected", [], {tag: "openProject"})
+                    var desp = []
+                    for (var i = 0; i < status.statuslist.count - 1; ++i)  //parent is not status here
+                        desp.push(status.statuslist.get(i).cap)
+                    Pipeline2.run("title_updateStatus", desp)
                 }
-            }
-            Component.onCompleted: {
-                Pipeline2.find(name + "_updateStatus").next(function(aInput){
-                    back.visible = aInput.length > 1
-                    //console.log(aInput.length)
-                    back.lastState = aInput.length === 2 ? "User" : "Project"
-                    return {out: {}}
-                }, {}, {vtype: []})
+                Component.onCompleted: {
+                    Pipeline2.find("title_updateStatus").next(function(aInput){
+                        visible = aInput.length > 1
+                        return {out: {}}
+                    }, {}, {vtype: []})
+                }
             }
         }
 
@@ -70,13 +67,15 @@ ApplicationWindow {
             height: parent.height - 60
             //initialItem: items[0]
             Component.onCompleted: {
-                Pipeline2.add(function(aInput){
-                    var idx = Math.round(aInput)
+                Pipeline2.find("title_updateStatus")
+                .next(function(aInput){
+                    var idx = aInput.length - 1
                     if (lastpage !== idx){
                         lastpage = idx
                         replace(items[lastpage])
                     }
-                }, {name: "switchPage", vtype: 0})
+                    return {out: {}}
+                }, {}, {vtype: []})
                 Pipeline2.run("loadUser", 0)
             }
         }
