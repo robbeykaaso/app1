@@ -44,39 +44,56 @@ TabView{
                     height: 100
                     Column{
                         anchors.fill: parent
-                        Label{
-                            text: qsTr("Name: ")
-                            font.pixelSize: 16
-                            leftPadding: 15
-                            topPadding: 15
+                        Repeater{
+                            model: 2
+                            delegate: Label{
+                                text: ""
+                                font.pixelSize: 16
+                                leftPadding: 15
+                                topPadding: 15
+                            }
                         }
-                        Label{
-                            text: qsTr("Type: ")
-                            font.pixelSize: 16
-                            leftPadding: 15
-                            topPadding: 15
+
+                        Component.onCompleted: {
+                            Pipeline2.add(function(aInput){
+                                children[0].text = qsTr("Name: ") + (aInput["name"] || "")
+                                children[1].text = qsTr("Type: ") + (aInput["type"] || "")
+                            }, {name: "updateTaskGUI"})
                         }
                     }
                 }
-                Row{
+                Grid{
+                    id: operation
+                    property var buttons: [
+                        {cap: qsTr("New"), func: function(){
+                             Pipeline2.run("_newObject", {title: qsTr("new task"), content: {name: "", type: ""}, tag: {tag: "newTask"}})
+                        }},
+                        {cap: qsTr("Open"), func: function(){
+                             Pipeline2.run("project_task_listViewSelected", [], {tag: "openTask"})
+                        }},
+                        {cap: qsTr("Delete"), func: function(){
+                             //Pipeline2.run("user_listViewSelected", [], {tag: "deleteProject"})
+                        }}
+
+                    ]
                     width: parent.width
                     height: parent.height - 100
-                    spacing: parent.width * 0.15
-                    leftPadding: spacing
-                    Button{
-                        width: parent.width * 0.3
-                        height: width
-                        text: qsTr("Open")
-                        anchors.verticalCenter: parent.verticalCenter
-                        onClicked: {
-                            Pipeline2.run("project_task_listViewSelected", [], {tag: "openTask"})
+                    rows: 1
+                    columns: 3
+                    Repeater{
+                        model: 3
+                        delegate: Item{
+                            width: parent.width / parent.columns
+                            height: parent.height / parent.rows
+                            Button{
+                                width: parent.width * 0.6
+                                height: width
+                                text: operation.buttons[index].cap
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                onClicked: operation.buttons[index].func()
+                            }
                         }
-                    }
-                    Button{
-                        width: parent.width * 0.3
-                        height: width
-                        text: qsTr("Delete")
-                        anchors.verticalCenter: parent.verticalCenter
                     }
                 }
             }

@@ -3,7 +3,9 @@ import QtQuick 2.12
 import QtQuick.Controls 2.5
 import QtQuick.Controls.Universal 2.3
 import "Component"
+import "Basic"
 import "Deepsight/Page"
+import "Deepsight/Component"
 import Pipeline2 1.0
 
 ApplicationWindow {
@@ -27,7 +29,7 @@ ApplicationWindow {
                 width: height * 2
                 onClicked: {
                     if (lastState == "User")
-                        Pipeline2.run("initSoftware", 0)
+                        Pipeline2.run("openUser", 0)
                     else
                         Pipeline2.run("user_listViewSelected", [], {tag: "openProject"})
                 }
@@ -75,8 +77,14 @@ ApplicationWindow {
                         replace(items[lastpage])
                     }
                 }, {name: "switchPage", vtype: 0})
-                Pipeline2.run("initSoftware", 0)
+                Pipeline2.run("loadUser", 0)
             }
         }
+    }
+    NewObject{
+
+    }
+    MsgDialog{
+
     }
 }
