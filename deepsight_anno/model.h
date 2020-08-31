@@ -5,8 +5,7 @@
 #include <QDateTime>
 
 class model : public QJsonObject{
-protected:
-
+public:
 /*#define ABSTRACT(MODEL) \
     QJsonObject get##MODEL##s(){  \
         return value(QString(STR(MODEL##_abstract)).toLower()).toObject(); \
@@ -31,6 +30,7 @@ protected:
                          "data", data);  \
     }*/
 protected:
+    QString getProjectName(const QJsonObject& aProject);
     void replaceModel(const QJsonObject& aModel){
         auto kys = this->keys();
         for (auto i : kys)

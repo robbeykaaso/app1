@@ -49,19 +49,6 @@ TabView{
         }
     }
     Tab{
-        title: qsTr("Parameter")
-        Row{
-            anchors.fill: parent
-            Rectangle{
-                width: 180
-                height: parent.height
-                List{
-                    anchors.fill: parent
-                }
-            }
-        }
-    }
-    Tab{
         title: qsTr("Job")
         Row{
             anchors.fill: parent

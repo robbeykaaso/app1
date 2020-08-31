@@ -1,5 +1,4 @@
 {
-    "id": "",
     "tasks": ["task_id"],
     "images": ["image_id"],
     "labels": ["label_id"],
