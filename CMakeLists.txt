@@ -25,8 +25,8 @@ set(REA_DIR ${CMAKE_CURRENT_LIST_DIR}/../frm/cmake)
 #message("xxx: ${CMAKE_CURRENT_LIST_DIR}")
 find_package(REA)
 
-find_package(DeepInspectSDK REQUIRED)
-find_package(RapidJSON REQUIRED)
+#find_package(DeepInspectSDK REQUIRED)
+#find_package(RapidJSON REQUIRED)
 
 #find_package(PythonLibs REQUIRED)
 #qtquick_compiler_add_resources(RESOURCES qml.qrc)
@@ -48,8 +48,8 @@ add_executable(${PROJECT_NAME}
     "socket/unitTest.cpp"
     "serial/modbusMaster.h"
     "serial/modbusMaster.cpp"
-    "device/camera.cpp"
-    "device/io.cpp"
+    #"device/camera.cpp"
+    #"device/io.cpp"
     "util/cv.h"
     "util/cv.cpp"
     "util/pack.cpp"
@@ -67,19 +67,19 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${OpenCV_LIBS}
     ${AWSSDK_LINK_LIBRARIES}
     ${REA_LIBS}
-    ${DeepInspectSDK_LIBS})# ${VTK_LIBRARIES})# ${PYTHON_LIBRARIES})#  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
+#    ${DeepInspectSDK_LIBS}
+    )# ${VTK_LIBRARIES})# ${PYTHON_LIBRARIES})#  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
 #include_directories("${deepinspectapptemplate_ROOT}/deepinspectControl")
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${REA_INCLUDE_DIRS})
 
 include_directories(${RxCpp_INCLUDE_DIRS})
 include_directories(${RapidJSON_INCLUDE_DIRS})
-include_directories(${DeepInspectSDK_INCLUDE_DIRS})
+#include_directories(${DeepInspectSDK_INCLUDE_DIRS})
 #message("xxx: ${REA_INCLUDE_DIRS}")
 #include(${VTK_USE_FILE})
 #include_directories("D:/thirdParty/tinydnn/tiny-dnn")
 #include_directories(${RapidJSON_INCLUDE_DIRS})
-#include_directories(${DeepInspectSDK_INCLUDE_DIRS})
 #include_directories(${RxCpp_INCLUDE_DIRS})
 #include_directories (${gflags_INCLUDE_DIR})
 #include_directories(${AWSSDK_INCLUDE_DIR})

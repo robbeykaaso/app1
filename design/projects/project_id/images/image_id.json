@@ -1,0 +1,19 @@
+{
+    "id": "id",
+    "source": ["path"],
+    "local": ["origin_path"],
+    "shapes": {
+        "shape_id0": {
+            "label": "label",
+            "points": [456, 211, 795, 320],
+            "type": "rect"
+        },
+        "shape_id1": {
+            "label": "label",
+            "center": [648, 896],
+            "xradius": 60,
+            "yradius": 70,
+            "type": "ellipse"
+        }
+    }
+}

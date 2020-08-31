@@ -101,7 +101,7 @@ Column {
             }
         }
         highlight: Rectangle {
-            width: parent.width
+            width: parent ? parent.width : 0
             height: 30
             color: selcolor
             radius: 5

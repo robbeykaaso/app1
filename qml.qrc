@@ -41,5 +41,6 @@
         <file>gui/Deepsight/Page/Task.qml</file>
         <file>gui/Deepsight/Page/User.qml</file>
         <file>gui/Deepsight/Component/NewObject.qml</file>
+        <file>gui/Deepsight/Component/MakeSure.qml</file>
     </qresource>
 </RCC>

@@ -7,7 +7,7 @@
 class model : public QJsonObject{
 protected:
 
-#define ABSTRACT(MODEL) \
+/*#define ABSTRACT(MODEL) \
     QJsonObject get##MODEL##s(){  \
         return value(QString(STR(MODEL##_abstract)).toLower()).toObject(); \
     } \
@@ -29,7 +29,7 @@ protected:
         return rea::Json("title", rea::JArray("name"),  \
                          "selects", a##MODEL##s.size() > 0 ? rea::JArray("0") : QJsonArray(),  \
                          "data", data);  \
-    }
+    }*/
 protected:
     void replaceModel(const QJsonObject& aModel){
         auto kys = this->keys();

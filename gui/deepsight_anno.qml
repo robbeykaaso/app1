@@ -83,6 +83,9 @@ ApplicationWindow {
     NewObject{
 
     }
+    MakeSure{
+
+    }
     MsgDialog{
 
     }

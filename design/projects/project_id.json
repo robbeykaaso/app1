@@ -1,0 +1,11 @@
+{
+    "id": "",
+    "tasks": ["task_id"],
+    "images": ["image_id"],
+    "labels": ["label_id"],
+    "label_groups": ["group_id"],
+    "image_filter": {
+        "type": "",
+        "val": ""
+    }
+}

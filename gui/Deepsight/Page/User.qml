@@ -72,7 +72,8 @@ TabView{
                              Pipeline2.run("user_listViewSelected", [], {tag: "openProject"})
                         }},
                         {cap: qsTr("Delete"), func: function(){
-                             Pipeline2.run("user_listViewSelected", [], {tag: "deleteProject"})
+                             Pipeline2.run("_makeSure", {title: qsTr("delete project"), content: "Make sure to delete?", tag: {tag: "deleteProject"}})
+                             //Pipeline2.run("user_listViewSelected", [], {tag: "deleteProject"})
                         }}
 
                     ]

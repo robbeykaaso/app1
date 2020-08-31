@@ -1,0 +1,13 @@
+{
+    "label_id": {
+        "name": "",
+        "color": "",
+        "deleted": "bool",
+        "size": "integer"
+    },
+    "group_id": {
+        "name": "",
+        "labels": ["label_id"],
+        "deleted": "bool"
+    }
+}

@@ -1,0 +1,20 @@
+{
+    "roi_region": {
+        "shapes": {
+            "shape_id0": {
+                "label": "label",
+                "points": [456, 211, 795, 320],
+                "type": "rect"
+            }
+        },
+        "ratio_mode": "bool"
+    },
+    "images": ["image_id"],
+    "labels": ["label_id"],
+    "label_groups": ["group_id"],
+    "scatter_display": "bool",
+    "image_filter": {
+        "type": "",
+        "val": ""
+    }
+}

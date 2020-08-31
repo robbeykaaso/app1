@@ -1,0 +1,12 @@
+{
+    "id": "",
+    "projects": ["project_id"],  //the first is current_project
+    "password": "",
+    "setup": {
+        "format_convert": "RGB2Gray",
+        "resize_mode": "linear",
+        "free_draw_radius": 1,
+        "zoom_ratio": 1.25
+    },
+    "current_task": "task_id"
+}

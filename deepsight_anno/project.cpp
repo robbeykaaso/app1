@@ -4,10 +4,10 @@
 
 class project : public model{
 protected:
-    ABSTRACT(Task)
+   // ABSTRACT(Task)
 public:
     project(){
-        rea::pipeline::add<QString>([this](rea::stream<QString>* aInput){  //open project
+/*        rea::pipeline::add<QString>([this](rea::stream<QString>* aInput){  //open project
             if (aInput->data() != getID()){
                 setID(aInput->data());
                 aInput->out<stgJson>(stgJson(QJsonObject(), "projectInfo/" + aInput->data() + ".json"));
@@ -68,6 +68,7 @@ public:
         ->nextB(0, "project_task_updateListView", QJsonObject())
         ->nextB(0, "project_task_listViewSelected", rea::Json("tag", "manual"))
         ->next("deepsightwriteJson");
+        */
     }
 private:
     void setID(const QString& aID){

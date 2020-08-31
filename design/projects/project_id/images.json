@@ -1,0 +1,12 @@
+{
+    "image_id": {
+        "name": [],
+        "time": "",
+        "shape_labels": {
+            "label_id": "count/integer"
+        },
+        "image_labels": {
+            "group_id": "label_id"
+        }
+    }
+}
