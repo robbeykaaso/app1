@@ -47,7 +47,8 @@ private:
     QJsonObject m_projects;
 public:
     user(){
-        rea::pipeline::add<double>([this](rea::stream<double>* aInput){  //open user
+        //open user
+        rea::pipeline::add<double>([this](rea::stream<double>* aInput){
             aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint()}), "title_updateStatus");
             auto projs = getProjects();
             aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
@@ -75,7 +76,8 @@ public:
         }), rea::Json("tag", "manual"))
         ->next("updateProjectGUI");
 
-        rea::pipeline::find("_makeSure")  //delete project
+        //delete project
+        rea::pipeline::find("_makeSure")
         ->next(rea::local("user_listViewSelected"), rea::Json("tag", "deleteProject"))
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
            auto dt = aInput->data();
@@ -117,7 +119,8 @@ public:
         ->nextB(0, "deepsightdeletePath", QJsonObject())
         ->next("deepsightwriteJson");
 
-        rea::pipeline::find("user_listViewSelected")  //open project
+        //open project
+        rea::pipeline::find("user_listViewSelected")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
             auto dt = aInput->data();
             if (dt.size() > 0){
@@ -130,7 +133,8 @@ public:
         ->nextB(0, "title_updateStatus", QJsonObject())
         ->next(openProject);
 
-        rea::pipeline::find("_newObject")  //new project, import project
+        //new project, import project
+        rea::pipeline::find("_newObject")
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
             auto proj = aInput->data();
 
@@ -159,15 +163,15 @@ public:
             aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
             aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), "deepsightwriteJson");
             aInput->out<stgJson>(stgJson(m_projects, "project.json"), "deepsightwriteJson");
-            if (projs.size() == 1)
-                aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
+            aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
         }), rea::Json("tag", "newProject"))
         ->nextB(0, "popMessage", QJsonObject())
         ->nextB(0, "user_updateListView", QJsonObject())
         ->nextB(0, "user_listViewSelected", rea::Json("tag", "manual"))
         ->next("deepsightwriteJson");
 
-        rea::pipeline::add<double>([](rea::stream<double>* aInput){ //load user
+        //load user
+        rea::pipeline::add<double>([](rea::stream<double>* aInput){
             aInput->out<stgJson>(stgJson(QJsonObject(), "project.json"));
             aInput->out<stgJson>(stgJson(QJsonObject(), "user/" + rea::GetMachineFingerPrint() + ".json"));
         }, rea::Json("name", loaduser))
@@ -176,7 +180,7 @@ public:
         ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
             auto dt = aInput->data();
             m_projects = dt[0].getData();
-            replaceModel(dt[1].getData());
+            dt[1].getData().swap(*this);
             aInput->out<double>(0, openUser);
         }))
         ->next(openUser);

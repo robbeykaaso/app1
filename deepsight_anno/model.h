@@ -31,14 +31,6 @@ public:
     }*/
 protected:
     QString getProjectName(const QJsonObject& aProject);
-    void replaceModel(const QJsonObject& aModel){
-        auto kys = this->keys();
-        for (auto i : kys)
-            if (i != "id")
-                this->remove(i);
-        for (auto i : aModel.keys())
-            this->insert(i, aModel.value(i));
-    }
 };
 
 #endif

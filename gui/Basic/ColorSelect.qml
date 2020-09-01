@@ -7,7 +7,7 @@ ColorDialog{
     property var service_tag
 
     onAccepted: {
-        Pipeline2.run(name + "_colorSelected", color.toString(), service_tag)
+        Pipeline2.run(name + "_colorSelected", "", service_tag)
         close()
     }
     onRejected: {
@@ -15,7 +15,7 @@ ColorDialog{
     }
     Component.onCompleted: {
         Pipeline2.add(function(aInput){
-            return {out: {}}
+            return {data: color.toString(), out: {}}
         }, {name: name + "_colorSelected", type: "Partial", vtype: ""})
 
         Pipeline2.add(function(aInput){

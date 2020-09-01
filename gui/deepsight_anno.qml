@@ -89,4 +89,7 @@ ApplicationWindow {
     MsgDialog{
 
     }
+    ColorSelect{
+
+    }
 }

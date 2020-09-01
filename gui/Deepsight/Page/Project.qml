@@ -124,11 +124,17 @@ TabView{
                         text: qsTr("new")
                         height: 30
                         width: parent.width / 2
+                        onClicked: {
+                            Pipeline2.run("_newObject", {title: qsTr("new group"), content: {group: ""}, tag: {tag: "newLabelGroup"}})
+                        }
                     }
                     Button{
                         text: qsTr("delete")
                         height: 30
                         width: parent.width / 2
+                        onClicked: {
+                            Pipeline2.run("_makeSure", {title: qsTr("delete group"), content: "Make sure to delete?", tag: {tag: "deleteLabelGroup"}})
+                        }
                     }
                 }
             }
@@ -179,7 +185,7 @@ TabView{
                     id: label_operation
                     property var buttons: [
                         {cap: qsTr("New"), func: function(){
-
+                            Pipeline2.run("_newObject", {title: qsTr("new label"), content: {label: ""}, tag: {tag: "newLabel"}})
                         }}
                     ]
                     width: parent.width
