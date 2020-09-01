@@ -2,11 +2,12 @@ import QtQuick 2.12
 import QtQuick.Controls 1.2
 import QtQuick.Controls.Styles 1.4
 import "../../Component"
+import "../Component"
+import "../../Basic"
 import QSGBoard 1.0
 import Pipeline2 1.0
 
 TabView{
-
     style: TabViewStyle {
         frameOverlap: 1
         tab: Rectangle {
@@ -27,6 +28,7 @@ TabView{
 
     Tab{
         title: qsTr("Task")
+        active: true  //disable lazy loading
         Row{
             anchors.fill: parent
             Rectangle{
@@ -103,6 +105,7 @@ TabView{
     }
     Tab{
         title: qsTr("Labels")
+        active: true
         Row{
             anchors.fill: parent
             Rectangle{
@@ -110,7 +113,23 @@ TabView{
                 height: parent.height
                 List{
                     name: "project_label"
-                    anchors.fill: parent
+                    width: parent.width
+                    height: parent.height - 30
+                }
+                Row{
+                    width: parent.width
+                    height: 30
+                    anchors.bottom: parent.bottom
+                    Button{
+                        text: qsTr("new")
+                        height: 30
+                        width: parent.width / 2
+                    }
+                    Button{
+                        text: qsTr("delete")
+                        height: 30
+                        width: parent.width / 2
+                    }
                 }
             }
             Column{
@@ -121,18 +140,38 @@ TabView{
                     height: 100
                     Column{
                         anchors.fill: parent
-                        Repeater{
-                            model: 3
-                            delegate: Label{
-                                text: ""
-                                font.pixelSize: 16
-                                leftPadding: 15
-                                topPadding: 15
+                        Label{
+                            id: labelgrouptitle
+                            text: qsTr("Group") + ":"
+                            font.pixelSize: 14
+                            padding: 5
+                            width: parent.width
+                            height: 30
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        Gridder{
+                            id: labelgroup
+                            name: "labels"
+                            size: [2, 2]
+                            com: LabelButton{
                             }
+                            width: parent.width
+                            height: 70
                         }
 
                         Component.onCompleted: {
-
+                            Pipeline2.add(function(aInput){
+                                labelgrouptitle.text = qsTr("Group") + ":" + (aInput["key"] || "")
+                                var lbls = aInput["val"] || {}
+                                var cnt = Object.keys(lbls).length
+                                labelgroup.updateViewCount(cnt)
+                                var idx = 0
+                                for (var i in lbls){
+                                    labelgroup.children[idx].clr = lbls[i]["color"] || "steelblue"
+                                    labelgroup.children[idx++].text = i
+                                }
+                            }, {name: "updateLabelGUI"})
                         }
                     }
                 }
@@ -140,24 +179,20 @@ TabView{
                     id: label_operation
                     property var buttons: [
                         {cap: qsTr("New"), func: function(){
-                            // Pipeline2.run("_newObject", {title: qsTr("new task"), content: {name: "", type: ""}, tag: {tag: "newTask"}})
-                        }},
-                        {cap: qsTr("Delete"), func: function(){
-                            // Pipeline2.run("user_listViewSelected", [], {tag: "deleteProject"})
-                        }}
 
+                        }}
                     ]
                     width: parent.width
                     height: parent.height - 100
                     rows: 1
-                    columns: 2
+                    columns: 1
                     Repeater{
-                        model: 2
+                        model: 1
                         delegate: Item{
                             width: parent.width / parent.columns
                             height: parent.height / parent.rows
                             Button{
-                                width: parent.width * 0.6
+                                width: parent.width * 0.4
                                 height: width
                                 text: label_operation.buttons[index].cap
                                 anchors.verticalCenter: parent.verticalCenter
@@ -172,6 +207,7 @@ TabView{
     }
     Tab{
         title: qsTr("Image")
+        active: true
         Row{
             anchors.fill: parent
             Rectangle{

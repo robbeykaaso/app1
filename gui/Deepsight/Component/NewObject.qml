@@ -38,6 +38,7 @@ TWindow{
             close()
         }}
     ]
+
     Component.onCompleted: {
         Pipeline2.add(function(aInput){
             var dt = {}
@@ -54,7 +55,7 @@ TWindow{
                 sets.children[j].destroy()
             for (var i in cnt)
                 entry.createObject(sets, {key: i})
-            height = Object.keys(cnt).length * 30 + 100
+            setHeight(Object.keys(cnt).length * 30 + 100)
             service_tag = aInput["tag"] || {tag: "manual"}
             show()
         }, {name: "_newObject", type: "Delegate", param: {delegate: "_objectNew"}})

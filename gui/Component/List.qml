@@ -117,7 +117,6 @@ Column {
         }
     }
     Component.onCompleted: {
-
         Pipeline2.add(function(aInput){
             return {data: selects, out: {}}
         }, {name: name + "_listViewSelected", type: "Partial", vtype: []})
@@ -162,7 +161,6 @@ Column {
 
             if (aInput["selects"])
                 view.currentIndex = selects.length > 0 ? selects[0] : - 1
-
             return {out: {}}
         }, {name: name + "_updateListView"})
     }

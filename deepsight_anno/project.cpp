@@ -12,13 +12,18 @@ private:
     QString m_project_id;
     QJsonObject m_tasks;
     QJsonObject m_images;
-    QJsonObject m_labels;
 private:
     QJsonArray getTasks(){
         return value("tasks").toArray();
     }
     void setTasks(const QJsonArray& aTasks){
         insert("tasks", aTasks);
+    }
+    QJsonObject getLabels(){
+        return value("labels").toObject();
+    }
+    void setLabels(const QJsonObject& aLabels){
+        insert("labels", aLabels);
     }
     QString getTaskName(const QJsonObject& aTask){
         return aTask.value("name").toString();
@@ -29,6 +34,14 @@ private:
             data.push_back(rea::Json("entry", rea::JArray(getTaskName(m_tasks.value(i.toString()).toObject()))));
         return rea::Json("title", rea::JArray("name"),
                          "selects", aTasks.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "data", data);
+    }
+    QJsonObject prepareLabelListGUI(const QJsonObject& aLabels){
+        QJsonArray data;
+        for (auto i : aLabels.keys())
+            data.push_back(rea::Json("entry", rea::JArray(i)));
+        return rea::Json("title", rea::JArray("group"),
+                         "selects", aLabels.size() > 0 ? rea::JArray("0") : QJsonArray(),
                          "data", data);
     }
     void insertTask(QJsonObject& aTask){
@@ -49,34 +62,29 @@ public:
                 m_project_abstract = dt.value("abstract").toObject();
                 aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task.json"));
                 aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image.json"));
-                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/label.json"));
                 aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
             }
         }, rea::Json("name", "openProject"))
         ->next(rea::local("deepsightreadJson"))
-        ->next(rea::buffer<stgJson>(4))
+        ->next(rea::buffer<stgJson>(3))
         ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
             auto dt = aInput->data();
             m_tasks = dt[0].getData();
             m_images = dt[1].getData();
-            m_labels = dt[2].getData();
-            replaceModel(dt[3].getData());
+            replaceModel(dt[2].getData());
 
             auto tsks = getTasks();
+            auto lbls = getLabels();
             aInput->out<QJsonObject>(prepareTaskListGUI(tsks), "project_task_updateListView");
-            if (tsks.size() > 0){
-                auto idx = dt[0].toInt();
-                if (idx < tsks.size()){
-                    auto nm = tsks[idx].toString();
-                    aInput->out<QJsonObject>(m_tasks.value(nm).toObject(), "updateTaskGUI");
-                }else
-                    aInput->out<QJsonObject>(QJsonObject(), "updateTaskGUI");
-            }
-            else
-                aInput->out<QJsonObject>(QJsonObject(), "updateTaskGUI");
+            aInput->out<QJsonObject>(prepareLabelListGUI(lbls), "project_label_updateListView");
+            aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected");
+            aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
         }))
         ->nextB(0, "updateTaskGUI", QJsonObject())
-        ->next("project_task_updateListView");
+        ->nextB(0, "project_label_updateListView", QJsonObject())
+        ->nextB(0, "project_task_updateListView", QJsonObject())
+        ->nextB(0, "project_task_listViewSelected", rea::Json("tag", "manual"))
+        ->next("project_label_listViewSelected", rea::Json("tag", "manual"));
 
         rea::pipeline::find("_newObject")  //new task
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
@@ -168,6 +176,25 @@ public:
         }), rea::Json("tag", openTask))
         ->nextB(0, "title_updateStatus", QJsonObject())
         ->next(openTask);
+
+        rea::pipeline::find("project_label_listViewSelected")  //select label group
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+           auto dt = aInput->data();
+           if (dt.size() == 0)
+               aInput->out<QJsonObject>(QJsonObject(), "updateLabelGUI");
+           else{
+               auto idx = dt[0].toInt();
+               auto lbls = getLabels();
+               if (idx < lbls.size()){
+                   aInput->out<QJsonObject>(rea::Json("key", (lbls.begin() + idx).key(), "val", (lbls.begin() + idx)->toObject()), "updateLabelGUI");
+               }
+               else
+                   aInput->out<QJsonObject>(QJsonObject(), "updateLabelGUI");
+           }
+        }), rea::Json("tag", "manual"))
+        ->next("updateLabelGUI");
+        //new label
+        //delete label
     }
 };
 

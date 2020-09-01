@@ -1,8 +1,18 @@
 {
     "tasks": ["task_id"],
     "images": ["image_id"],
-    "labels": ["label_id"],
-    "label_groups": ["group_id"],
+    "labels": {
+        "shape": {
+            "labelName": {
+                "color": ""
+            }
+        },
+        "groupName": {
+            "labelName": {
+                "color": ""
+            }
+        }
+    },
     "image_filter": {
         "type": "",
         "val": ""

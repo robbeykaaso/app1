@@ -33,7 +33,19 @@ TabView{
                 List{
                     name: "user"
                     anchors.fill: parent
+                    //width: parent.width
+                    //height: parent.height - 30
                 }
+                /*Row{
+                    width: parent.width
+                    height: 30
+                    anchors.bottom: parent.bottom
+                    Button{
+                        text: qsTr("import")
+                        height: 30
+                        width: parent.width
+                    }
+                }*/
             }
             Column{
                 width: parent.width - 180
@@ -66,27 +78,29 @@ TabView{
                     id: operation
                     property var buttons: [
                         {cap: qsTr("New"), func: function(){
-                             Pipeline2.run("_newObject", {title: qsTr("new project"), content: {name: "", channel: ""}, tag: {tag: "newProject"}})
+                            Pipeline2.run("_newObject", {title: qsTr("new project"), content: {name: "", channel: ""}, tag: {tag: "newProject"}})
                         }},
-                        {cap: qsTr("Open"), func: function(){
-                             Pipeline2.run("user_listViewSelected", [], {tag: "openProject"})
+                        {cap: qsTr("Import"), func: function(){
+                            Pipeline2.run("_newObject", {title: qsTr("import project"), content: {id: ""}, tag: {tag: "newProject"}})
                         }},
                         {cap: qsTr("Delete"), func: function(){
-                             Pipeline2.run("_makeSure", {title: qsTr("delete project"), content: "Make sure to delete?", tag: {tag: "deleteProject"}})
+                            Pipeline2.run("_makeSure", {title: qsTr("delete project"), content: "Make sure to delete?", tag: {tag: "deleteProject"}})
+                        }},
+                        {cap: qsTr("Open"), func: function(){
+                            Pipeline2.run("user_listViewSelected", [], {tag: "openProject"})
                         }}
-
                     ]
                     width: parent.width
                     height: parent.height - 100
-                    rows: 1
-                    columns: 3
+                    rows: 2
+                    columns: 2
                     Repeater{
-                        model: 3
+                        model: 4
                         delegate: Item{
                             width: parent.width / parent.columns
                             height: parent.height / parent.rows
                             Button{
-                                width: parent.width * 0.6
+                                width: parent.width * 0.4
                                 height: width
                                 text: operation.buttons[index].cap
                                 anchors.verticalCenter: parent.verticalCenter

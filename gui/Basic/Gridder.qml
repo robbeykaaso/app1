@@ -46,7 +46,7 @@ Grid{
             sum = aSum[0] * aSum[1]
         else
             sum = aSum
-        if (sum > 0){
+        if (sum >= 0){
             var del = sum - viewcount
             var i
             if (del > 0){

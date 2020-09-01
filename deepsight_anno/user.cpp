@@ -23,20 +23,26 @@ private:
     }
     QJsonObject prepareProjectListGUI(const QJsonArray& aProjects){
         QJsonArray data;
-        for (auto i : aProjects)
-            data.push_back(rea::Json("entry", rea::JArray(getProjectName(m_projects.value(i.toString()).toObject()))));
-        return rea::Json("title", rea::JArray("name"),
+        for (auto i : aProjects){
+            auto proj = m_projects.value(i.toString()).toObject();
+            data.push_back(rea::Json("entry", rea::JArray(getProjectName(proj), getProjectOwner(proj) == rea::GetMachineFingerPrint())));
+        }
+        return rea::Json("title", rea::JArray("name", "owner"),
                          "selects", aProjects.size() > 0 ? rea::JArray("0") : QJsonArray(),
                          "data", data);
     }
-    void insertProject(QJsonObject& aProject){
+    QJsonArray addProject(const QString& aID){
         auto mdls = getProjects();
+        mdls.push_back(aID);
+        setProjects(mdls);
+        return mdls;
+    }
+    QString insertProject(QJsonObject& aProject){
         auto tm = QDateTime::currentDateTime().toString(Qt::DateFormat::ISODate);
         auto tms = tm.split("T");
         auto id = rea::generateUUID();
-        mdls.push_back(id);
         m_projects.insert(id, rea::Json(aProject, "time", tms[0] + " " + tms[1], "owner", rea::GetMachineFingerPrint()));
-        setProjects(mdls);
+        return id;
     }
     QJsonObject m_projects;
 public:
@@ -45,10 +51,9 @@ public:
             aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint()}), "title_updateStatus");
             auto projs = getProjects();
             aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
-            if (projs.size() > 0)
-                aInput->out<QJsonObject>(m_projects.value(projs.begin()->toString()).toObject(), "updateProjectGUI");
+            aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
         }, rea::Json("name", openUser))
-        ->nextB(0, "updateProjectGUI", QJsonObject())
+        ->nextB(0, "user_listViewSelected", rea::Json("tag", "manual"))
         ->nextB(0, "title_updateStatus", QJsonObject())
         ->next("user_updateListView");
 
@@ -125,21 +130,37 @@ public:
         ->nextB(0, "title_updateStatus", QJsonObject())
         ->next(openProject);
 
-        rea::pipeline::find("_newObject")  //new project
+        rea::pipeline::find("_newObject")  //new project, import project
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
             auto proj = aInput->data();
-            auto nm = proj.value("name").toString();
-            if (nm == "")
-                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid name!"), "popMessage");
-            else{
-                insertProject(proj);
-                auto projs = getProjects();
-                aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
-                aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), "deepsightwriteJson");
-                aInput->out<stgJson>(stgJson(m_projects, "project.json"), "deepsightwriteJson");
-                if (projs.size() == 1)
-                    aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
+
+            auto projs = getProjects();
+            if (proj.contains("id")){
+                auto id = proj.value("id").toString();
+                if (!m_projects.contains(id)){
+                    aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid id!"), "popMessage");
+                    return;
+                }else{
+                    for (auto i : projs)
+                        if (i == id){
+                            aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Existed project!"), "popMessage");
+                            return;
+                        }
+                    projs = addProject(id);
+                }
+            }else{
+                auto nm = proj.value("name").toString();
+                if (nm == ""){
+                    aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid name!"), "popMessage");
+                    return;
+                }else
+                    projs = addProject(insertProject(proj));
             }
+            aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
+            aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), "deepsightwriteJson");
+            aInput->out<stgJson>(stgJson(m_projects, "project.json"), "deepsightwriteJson");
+            if (projs.size() == 1)
+                aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
         }), rea::Json("tag", "newProject"))
         ->nextB(0, "popMessage", QJsonObject())
         ->nextB(0, "user_updateListView", QJsonObject())

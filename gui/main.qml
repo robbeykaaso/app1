@@ -705,7 +705,7 @@ ApplicationWindow {
         content: Gridder{
             id: gridder_cld
 
-            name: qsTr("demo")
+            name: "demo"
             size: [2, 2]
             com: Component{
                 Rectangle{

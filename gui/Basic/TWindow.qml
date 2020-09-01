@@ -118,4 +118,8 @@ Window{
             }
         }
     }
+    function setHeight(aHeight){
+        height = aHeight
+        mid.height = height - Screen.desktopAvailableHeight * (0.045 + (footbuttons ? 0.03 : 0))
+    }
 }
