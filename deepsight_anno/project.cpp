@@ -14,6 +14,15 @@ private:
     QJsonObject m_tasks;
     QJsonObject m_images;
 private:
+    int getChannelCount(){
+        return m_project_abstract.value("channel").toString("1").toInt();
+    }
+    QJsonArray getImages(){
+        return value("images").toArray();
+    }
+    void setImages(const QJsonArray& aImages){
+        insert("images", aImages);
+    }
     QJsonArray getTasks(){
         return value("tasks").toArray();
     }
@@ -28,6 +37,21 @@ private:
     }
     QString getTaskName(const QJsonObject& aTask){
         return aTask.value("name").toString();
+    }
+    QString getImageName(const QJsonObject& aImage){
+        auto nms = aImage.value("name").toArray();
+        QString ret = "";
+        for (auto i : nms)
+            ret += i.toString() + "\n";
+        return ret;
+    }
+    QJsonObject prepareImageListGUI(const QJsonArray& aImages){
+        QJsonArray data;
+        for (auto i : aImages)
+            data.push_back(rea::Json("entry", rea::JArray(getImageName(m_images.value(i.toString()).toObject()))));
+        return rea::Json("title", rea::JArray("name"),
+                         "selects", aImages.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "data", data);
     }
     QJsonObject prepareTaskListGUI(const QJsonArray& aTasks){
         QJsonArray data;
@@ -76,6 +100,7 @@ public:
             dt[2].getData().swap(*this);
 
             auto tsks = getTasks();
+            auto imgs = getImages();
             auto lbls = getLabels();
             bool dflt = false;
             if (!lbls.contains("shape")){
@@ -91,14 +116,18 @@ public:
                 setLabels(lbls);
 
             aInput->out<QJsonObject>(prepareTaskListGUI(tsks), "project_task_updateListView");
+            aInput->out<QJsonObject>(prepareImageListGUI(imgs), "project_image_updateListView");
             aInput->out<QJsonObject>(prepareLabelListGUI(lbls), "project_label_updateListView");
             aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected");
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
             aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
         }))
         ->nextB(0, "updateTaskGUI", QJsonObject())
-        ->nextB(0, "project_label_updateListView", QJsonObject())
         ->nextB(0, "project_task_updateListView", QJsonObject())
+        ->nextB(0, "project_image_updateListView", QJsonObject())
+        ->nextB(0, "project_label_updateListView", QJsonObject())
         ->nextB(0, "project_task_listViewSelected", rea::Json("tag", "manual"))
+        ->nextB(0, "project_image_listViewSelected", rea::Json("tag", "manual"))
         ->next("project_label_listViewSelected", rea::Json("tag", "manual"));
 
         //new task
@@ -351,6 +380,35 @@ public:
         }))
         ->nextB(0, "updateLabelGUI", QJsonObject())
         ->next("deepsightwriteJson");
+
+        //select image
+        rea::pipeline::find("project_image_listViewSelected")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+           auto dt = aInput->data();
+           if (dt.size() == 0)
+               aInput->out<QJsonObject>(QJsonObject(), "updateImageGUI");
+           else{
+               auto idx = dt[0].toInt();
+               auto imgs = getImages();
+               if (idx < imgs.size()){
+                   auto nm = imgs[idx].toString();
+                   aInput->out<QJsonObject>(m_tasks.value(nm).toObject(), "updateImageGUI");
+               }
+               else
+                   aInput->out<QJsonObject>(QJsonObject(), "updateImageGUI");
+           }
+        }), rea::Json("tag", "manual"))
+        ->next("updateImageGUI");
+
+        const QString importImage = "importImage";
+        rea::pipeline::find("_selectFile")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            auto pths = aInput->data();
+            auto ch = getChannelCount();
+            for (int i = 0; i < pths.size(); i += ch){
+
+            }
+        }), rea::Json("tag", "importImage"));
     }
 };
 

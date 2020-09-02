@@ -188,7 +188,8 @@ public:
 };
 
 static rea::regPip<QQmlApplicationEngine*> init_user([](rea::stream<QQmlApplicationEngine*>* aInput){
-    static fsStorage local_storage("deepsight");
+    static fsStorage file_storage("deepsight");
+    static fsStorage local_storage;
     static user cur_user;
     aInput->out();
 }, QJsonObject(), "regQML");

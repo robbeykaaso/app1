@@ -219,29 +219,65 @@ TabView{
             Rectangle{
                 width: 180
                 height: parent.height
-                List{
-                    name: "project_image"
-                    width: parent.width
-                    height: parent.height - 30
-                }
-                Row{
-                    width: parent.width
-                    height: 30
-                    anchors.bottom: parent.bottom
-                    Button{
-                        text: qsTr("import")
+                Column{
+                    anchors.fill: parent
+                    Row{
+                        width: parent.width
                         height: 30
-                        width: parent.width / 3
+                        Button{
+                            text: qsTr("All")
+                            height: parent.height
+                            width: 60
+                        }
+                        Search {
+                            text: qsTr("filter")
+                            height: parent.height
+                            width: parent.width - 60
+                        }
                     }
-                    Button{
-                        text: qsTr("export")
-                        height: 30
-                        width: parent.width / 3
+                    List{
+                        name: "project_image"
+                        width: parent.width
+                        height: parent.height - 90
                     }
-                    Button{
-                        text: qsTr("save")
+                    Row{
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: 90
                         height: 30
-                        width: parent.width / 3
+                        Edit{
+                            caption.text: qsTr("Page: ")
+                            input.text: "2"
+                            background.color: "lightskyblue"
+                            width: 60
+                            ratio: 0.5
+                        }
+                        Label{
+                            text: "/10"
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                    Row{
+                        width: parent.width
+                        height: 30
+                        //anchors.bottom: parent.bottom
+                        Button{
+                            text: qsTr("import")
+                            height: 30
+                            width: parent.width / 3
+                            onClicked: {
+                                Pipeline2.run("_selectFile", {folder: false, filter: ["Image files (*.jpg *.png *.jpeg *.bmp)"], tag: {tag: "importImage"}})
+                            }
+                        }
+                        Button{
+                            text: qsTr("export")
+                            height: 30
+                            width: parent.width / 3
+                        }
+                        Button{
+                            text: qsTr("save")
+                            height: 30
+                            width: parent.width / 3
+                        }
                     }
                 }
             }

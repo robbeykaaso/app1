@@ -89,6 +89,9 @@ ApplicationWindow {
     MsgDialog{
 
     }
+    File{
+
+    }
     ColorSelect{
 
     }
