@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
         translator.load(ln);
     QCoreApplication::installTranslator(&translator);*/
 
-    //engine.load(QUrl(QStringLiteral("qrc:/gui/deepsight_anno.qml")));
-    engine.load(QUrl(QStringLiteral("qrc:/gui/main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:/gui/deepsight_anno.qml")));
+    //engine.load(QUrl(QStringLiteral("qrc:/gui/main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
 

@@ -358,9 +358,35 @@ ApplicationWindow {
                                                           ]})
                     }
                 }
+                MenuItem{
+                    text: qsTr("updatePageListView")
+                    onClicked: {
+                        Pipeline2.run("pageList_updateListView", {title: ["idx", "dog", "sheep", "rat"],
+                                                          selects: [1, 3, 11],
+                                                          entrycount: 3,
+                                                          pageindex: 2,
+                                                          data: [
+                                                            {entry: [0, 6, 2, 3]},
+                                                            {entry: [1, 6, 2, 3]},
+                                                            {entry: [2, 6, 2, 3]},
+                                                            {entry: [3, 6, 2, 3]},
+                                                            {entry: [4, 6, 2, 3]},
+                                                            {entry: [5, 6, 2, 3]},
+                                                            {entry: [6, 6, 2, 3]},
+                                                            {entry: [7, 6, 2, 3]},
+                                                            {entry: [8, 6, 2, 3]},
+                                                            {entry: [9, 6, 2, 3]},
+                                                            {entry: [10, 6, 2, 3]},
+                                                            {entry: [11, 6, 2, 3]}
+                                                          ]})
+                    }
+                }
 
                 Component.onCompleted: {
                     Pipeline2.find("_listViewSelected").next(function(aInput){
+                        console.log(aInput)
+                    }, {tag: "manual"}, {vtype: []})
+                    Pipeline2.find("pageList_listViewSelected").next(function(aInput){
                         console.log(aInput)
                     }, {tag: "manual"}, {vtype: []})
                 }
@@ -594,9 +620,18 @@ ApplicationWindow {
                     }
                     Rectangle{
                         width: parent.width
-                        height: parent.height - 30
+                        height: (parent.height - 30) / 2
                         color: "white"
                         List{
+                            anchors.fill: parent
+                        }
+                    }
+                    Rectangle{
+                        width: parent.width
+                        height: (parent.height - 30) / 2
+                        color: "white"
+                        PageList{
+                            name: "pageList"
                             anchors.fill: parent
                         }
                     }

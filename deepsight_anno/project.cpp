@@ -56,6 +56,7 @@ private:
         for (auto i : aImages)
             data.push_back(rea::Json("entry", rea::JArray(getImageName(m_images.value(i.toString()).toObject()))));
         return rea::Json("title", rea::JArray("name"),
+                         "entrycount", 30,
                          "selects", aImages.size() > 0 ? rea::JArray("0") : QJsonArray(),
                          "data", data);
     }

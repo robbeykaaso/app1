@@ -235,26 +235,10 @@ TabView{
                             width: parent.width - 60
                         }
                     }
-                    List{
+                    PageList{
                         name: "project_image"
                         width: parent.width
-                        height: parent.height - 90
-                    }
-                    Row{
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: 90
-                        height: 30
-                        Edit{
-                            caption.text: qsTr("Page: ")
-                            input.text: "2"
-                            background.color: "lightskyblue"
-                            width: 60
-                            ratio: 0.5
-                        }
-                        Label{
-                            text: "/10"
-                            anchors.verticalCenter: parent.verticalCenter
-                        }
+                        height: parent.height - 60
                     }
                     Row{
                         width: parent.width
