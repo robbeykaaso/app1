@@ -46,10 +46,12 @@ TWindow{
                 value = cur / sum
                 title.text = tit + " (" + Math.round(value * 100) + "%)"
 
-                if (value == 1)
+                if (value == 1){
                     root.close()
-                else if (!root.visible)
+                }
+                else if (!root.visible){
                     root.show()
+                }
                 return {out: [{out: value}]}
             }
 

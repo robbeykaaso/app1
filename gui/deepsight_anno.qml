@@ -95,4 +95,7 @@ ApplicationWindow {
     ColorSelect{
 
     }
+    Progress{
+
+    }
 }

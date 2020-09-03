@@ -8,11 +8,14 @@ protected:
    // ABSTRACT(Task)
 private:
     const QString openTask = "openTask";
+    const QString importImage = "importImage";
 private:
     QJsonObject m_project_abstract;
     QString m_project_id;
     QJsonObject m_tasks;
     QJsonObject m_images;
+private:
+    std::vector<stgCVMat> m_cvmat_cache;
 private:
     int getChannelCount(){
         return m_project_abstract.value("channel").toString("1").toInt();
@@ -41,8 +44,11 @@ private:
     QString getImageName(const QJsonObject& aImage){
         auto nms = aImage.value("name").toArray();
         QString ret = "";
-        for (auto i : nms)
-            ret += i.toString() + "\n";
+        if (nms.size() > 0){
+            ret += nms[0].toString();
+            if (nms.size() > 1)
+                ret += "\n...";
+        }
         return ret;
     }
     QJsonObject prepareImageListGUI(const QJsonArray& aImages){
@@ -392,7 +398,7 @@ public:
                auto imgs = getImages();
                if (idx < imgs.size()){
                    auto nm = imgs[idx].toString();
-                   aInput->out<QJsonObject>(m_tasks.value(nm).toObject(), "updateImageGUI");
+                   aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateImageGUI");
                }
                else
                    aInput->out<QJsonObject>(QJsonObject(), "updateImageGUI");
@@ -400,15 +406,76 @@ public:
         }), rea::Json("tag", "manual"))
         ->next("updateImageGUI");
 
-        const QString importImage = "importImage";
+        //import image
         rea::pipeline::find("_selectFile")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            m_cvmat_cache.clear();
             auto pths = aInput->data();
-            auto ch = getChannelCount();
-            for (int i = 0; i < pths.size(); i += ch){
+            auto remain = pths.size() % getChannelCount();
+            while (remain--)
+                pths.pop_back();
+            aInput->out<QJsonObject>(rea::Json("title", importImage, "sum", pths.size()), "updateProgress");
+            for (auto i : pths)
+                aInput->out<stgCVMat>(stgCVMat(cv::Mat(), i.toString()));
+        }), rea::Json("tag", importImage))
+        ->nextB(0, "updateProgress", QJsonObject())
+        ->next(rea::local("readCVMat", rea::Json("thread", 10)))
+        ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
+            m_cvmat_cache.push_back(aInput->data());
+            int sz = int(m_cvmat_cache.size());
+            if (sz == getChannelCount()){
+                auto w = m_cvmat_cache[0].getData().cols, h = m_cvmat_cache[0].getData().rows;
+                for (auto i : m_cvmat_cache){ //make sure the same width and height
+                    if (i.getData().cols != w || i.getData().rows != h){
+                        aInput->out<QJsonObject>(rea::Json("step", sz), "updateProgress");
+                        return;
+                    }
+                }
 
+                auto id = rea::generateUUID();
+                QJsonArray nms;
+                QJsonArray localpth;
+                QJsonArray channels;
+                for (auto i : m_cvmat_cache){
+                    localpth.push_back(i);
+                    channels.push_back(i.getData().channels());
+                    auto nm = i.mid(i.lastIndexOf("/") + 1, i.length());
+                    nms.push_back(nm);
+                    aInput->out<stgCVMat>(stgCVMat(i.getData(), "project/" + m_project_id + "/image/" + id + "/" + nm));
+                }
+                auto tm = QDateTime::currentDateTime().toString(Qt::DateFormat::ISODate);
+                auto tms = tm.split("T");
+                m_images.insert(id, rea::Json("name", nms, "time", tms[0] + " " + tms[1]));  //update image.json
+                aInput->out<stgJson>(stgJson(rea::Json("width", w,  //update image_id.json
+                                                       "height", h,
+                                                       "channel", channels,
+                                                       "source", nms,
+                                                       "local", localpth),
+                                             "project/" + m_project_id + "/image/" + id + ".json"), "deepsightwriteJson");
+
+                auto imgs = getImages();
+                imgs.push_back(id);
+                setImages(imgs);   //update project_id.json
+
+                m_cvmat_cache.clear();
             }
-        }), rea::Json("tag", "importImage"));
+        }))
+        ->nextB(0, "updateProgress", QJsonObject())
+        ->nextB(0, "deepsightwriteJson", QJsonObject())
+        ->next(rea::local("deepsightwriteCVMat", rea::Json("thread", 11)))
+        ->next(rea::pipeline::add<stgCVMat>([](rea::stream<stgCVMat>* aInput){
+            aInput->out<QJsonObject>(QJsonObject());
+        }))
+        ->next(rea::local("updateProgress"))
+        ->next(rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+            if (aInput->data() == 1.0){
+                aInput->out<stgJson>(stgJson(m_images, "project/" + m_project_id + "/image.json"), "deepsightwriteJson");
+                aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
+                aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
+            }
+        }))
+        ->nextB(0, "project_image_updateListView", QJsonObject())
+        ->next("deepsightwriteJson");
     }
 };
 

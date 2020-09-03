@@ -1,5 +1,7 @@
 {
-    "id": "id",
+    "width": "integer",
+    "height": "integer",
+    "channel": [],
     "source": ["path"],
     "local": ["origin_path"],
     "shapes": {
