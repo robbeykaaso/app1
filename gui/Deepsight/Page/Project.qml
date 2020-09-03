@@ -291,14 +291,28 @@ TabView{
                 Row{
                     width: parent.width
                     height: parent.height - 100
-                    QSGBoard{
-                        name: "projbrd"
-                        plugins: [{type: "transform"}]
+
+                    Component.onCompleted: {
+                        Pipeline2.find("title_updateStatus").next(function(aInput){
+                            for (var i = 0; i < projectimage.children.length; ++i)
+                                projectimage.children[i].beforeDestroy()
+                            return {out: {}}
+                        }, {}, {name: "removeWholeQSGNodes", vtype: []})
+                    }
+                    Gridder{
+                        id: projectimage
+                        name: "projectimage"
+                        size: 1
+                        com: QSGBoard{
+                            width: parent.width / parent.columns
+                            height: parent.height / parent.rows
+                            plugins: [{type: "transform"}]
+                            Component.onDestruction: {
+                                beforeDestroy()
+                            }
+                        }
                         width: parent.width - 60
                         height: parent.height
-                        Component.onDestruction: {
-                            beforeDestroy()
-                        }
                     }
                     Rectangle{
                         width: 60

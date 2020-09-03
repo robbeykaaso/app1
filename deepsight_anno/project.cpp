@@ -1,6 +1,8 @@
 #include "reactive2.h"
 #include "../storage/storage.h"
 #include "model.h"
+#include "imagePool.h"
+#include "../util/cv.h"
 #include <QRandomGenerator>
 
 class project : public model{
@@ -15,6 +17,7 @@ private:
     QJsonObject m_tasks;
     QJsonObject m_images;
 private:
+    QString m_current_image;
     std::vector<stgCVMat> m_cvmat_cache;
 private:
     int getChannelCount(){
@@ -388,6 +391,16 @@ public:
         ->nextB(0, "updateLabelGUI", QJsonObject())
         ->next("deepsightwriteJson");
 
+        //the qsgnode will be destroyed by qt after switch page
+        rea::pipeline::find("title_updateStatus")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            if (aInput->data().size() == 2)
+                aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
+            else
+                m_current_image = "";
+        }))
+        ->next("project_image_listViewSelected", rea::Json("tag", "manual"));
+
         //select image
         rea::pipeline::find("project_image_listViewSelected")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
@@ -399,13 +412,41 @@ public:
                auto imgs = getImages();
                if (idx < imgs.size()){
                    auto nm = imgs[idx].toString();
-                   aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateImageGUI");
+                   if (nm != m_current_image){
+                       auto img = m_images.value(nm).toObject();
+                       m_current_image = nm;
+                       auto nms = img.value("name").toArray();
+                       aInput->out<stgCVMat>(stgCVMat(cv::Mat(), "project/" + m_project_id + "/image/" + nm + "/" + nms[0].toString()));
+                   }
+                   //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateImageGUI");
                }
                else
                    aInput->out<QJsonObject>(QJsonObject(), "updateImageGUI");
            }
         }), rea::Json("tag", "manual"))
-        ->next("updateImageGUI");
+        ->nextB(0, "updateImageGUI", QJsonObject())
+        ->next(rea::local("deepsightreadCVMat"))
+        ->next(rea::pipeline::add<stgCVMat>([](rea::stream<stgCVMat>* aInput){
+            auto dt = aInput->data();
+            auto pth = QString(dt);
+            auto img = cvMat2QImage(dt.getData());
+            rea::imagePool::cacheImage(pth, img);
+            auto cfg = rea::Json("width", img.width(),
+                                 "height", img.height(),
+                                 "face", 200,
+                                 "text", rea::Json("visible", false,
+                                                   "size", rea::JArray(100, 50),
+                                                   "location", "bottom"),
+                                 "objects", rea::Json(
+                                                "img_2", rea::Json(
+                                                             "type", "image",
+                                                             "range", rea::JArray(0, 0, img.width(), img.height()),
+                                                             "path", pth
+                                                                 )
+                                                    ));
+            aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder0");
+        }))
+        ->next("updateQSGModel_projectimage_gridder0");
 
         //import image
         rea::pipeline::find("_selectFile")

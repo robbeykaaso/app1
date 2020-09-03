@@ -75,7 +75,7 @@ ApplicationWindow {
                         replace(items[lastpage])
                     }
                     return {out: {}}
-                }, {}, {vtype: []})
+                }, {}, {name: "switch_page", vtype: []})
                 Pipeline2.run("loadUser", 0)
             }
         }
