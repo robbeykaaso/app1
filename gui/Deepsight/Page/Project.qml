@@ -298,17 +298,30 @@ TabView{
                                 projectimage.children[i].beforeDestroy()
                             return {out: {}}
                         }, {}, {name: "removeWholeQSGNodes", vtype: []})
+
+                        Pipeline2.add(function(aInput){
+                            for (var i = 0; i < projectimage.children.length; ++i)
+                                Pipeline2.run("updateQSGAttr_" + projectimage.children[i].name, {key: ["transform"], type: "zoom"})
+                        }, {name: "fitProjectImageShow"})
                     }
                     Gridder{
                         id: projectimage
                         name: "projectimage"
                         size: 1
-                        com: QSGBoard{
+                        com: Rectangle{
+                            property string name
                             width: parent.width / parent.columns
                             height: parent.height / parent.rows
-                            plugins: [{type: "transform"}]
-                            Component.onDestruction: {
-                                beforeDestroy()
+                            color: "transparent"
+                            border.color: "black"
+                            QSGBoard{
+                                name: parent.name
+                                anchors.fill: parent
+                                clip: true
+                                plugins: [{type: "transform"}]
+                                Component.onDestruction: {
+                                    beforeDestroy()
+                                }
                             }
                         }
                         width: parent.width - 60
@@ -324,26 +337,73 @@ TabView{
                                 text: qsTr("select")
                                 height: 30
                                 width: parent.width
+                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "select"}])
                             }
                             Button{
                                 text: qsTr("free")
                                 height: 30
                                 width: parent.width
+                                onClicked:  Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawfree"}])
                             }
                             Button{
                                 text: qsTr("rect")
                                 height: 30
                                 width: parent.width
+                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawrect"}])
                             }
                             Button{
                                 text: qsTr("ellipse")
                                 height: 30
                                 width: parent.width
+                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawellipse"}])
+                            }
+                            Button{
+                                text: qsTr("node")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "editnode"}])
+                            }
+                            Button{
+                                text: qsTr("delete")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("projectimage_gridder0_deleteShapes", {})
+                            }
+                            Button{
+                                text: qsTr("copy")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("projectimage_gridder0_copyShapes", {})
+                            }
+                            Button{
+                                text: qsTr("paste")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("projectimage_gridder0_pasteShapes", {})
+                            }
+                            Button{
+                                text: qsTr("undo")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("doCommand", - 1)
+                            }
+                            Button{
+                                text: qsTr("redo")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("doCommand", 1)
                             }
                             Button{
                                 text: qsTr("scatter")
                                 height: 30
                                 width: parent.width
+                                onClicked: Pipeline2.run("scatterProjectImageShow", {})
+                            }
+                            Button{
+                                text: qsTr("fit")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("fitProjectImageShow", {})
                             }
                         }
                     }

@@ -28,7 +28,7 @@ Grid{
             columns = cnt
             rows = Math.ceil(viewcount / cnt)
         }
-        // console.log(viewcount + ";" + columns + ";" + rows)
+         //console.log(viewcount + ";" + columns + ";" + rows)
     }
 
     function addView(aIndex){
