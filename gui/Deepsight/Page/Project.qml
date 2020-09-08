@@ -284,7 +284,11 @@ TabView{
                         }
 
                         Component.onCompleted: {
-
+                            Pipeline2.add(function(aInput){
+                                children[0].text = qsTr("Name: ") + (aInput["source"] || "")
+                                children[1].text = qsTr("Size: ") + (aInput["width"] || "") + ";" + (aInput["height"] || "")
+                                children[2].text = qsTr("Channel: ") + (aInput["channel"] || "")
+                            }, {name: "updateProjectImageGUI"})
                         }
                     }
                 }
@@ -295,7 +299,8 @@ TabView{
                     Component.onCompleted: {
                         Pipeline2.find("title_updateStatus").next(function(aInput){
                             for (var i = 0; i < projectimage.children.length; ++i)
-                                projectimage.children[i].beforeDestroy()
+                                projectimage.children[i].children[0].beforeDestroy()
+
                             return {out: {}}
                         }, {}, {name: "removeWholeQSGNodes", vtype: []})
 
@@ -317,7 +322,6 @@ TabView{
                             QSGBoard{
                                 name: parent.name
                                 anchors.fill: parent
-                                clip: true
                                 plugins: [{type: "transform"}]
                                 Component.onDestruction: {
                                     beforeDestroy()
@@ -358,6 +362,12 @@ TabView{
                                 onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawellipse"}])
                             }
                             Button{
+                                text: qsTr("circle")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawcircle"}])
+                            }
+                            Button{
                                 text: qsTr("node")
                                 height: 30
                                 width: parent.width
@@ -385,13 +395,13 @@ TabView{
                                 text: qsTr("undo")
                                 height: 30
                                 width: parent.width
-                                onClicked: Pipeline2.run("doCommand", - 1)
+                                onClicked: Pipeline2.run("doCommand", - 1, {tag: "manual"})
                             }
                             Button{
                                 text: qsTr("redo")
                                 height: 30
                                 width: parent.width
-                                onClicked: Pipeline2.run("doCommand", 1)
+                                onClicked: Pipeline2.run("doCommand", 1, {tag: "manual"})
                             }
                             Button{
                                 text: qsTr("scatter")
