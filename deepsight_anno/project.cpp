@@ -54,11 +54,17 @@ private:
         }
         return ret;
     }
+    QString getImageTime(const QJsonObject& aImage){
+        return aImage.value("time").toString();
+    }
+
     QJsonObject prepareImageListGUI(const QJsonArray& aImages){
         QJsonArray data;
-        for (auto i : aImages)
-            data.push_back(rea::Json("entry", rea::JArray(getImageName(m_images.value(i.toString()).toObject()))));
-        return rea::Json("title", rea::JArray("name"),
+        for (auto i : aImages){
+            auto img = m_images.value(i.toString()).toObject();
+            data.push_back(rea::Json("entry", rea::JArray(getImageName(img), getImageTime(img))));
+        }
+        return rea::Json("title", rea::JArray("name", "time"),
                          "entrycount", 30,
                          "selects", aImages.size() > 0 ? rea::JArray("0") : QJsonArray(),
                          "data", data);
@@ -134,6 +140,7 @@ private:
                 //aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
                 aInput->out<QJsonObject>(rea::Json("count", 1), "scatterProjectImageShow");
                 aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
+                aInput->out<QJsonObject>(getFilter(), "updateProjectImageFilterGUI");
             }))
             ->nextB(0, "updateTaskGUI", QJsonObject())
             ->nextB(0, "project_task_updateListView", QJsonObject())
@@ -141,6 +148,7 @@ private:
             ->nextB(0, "project_label_updateListView", QJsonObject())
             ->nextB(0, "project_task_listViewSelected", rea::Json("tag", "manual"))
             ->nextB(0, "scatterProjectImageShow", QJsonObject())
+            ->nextB(0, "updateProjectImageFilterGUI", QJsonObject())
             //->nextB(0, "project_image_listViewSelected", rea::Json("tag", "manual"))
             ->next("project_label_listViewSelected", rea::Json("tag", "manual"));
     }
@@ -439,6 +447,14 @@ private:
         return aImage.value("shapes").toObject();
     }
 
+    QJsonObject getFilter(){
+        return value("filter").toObject();
+    }
+
+    void setFilter(const QJsonObject& aFilter){
+        insert("filter", aFilter);
+    }
+
     QJsonObject getImageLabels(const QJsonObject& aImageAbstract){
         return aImageAbstract.value("image_label").toObject();
     }
@@ -708,6 +724,22 @@ private:
                 aInput->out<stgJson>(stgJson(dt, pth), "deepsightwriteJson");
             }))
             ->next("deepsightwriteJson");
+
+        //filter images
+        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            setFilter(dt);
+            if (dt.value("type") == "all"){
+
+            }else if (dt.value("type") == "time"){
+
+            }else if (dt.value("type") == "name"){
+
+            }else
+                return;
+            aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
+        }, rea::Json("name", "filterProjectImages"))
+        ->nextB(0, "deepsightwriteJson", QJsonObject());
     }
 private:
     int m_show_count = 1;

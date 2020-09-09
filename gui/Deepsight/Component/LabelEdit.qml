@@ -6,6 +6,7 @@ Rectangle{
     property bool sync: false
     property string group: "shape"
     property string label
+    property int fontsize: 16
     signal updatelabel(string aLabel)
     width: 80
     height: 30
@@ -13,7 +14,7 @@ Rectangle{
     border.color: "black"
     Label{
         text: label
-        font.pixelSize: 16
+        font.pixelSize: fontsize
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
     }
@@ -61,6 +62,7 @@ Rectangle{
             var src = "import QtQuick 2.12; import QtQuick.Controls 2.5;"
             src += "MenuItem{"
             src += "text: '" + j + "';"
+            src += "font.pixelSize: " + fontsize + ";"
             src += "onClicked: {"
             src += "label = text;"
             src += "updatelabel(label);"

@@ -224,15 +224,45 @@ TabView{
                     Row{
                         width: parent.width
                         height: 30
-                        Button{
-                            text: qsTr("All")
+                        LabelEdit{
+                            label: "all"
+                            group: "filter"
+                            fontsize: 8
                             height: parent.height
-                            width: 60
+                            width: 50
+                            onUpdatelabel: function(aLabel){
+                                if (aLabel === "all"){
+                                    Pipeline2.run("filterProjectImages", {type: label})
+                                    search.hint = ""
+                                    search.text = ""
+                                }else if (aLabel === "time")
+                                    search.hint = "input time"
+                                else if (aLabel === "name")
+                                    search.hint = "input name"
+                            }
+                            Component.onCompleted: {
+                                updateMenu({filter: {"all": "", "time": "", "name": ""}})
+                                Pipeline2.find("projectimage_Searched")
+                                .next(function(aInput){
+                                    if (label !== "all")
+                                        return {out: [{out: {type: label, value: aInput}, next: "filterProjectImages"}]}
+                                }, {tag: "manual"}, {vtype: ""})
+                                .next("filterProjectImages")
+                            }
                         }
                         Search {
-                            text: qsTr("filter")
+                            id: search
+                            name: "projectimage"
+                            //text: qsTr("filter")
+                            hint: qsTr("filter")
                             height: parent.height
-                            width: parent.width - 60
+                            width: parent.width - 50
+                        }
+                        Component.onCompleted: {
+                            Pipeline2.add(function(aInput){
+                                children[0].label = aInput["type"]
+                                search.text = aInput["value"]
+                            }, {name: "updateProjectImageFilterGUI"})
                         }
                     }
                     PageList{
@@ -253,11 +283,13 @@ TabView{
                             }
                         }
                         Button{
+                            visible: false
                             text: qsTr("export")
                             height: 30
                             width: parent.width / 3
                         }
                         Button{
+                            visible: false
                             text: qsTr("save")
                             height: 30
                             width: parent.width / 3
