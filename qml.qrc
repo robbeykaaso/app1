@@ -44,5 +44,6 @@
         <file>gui/Deepsight/Component/MakeSure.qml</file>
         <file>gui/Deepsight/Component/LabelButton.qml</file>
         <file>gui/Component/PageList.qml</file>
+        <file>gui/Deepsight/Component/LabelEdit.qml</file>
     </qresource>
 </RCC>

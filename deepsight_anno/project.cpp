@@ -38,6 +38,7 @@ private:
         return value("labels").toObject();
     }
     void setLabels(const QJsonObject& aLabels){
+        rea::pipeline::run<QJsonObject>("projectLabelChanged", aLabels);
         insert("labels", aLabels);
     }
     QString getTaskName(const QJsonObject& aTask){
@@ -123,6 +124,8 @@ private:
                 }
                 if (dflt)
                     setLabels(lbls);
+                else
+                    setLabels(value("labels").toObject());
 
                 aInput->out<QJsonObject>(prepareTaskListGUI(tsks), "project_task_updateListView");
                 aInput->out<QJsonObject>(prepareImageListGUI(imgs), "project_image_updateListView");
@@ -393,6 +396,36 @@ private:
             }))
             ->nextB(0, "updateLabelGUI", QJsonObject())
             ->next("deepsightwriteJson");
+
+        //modifyImageLabel
+        auto mdyImageLabel = rea::buffer<QJsonArray>(2);
+        rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
+            aInput->out<QJsonArray>(rea::JArray(dt.value("group"), dt.value("label")));
+        }, rea::Json("name", "modifyImageLabel"))
+        ->nextB(0, mdyImageLabel, QJsonObject())
+        ->next("project_image_listViewSelected", rea::Json("tag", "modifyImageLabel"))
+            ->next(mdyImageLabel, rea::Json("tag", "modifyImageLabel"))
+        ->next(rea::pipeline::add<std::vector<QJsonArray>>([this](rea::stream<std::vector<QJsonArray>>* aInput){
+            auto sels = aInput->data()[0];
+            auto lbl = aInput->data()[1];
+            auto imgs = getImages();
+            for (auto i : sels){
+                auto img = imgs[i.toInt()].toString();
+                auto abs = m_images.value(img).toObject();
+                auto lbls = getImageLabels(abs);
+                lbls.insert(lbl[0].toString(), lbl[1]);
+                setImageLabels(abs, lbls);
+                m_images.insert(img, abs);
+            }
+            aInput->out<stgJson>(stgJson(m_images, "project/" + m_project_id + "/image.json"), "deepsightwriteJson");
+        }))
+        ->next("deepsightwriteJson");
+
+        rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+            aInput->out();
+        }, rea::Json("name", "projectLabelChanged"));
     }
 private:
     QString m_current_image;
@@ -406,6 +439,14 @@ private:
         return aImage.value("shapes").toObject();
     }
 
+    QJsonObject getImageLabels(const QJsonObject& aImageAbstract){
+        return aImageAbstract.value("image_label").toObject();
+    }
+
+    void setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels){
+        aImageAbstract.insert("image_label", aLabels);
+    }
+
     void setShapes(QJsonObject& aImage, const QJsonObject& aShapes){
         aImage.insert("shapes", aShapes);
     }
@@ -415,7 +456,7 @@ private:
         for (auto i : aModification){
             auto dt = i.toObject();
             if (dt.value("cmd").toBool()){
-                if (dt.value("id") != aPath){
+                if (dt.contains("id") && dt.value("id") != aPath){
                     aPath = dt.value("id").toString();
                     return false;
                 }
@@ -503,6 +544,7 @@ private:
                            if (idx < imgs.size()){
                                auto nm = imgs[idx].toString();
                                if (nm != m_current_image){
+                                   aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_projectimage_gridder0");
                                    auto img = m_images.value(nm).toObject();
                                    m_current_image = nm;
                                    auto nms = img.value("name").toArray();
@@ -519,9 +561,10 @@ private:
                                aInput->out<QJsonObject>(QJsonObject(), "updateProjectImageGUI");
                        }
                    }), rea::Json("tag", "manual"))
+            ->nextB(0, "updateQSGCtrl_projectimage_gridder0", QJsonObject())
             ->nextB(0, "deepsightreadJson", selectProjectImage, rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
                         m_image = aInput->data().getData();
-                        aInput->out<QJsonObject>(m_image, "updateProjectImageGUI");
+                        aInput->out<QJsonObject>(rea::Json(m_image, "image_label", getImageLabels(m_images.value(m_current_image).toObject())), "updateProjectImageGUI");
                     }), selectProjectImage, "updateProjectImageGUI", QJsonObject())
             ->nextB(0, "updateProjectImageGUI", QJsonObject())
             ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
@@ -561,9 +604,10 @@ private:
                                      "width", img.width(),
                                      "height", img.height(),
                                      "face", 100,
-                                     "text", rea::Json("visible", false,
-                                                       "size", rea::JArray(100, 50),
-                                                       "location", "bottom"),
+                                     "text", rea::Json("visible", true,
+                                                       "size", rea::JArray(80, 30)
+                                                       //"location", "bottom"
+                                                       ),
                                      "objects", objs);
                 rea::pipeline::run<QJsonObject>("updateQSGModel_projectimage_gridder" + QString::number(ch), cfg);
                 //aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder0");

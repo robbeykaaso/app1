@@ -16,6 +16,10 @@ TWindow{
             width: 180
             caption.text: qsTr(key) + ":"
             ratio: 0.3
+            input.onAccepted: {
+                Pipeline2.run("_objectNew", {}, service_tag)
+                close()
+            }
         }
     }
 

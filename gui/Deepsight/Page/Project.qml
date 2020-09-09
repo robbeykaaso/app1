@@ -277,17 +277,53 @@ TabView{
                             model: 3
                             delegate: Label{
                                 text: ""
+                                height: 20
                                 font.pixelSize: 16
-                                leftPadding: 15
-                                topPadding: 15
+                                leftPadding: 10
+                                topPadding: 10
                             }
                         }
-
+                        Row{
+                            id: imglbls
+                            property var labels: ({})
+                            height: 30
+                            width: parent.width
+                            topPadding: 10
+                            spacing: 10
+                            Label{
+                                text: qsTr("Labels: ")
+                                height: 20
+                                font.pixelSize: 16
+                                leftPadding: 10
+                            }
+                            Component{
+                                id: lbledt
+                                LabelEdit{
+                                    height: 20
+                                    onUpdatelabel: function(aLabel){
+                                        Pipeline2.run("modifyImageLabel", {group: group, label: aLabel})
+                                    }
+                                }
+                            }
+                            Component.onCompleted: {
+                                Pipeline2.find("projectLabelChanged").next(function(aInput){
+                                    for (var i = 1; i < children.length; ++i)
+                                        children[i].destroy()
+                                    for (var j in aInput)
+                                        if (j !== "shape"){
+                                            lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(aInput)
+                                        }
+                                })
+                            }
+                        }
                         Component.onCompleted: {
                             Pipeline2.add(function(aInput){
                                 children[0].text = qsTr("Name: ") + (aInput["source"] || "")
                                 children[1].text = qsTr("Size: ") + (aInput["width"] || "") + ";" + (aInput["height"] || "")
                                 children[2].text = qsTr("Channel: ") + (aInput["channel"] || "")
+                                imglbls.labels = aInput["image_label"] || {}
+                                for (var i = 1; i < imglbls.children.length; ++i)
+                                    imglbls.children[i].label = imglbls.labels[imglbls.children[i].group] || ""
                             }, {name: "updateProjectImageGUI"})
                         }
                     }
@@ -308,9 +344,30 @@ TabView{
                             for (var i = 0; i < projectimage.children.length; ++i)
                                 Pipeline2.run("updateQSGAttr_" + projectimage.children[i].name, {key: ["transform"], type: "zoom"})
                         }, {name: "fitProjectImageShow"})
+
+                        Pipeline2.add(function(aInput){
+                            if (aInput["bound"]){
+                                projectimage.children[0].children[1].visible = true
+                                var bnd = aInput["bound"]
+                                projectimage.children[0].children[1].x = bnd[0] + (bnd[2] - bnd[0] - 80) * 0.5
+                                projectimage.children[0].children[1].y = bnd[1] - 35
+                                var shps = aInput["shapes"]
+                                var lbl = ""
+                                var idx = 0
+                                projectimage.selects = shps
+                                for (var i in shps){
+                                    if (idx++)
+                                        lbl += ";"
+                                    lbl += shps[i]["caption"] || ""
+                                }
+                                projectimage.children[0].children[1].label = lbl
+                            }else
+                                projectimage.children[0].children[1].visible = false
+                        }, {name: "updateQSGSelects_projectimage_gridder0"})
                     }
                     Gridder{
                         id: projectimage
+                        property var selects
                         name: "projectimage"
                         size: 1
                         com: Rectangle{
@@ -325,6 +382,16 @@ TabView{
                                 plugins: [{type: "transform"}]
                                 Component.onDestruction: {
                                     beforeDestroy()
+                                }
+                            }
+                            LabelEdit{
+                                sync: parent.name === "projectimage_gridder0"
+                                visible: false
+                                onUpdatelabel: function(aLabel){
+                                    if (projectimage.selects)
+                                        for (var j = 0; j < projectimage.children.length; ++j)
+                                            for (var i in projectimage.selects)
+                                                Pipeline2.run("updateQSGAttr_" + projectimage.children[j].name, {obj: i, key: ["caption"], val: aLabel, cmd: true})
                                 }
                             }
                         }
