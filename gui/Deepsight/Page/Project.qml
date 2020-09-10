@@ -514,10 +514,19 @@ TabView{
                                 width: parent.width
                                 onClicked: Pipeline2.run("fitProjectImageShow", {})
                             }
+                            Button{
+                                text: qsTr("image")
+                                height: 30
+                                width: parent.width
+                                onClicked: transformimg.show()
+                            }
                         }
                     }
                 }
             }
         }
+    }
+    TransformImage{
+        id: transformimg
     }
 }

@@ -312,7 +312,7 @@ Column{
             }
             src += "AutoSize{}}"
             ret = Qt.createQmlObject(src, cld)
-            scr_root.contentHeight += 25
+            scr_root.contentHeight += 40
         }else if (aType === "string" || aType === "double"){
             src += "anchors.verticalCenter: parent ? parent.children[1].verticalCenter : undefined;}"
             if (aStyle && aStyle["jsst"] && aStyle["jsst"]["val_type"] === "combo"){
@@ -388,7 +388,7 @@ Column{
             }
             src += "AutoSize{}}"
             ret = Qt.createQmlObject(src, cld)
-            scr_root.contentHeight += 25
+            scr_root.contentHeight += 40
         }else{
             src += "}"
             src += "TreeNode{"

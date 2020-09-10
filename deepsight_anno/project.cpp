@@ -44,8 +44,11 @@ private:
     QString getTaskName(const QJsonObject& aTask){
         return aTask.value("name").toString();
     }
-    QString getImageName(const QJsonObject& aImage){
-        auto nms = aImage.value("name").toArray();
+    QJsonArray getImageName(const QJsonObject& aImage){
+        return aImage.value("name").toArray();
+    }
+    QString getImageStringName(const QJsonObject& aImage){
+        auto nms = getImageName(aImage);
         QString ret = "";
         if (nms.size() > 0){
             ret += nms[0].toString();
@@ -62,7 +65,7 @@ private:
         QJsonArray data;
         for (auto i : aImages){
             auto img = m_images.value(i.toString()).toObject();
-            data.push_back(rea::Json("entry", rea::JArray(getImageName(img), getImageTime(img))));
+            data.push_back(rea::Json("entry", rea::JArray(getImageStringName(img), getImageTime(img))));
         }
         return rea::Json("title", rea::JArray("name", "time"),
                          "entrycount", 30,
@@ -552,8 +555,14 @@ private:
         rea::pipeline::find("project_image_listViewSelected")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                        auto dt = aInput->data();
-                       if (dt.size() == 0)
+                       if (dt.size() == 0){
+                           rea::pipeline::run<QJsonArray>("updateQSGCtrl_projectimage_gridder0", QJsonArray());  //must be before "updateQSGModel_projectimage_gridder"
+                           m_current_image = "";
+                           int cnt = getChannelCount();
+                           for (int i = 0; i < cnt; ++i)
+                               rea::pipeline::run<QJsonObject>("updateQSGModel_projectimage_gridder" + QString::number(i), QJsonObject());
                            aInput->out<QJsonObject>(QJsonObject(), "updateProjectImageGUI");
+                       }
                        else{
                            auto idx = dt[0].toInt();
                            auto imgs = getImages();
@@ -561,9 +570,8 @@ private:
                                auto nm = imgs[idx].toString();
                                if (nm != m_current_image){
                                    aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_projectimage_gridder0");
-                                   auto img = m_images.value(nm).toObject();
                                    m_current_image = nm;
-                                   auto nms = img.value("name").toArray();
+                                   auto nms = getImageName(m_images.value(m_current_image).toObject());
                                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), "deepsightreadJson", selectProjectImage);
                                    for (auto i = 0; i < m_show_count; ++i){
                                        auto img = "project/" + m_project_id + "/image/" + nm + "/" + nms[i].toString();
@@ -572,9 +580,9 @@ private:
                                    }
                                }
                                //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateProjectImageGUI");
-                           }
-                           else
+                           }else{
                                aInput->out<QJsonObject>(QJsonObject(), "updateProjectImageGUI");
+                           }
                        }
                    }), rea::Json("tag", "manual"))
             ->nextB(0, "updateQSGCtrl_projectimage_gridder0", QJsonObject())
@@ -704,6 +712,8 @@ private:
         //modify image
         rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                if (m_current_image == "")
+                    return;
                 QString cur = "project/" + m_project_id + "/image/" + m_current_image + ".json";
                 QString pth = cur;
                 if (modifyImage(aInput->data(), m_image, pth))
@@ -728,17 +738,39 @@ private:
         //filter images
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
             auto dt = aInput->data();
-            setFilter(dt);
+            QJsonArray imgs;
             if (dt.value("type") == "all"){
-
+                for (auto i : m_images.keys())
+                    imgs.push_back(i);
             }else if (dt.value("type") == "time"){
-
+                auto tm = dt.value("value").toString();
+                if (tm != "")
+                    for (auto i : m_images.keys()){
+                        auto img = m_images.value(i).toObject();
+                        if (img.value("time").toString().indexOf(tm) >= 0)
+                            imgs.push_back(i);
+                    }
             }else if (dt.value("type") == "name"){
-
+                auto nm = dt.value("value").toString();
+                if (nm != "")
+                    for (auto i : m_images.keys()){
+                        auto nms = getImageName(m_images.value(i).toObject());
+                        for (auto j : nms)
+                            if (j.toString().indexOf(nm) >= 0){
+                                imgs.push_back(i);
+                                break;
+                            }
+                    }
             }else
                 return;
+            setImages(imgs);
+            setFilter(dt);
+            aInput->out<QJsonObject>(prepareImageListGUI(imgs), "project_image_updateListView");
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
             aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
         }, rea::Json("name", "filterProjectImages"))
+        ->nextB(0, "project_image_updateListView", QJsonObject())
+        ->nextB(0, "project_image_listViewSelected", rea::Json("tag", "manual"))
         ->nextB(0, "deepsightwriteJson", QJsonObject());
     }
 private:
@@ -768,6 +800,154 @@ private:
             ->nextB(0, "projectimage_updateViewCount", QJsonObject())
             ->next("project_image_listViewSelected", rea::Json("tag", "manual"));
     }
+private:
+    QJsonObject m_image_operations;
+    QStringList m_used_operations;
+    QJsonArray m_current_operations;
+    QJsonArray m_current_operations_cfg;
+    int m_select_operator = - 1;
+    rea::pipe0* m_image_src;
+    rea::pipe0* m_map_image;
+
+    QJsonObject prepareImageOperationListGUI(const QString& aTitle, const QJsonObject& aOperations){
+        QJsonArray data;
+        for (auto i : aOperations.keys())
+            data.push_back(rea::Json("entry", rea::JArray(aOperations.value(i).toObject().value("caption"))));
+        return rea::Json("title", rea::JArray(aTitle),
+                         "selects", aOperations.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "data", data);
+    }
+
+    QJsonObject prepareUsedOperationListGUI(){
+        QJsonArray data;
+        for (auto i : m_current_operations)
+            data.push_back(rea::Json("entry", rea::JArray(m_image_operations.value(i.toString()).toObject().value("caption"))));
+        return rea::Json("title", rea::JArray("used"),
+                         "selects", m_current_operations.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "data", data);
+    }
+
+    QJsonObject matToShow(const QString& aPath, const cv::Mat& aMat){
+        auto img = cvMat2QImage(aMat);
+        rea::imagePool::cacheImage(aPath, img);
+
+        auto objs = rea::Json("img_" + m_current_image, rea::Json(
+                                                            "type", "image",
+                                                            "range", rea::JArray(0, 0, img.width(), img.height()),
+                                                            "path", aPath));
+        return rea::Json("width", img.width(),
+                         "height", img.height(),
+                         "objects", objs);
+    }
+
+    void transformImage(){
+        //trig show
+        m_image_src = rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            if (m_current_image != ""){
+                auto nms = getImageName(m_images.value(m_current_image).toObject());
+                    auto img = "project/" + m_project_id + "/image/" + m_current_image + "/" + nms[0].toString();
+                    m_show_cache.insert(img, 0);
+                    aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img));
+            }
+        }, rea::Json("name", "showBeforeAfter"))
+            ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
+            ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
+                auto dt = aInput->data();
+                aInput->out<QJsonObject>(matToShow(QString(dt), dt.getData()), "updateQSGModel_imagebefore");
+                aInput->out<cv::Mat>(dt.getData());
+        }))
+            ->nextB(0, "updateQSGModel_imagebefore", QJsonObject());
+
+        //map mat to show
+        m_map_image = rea::pipeline::add<cv::Mat>([this](rea::stream<cv::Mat>* aInput){
+            aInput->out<QJsonObject>(matToShow("img_result", aInput->data()), "updateQSGModel_imageafter");
+        })
+        ->nextB(0, "updateQSGModel_imageafter", QJsonObject());
+
+        //add operators
+        rea::pipeline::find("image_operation_listViewSelected")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            auto sels = aInput->data();
+            for (auto i : sels){
+                m_current_operations.push_back(m_image_operations.keys()[i.toInt()]);
+                m_current_operations_cfg.push_back((m_image_operations.begin() + i.toInt()).value().toObject().value("param").toObject());
+            }
+            aInput->out<QJsonObject>(prepareUsedOperationListGUI(), "used_operation_updateListView");
+        }), rea::Json("tag", "addOperation"))
+        ->next("used_operation_updateListView");
+
+        //select operator
+        rea::pipeline::find("used_operation_listViewSelected")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+           auto dt = aInput->data();
+           if (dt.size() > 0){
+               m_select_operator = dt[0].toInt(); ;
+               aInput->out<QJsonObject>(rea::Json("data",
+                                                  (m_current_operations_cfg.begin() + m_select_operator)->toObject()),
+                                        "imageoperatorloadTreeView");
+           }else
+               m_select_operator = - 1;
+       }), rea::Json("tag", "manual"))
+            ->next("imageoperatorloadTreeView");
+
+        //modify operators
+        rea::pipeline::find("imageoperatortreeViewGUIModified")
+            ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                auto dt = aInput->data();
+                if (m_select_operator >= 0){
+                    auto prm = (m_current_operations_cfg.begin() + m_select_operator)->toObject();
+                    auto keys = dt.value("key").toString().split(";");
+                    prm.insert(keys[1], dt.value("val"));
+                    m_current_operations_cfg[m_select_operator] = prm;
+                }
+            }));
+
+        //delete operators
+        rea::pipeline::find("used_operation_listViewSelected")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            auto dt = aInput->data();
+            std::vector<int> idxes;
+            for (auto i : dt)
+                idxes.push_back(i.toInt());
+            std::sort(idxes.begin(), idxes.end(), std::greater<int>());
+            for (auto i : idxes){
+                m_current_operations.removeAt(i);
+                m_current_operations_cfg.removeAt(i);
+            }
+            aInput->out<QJsonObject>(prepareUsedOperationListGUI(), "used_operation_updateListView");
+        }), rea::Json("tag", "deleteOperation"))
+        ->next("used_operation_updateListView");
+
+        //connect operators
+        rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            for (int i = m_used_operations.size() - 2; i >= 0; --i)
+                rea::pipeline::find(m_used_operations[i])->removeNext(m_used_operations[i + 1]);
+            for (int i = 1; i < m_used_operations.size() - 1; ++i)
+                rea::pipeline::remove(m_used_operations[i]);
+            m_used_operations.clear();
+            m_used_operations.push_back(m_image_src->actName());
+            for (int i = 0; i < m_current_operations.size(); ++i)
+                m_used_operations.push_back(rea::local(m_current_operations[i].toString())->actName());
+            m_used_operations.push_back(m_map_image->actName());
+            for (int i = 0; i < m_used_operations.size() - 1; ++i)
+                rea::pipeline::find(m_used_operations[i])->next(m_used_operations[i + 1]);
+            aInput->out<QJsonObject>(QJsonObject(), "showBeforeAfter");
+        }, rea::Json("name", "transformImage"))
+            ->next("showBeforeAfter");
+
+        //load operators
+        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            aInput->out();
+        }, rea::Json("name", "loadImageOperations"));
+
+        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            for (auto i : dt.keys())
+                m_image_operations.insert(i, dt.value(i));
+            aInput->out<QJsonObject>(prepareImageOperationListGUI("operators", m_image_operations), "image_operation_updateListView");
+        }, rea::Json("name", "imageOperationsLoaded"))
+            ->nextB(0, "image_operation_updateListView", QJsonObject());
+    }
 public:
     project(){
         projectManagement();
@@ -775,6 +955,7 @@ public:
         labelManagement();
         imageManagement();
         guiManagement();
+        transformImage();
     }
 };
 

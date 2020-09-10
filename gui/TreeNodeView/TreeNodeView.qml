@@ -111,7 +111,7 @@ ScrollView{
             }, {name: key + "modifyTreeViewGUI", type: "Partial"})
 
             Pipeline2.add(function(aInput){
-                console.log(aInput["key"] + ";" + aInput["val"] + ";" + aInput["type"])
+                //console.log(aInput["key"] + ";" + aInput["val"] + ";" + aInput["type"])
                 return {out: {}}
             }, {name: key + "treeViewGUIModified"})
 
