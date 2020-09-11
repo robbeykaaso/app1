@@ -59,6 +59,8 @@ Column {
                         color: fontclr
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                        clip: true
                     }
                 }
             }

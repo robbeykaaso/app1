@@ -24,11 +24,11 @@ find_package(AWSSDK REQUIRED COMPONENTS core s3)
 set(REA_DIR ${CMAKE_CURRENT_LIST_DIR}/../frm/cmake)
 #message("xxx: ${CMAKE_CURRENT_LIST_DIR}")
 find_package(REA)
+#find_package(PythonLibs REQUIRED)
 
 #find_package(DeepInspectSDK REQUIRED)
 #find_package(RapidJSON REQUIRED)
 
-#find_package(PythonLibs REQUIRED)
 #qtquick_compiler_add_resources(RESOURCES qml.qrc)
 #find_package(VTK REQUIRED)
 
@@ -53,6 +53,9 @@ add_executable(${PROJECT_NAME}
     "util/cv.h"
     "util/cv.cpp"
     "util/pack.cpp"
+    "util/image.cpp"
+#    "util/py.h"
+#    "util/py.cpp"
     "deepsight_anno/model.h"
     "deepsight_anno/model.cpp"
     "deepsight_anno/user.cpp"
@@ -69,13 +72,15 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     ${AWSSDK_LINK_LIBRARIES}
     ${REA_LIBS}
 #    ${DeepInspectSDK_LIBS}
-    )# ${VTK_LIBRARIES})# ${PYTHON_LIBRARIES})#  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
+#    ${PYTHON_LIBRARIES}
+    )# ${VTK_LIBRARIES})# #  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
 #include_directories("${deepinspectapptemplate_ROOT}/deepinspectControl")
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${REA_INCLUDE_DIRS})
 
 include_directories(${RxCpp_INCLUDE_DIRS})
 include_directories(${RapidJSON_INCLUDE_DIRS})
+#include_directories(${PYTHON_INCLUDE_DIRS})
 #include_directories(${DeepInspectSDK_INCLUDE_DIRS})
 #message("xxx: ${REA_INCLUDE_DIRS}")
 #include(${VTK_USE_FILE})
@@ -84,7 +89,6 @@ include_directories(${RapidJSON_INCLUDE_DIRS})
 #include_directories(${RxCpp_INCLUDE_DIRS})
 #include_directories (${gflags_INCLUDE_DIR})
 #include_directories(${AWSSDK_INCLUDE_DIR})
-#include_directories(${PYTHON_INCLUDE_DIRS})
 #include_directories("D:/catch/Catch2/single_include/catch2")
 
 #message("include ${RapidJSON_INCLUDE_DIRS}")

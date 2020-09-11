@@ -289,10 +289,11 @@ TabView{
                             width: parent.width / 3
                         }
                         Button{
-                            visible: false
-                            text: qsTr("save")
+                            text: qsTr("setting")
                             height: 30
                             width: parent.width / 3
+                            onClicked:
+                                Pipeline2.run("setImageShow", {})
                         }
                     }
                 }

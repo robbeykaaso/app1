@@ -4,22 +4,33 @@ import Pipeline2 1.0
 
 TWindow{
     property var service_tag
-    width: 200
+    width: 240
     height: 100
     caption: qsTr("new object")
 
     Component{
-        id: entry
+        id: edit
         Edit{
             property string key
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 180
+            width: 220
             caption.text: qsTr(key) + ":"
             ratio: 0.3
-            input.onAccepted: {
-                Pipeline2.run("_objectNew", {}, service_tag)
-                close()
-            }
+        }
+    }
+
+    Component{
+        id: cmb
+        Combo{
+            property string key
+            property var mdl
+            property int idx
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 220
+            caption.text: qsTr(key) + ":"
+            ratio: 0.3
+            combo.model: mdl
+            combo.currentIndex: idx
         }
     }
 
@@ -48,7 +59,10 @@ TWindow{
             var dt = {}
             var itms = sets.children
             for (var i = 0; i < itms.length; ++i)
-                dt[itms[i].key] = itms[i].input.text
+                if (itms[i] instanceof Edit)
+                    dt[itms[i].key] = itms[i].input.text
+                else if (itms[i] instanceof Combo)
+                    dt[itms[i].key] = itms[i].combo.currentText
             return {data: dt, out: {}}
         }, {name: "_objectNew", type: "Partial"})
 
@@ -58,7 +72,10 @@ TWindow{
             for (var j = 0; j < sets.children.length; ++j)
                 sets.children[j].destroy()
             for (var i in cnt)
-                entry.createObject(sets, {key: i})
+                if (typeof cnt[i] == "object")
+                    cmb.createObject(sets, {key: i, mdl: cnt[i]["model"], idx: cnt[i]["index"]})
+                else
+                    edit.createObject(sets, {key: i})
             setHeight(Object.keys(cnt).length * 30 + 100)
             service_tag = aInput["tag"] || {tag: "manual"}
             show()

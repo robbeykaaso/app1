@@ -710,6 +710,11 @@ ApplicationWindow {
                     caption.text: qsTr("attribu2") + ":"
                     ratio: 0.4
                 }
+                Spin{
+                    width: 180
+                    caption.text: qsTr("attribute555") + ":"
+                    ratio: 0.4
+                }
                 Combo{
                     width: 180
                     caption.text: qsTr("attribute3") + ":"

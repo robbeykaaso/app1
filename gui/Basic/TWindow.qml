@@ -10,7 +10,7 @@ Window{
     property alias content: mid.data
     property var titlebuttons
     property var footbuttons
-    flags: Qt.FramelessWindowHint
+    flags: Qt.Window | Qt.CustomizeWindowHint //Qt.FramelessWindowHint
     modality: Qt.WindowModal
     width: 400
     height: 300
@@ -37,9 +37,64 @@ Window{
             width: parent.width
             height: Screen.desktopAvailableHeight * 0.03
             Rectangle{
+                x: parent.height * 0.2
+                y: parent.height * 0.2
+                height: parent.height * 0.6
+                width: height
+                color: "lightskyblue"
+                ShaderEffect{
+                    id: logo
+                    anchors.fill: parent
+                    property variant source: Image{
+                        anchors.fill: parent
+                        source: "qrc:resource/logo.png"
+                    }
+                    property real amplitude: 0
+                    property real frequency: 20
+                    property real time: 0
+                    NumberAnimation on time {
+                        id: animation
+                        running: false
+                        loops: Animation.Infinite; from: 0; to: Math.PI * 2; duration: 600
+                    }
+                    /*fragmentShader: "
+                        varying highp vec2 qt_TexCoord0;
+                        uniform sampler2D source;
+                        uniform lowp float qt_Opacity;
+                        uniform lowp float redChannel;
+                        void main(){
+                            gl_FragColor = texture2D(source, qt_TexCoord0) * vec4(redChannel, 1.0, 1.0, 1.0) * qt_Opacity;
+                        }
+                    "*/
+                    fragmentShader: "
+                        uniform sampler2D source;
+                        varying highp vec2 qt_TexCoord0;
+                        uniform lowp float qt_Opacity;
+                        uniform highp float amplitude;
+                        uniform highp float frequency;
+                        uniform highp float time;
+                        void main()
+                        {
+                            highp vec2 p = sin(time + frequency * qt_TexCoord0);
+                            gl_FragColor = texture2D(source, qt_TexCoord0 + amplitude * vec2(p.y, -p.x)) * qt_Opacity;
+                        }
+                    "
+                    MouseArea{
+                        anchors.fill: parent
+                        onClicked: {
+                            animation.running = !animation.running
+                            if (animation.running)
+                                logo.amplitude = 0.02
+                            else
+                                logo.amplitude = 0
+                        }
+                    }
+                }
+            }
+            Rectangle{
                 id: titbar
                 height: parent.height
-                width: parent.width - btns.parent.width
+                width: parent.width - btns.parent.width - logo.width
                 Text{
                     leftPadding: parent.width * 0.05
                     anchors.verticalCenter: parent.verticalCenter
@@ -118,6 +173,10 @@ Window{
             }
         }
     }
+    onHeightChanged: {
+        mid.height = height - Screen.desktopAvailableHeight * (0.045 + (footbuttons ? 0.03 : 0))
+    }
+
     function setHeight(aHeight){
         height = aHeight
         mid.height = height - Screen.desktopAvailableHeight * (0.045 + (footbuttons ? 0.03 : 0))

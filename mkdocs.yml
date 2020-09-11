@@ -18,6 +18,7 @@ nav:
             - basic:
                 - edit: gui/basic/edit.md
                 - check: gui/basic/check.md
+                - spin: gui/basic/spin.md
                 - combo: gui/basic/combo.md
                 - track: gui/basic/track.md
                 - radio: gui/basic/radio.md
