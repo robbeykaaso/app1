@@ -110,7 +110,7 @@ private:
                 aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
             }
         }, rea::Json("name", "openProject"))
-            ->next(rea::local("deepsightreadJson"))
+            ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
             ->next(rea::buffer<stgJson>(3))
             ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
                 auto dt = aInput->data();
@@ -748,7 +748,7 @@ private:
                 }
             }))
             ->nextB(0, "deepsightwriteJson", QJsonObject())
-            ->next(rea::local("deepsightreadJson"))
+            ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
                 auto dt = aInput->data().getData();
                 auto pth = QString(aInput->data());

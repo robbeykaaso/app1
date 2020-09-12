@@ -521,6 +521,12 @@ TabView{
                                 width: parent.width
                                 onClicked: transformimg.show()
                             }
+                            /*Button{
+                                text: qsTr("camera")
+                                height: 30
+                                width: parent.width
+                                onClicked: camera.show()
+                            }*/
                         }
                     }
                 }
@@ -530,4 +536,8 @@ TabView{
     TransformImage{
         id: transformimg
     }
+    /*Camera{
+        id: camera
+        name: "camera1"
+    }*/
 }

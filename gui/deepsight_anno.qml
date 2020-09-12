@@ -13,6 +13,7 @@ ApplicationWindow {
     width: 800
     height: 600
     //Universal.theme: Universal.Dark
+    title: qsTr("DeepsightInspection V4.0/REA V7.0")
     Column{
         anchors.fill: parent
         Status{

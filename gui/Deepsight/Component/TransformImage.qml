@@ -8,7 +8,7 @@ import QSGBoard 1.0
 
 TWindow{
     width: 800
-    height: 500
+    height: 600
     caption: qsTr("transform image")
 
     content:
