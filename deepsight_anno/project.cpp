@@ -616,33 +616,6 @@ private:
                     }), selectProjectImage, "updateProjectImageGUI", QJsonObject())
             ->nextB(0, "updateProjectImageGUI", QJsonObject())
             ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
-            ->next(rea::local(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
-                  auto show = getImageShow();
-                  cv::Mat ret = aInput->data().getData();
-                  /*auto md = getResizeMode(show);
-                  if (md == "nearest")
-                      cv::resize(ret, ret, ret.size(), 0, 0, cv::InterpolationFlags::INTER_NEAREST);
-                  else if (md == "cubic")
-                      cv::resize(ret, ret, ret.size(), 0, 0, cv::InterpolationFlags::INTER_CUBIC);
-                  else if (md == "area")
-                      cv::resize(ret, ret, ret.size(), 0, 0, cv::InterpolationFlags::INTER_AREA);
-                  else if (md == "lanczos4")
-                      cv::resize(ret, ret, ret.size(), 0, 0, cv::InterpolationFlags::INTER_LANCZOS4);
-                  else
-                      cv::resize(ret, ret, ret.size(), 0, 0, cv::InterpolationFlags::INTER_LINEAR);*/
-                  auto fmt = getColorFormat(show);
-                  try{
-                      if (fmt == "BayerRG2RGB")
-                          cv::cvtColor(ret, ret, cv::COLOR_BayerRG2BGR);
-                      else if (fmt == "BayerRG2Gray")
-                          cv::cvtColor(ret, ret, cv::COLOR_BayerRG2GRAY);
-                      else if (fmt == "RGB2Gray")
-                          cv::cvtColor(ret, ret, cv::COLOR_RGB2GRAY);
-                  }catch(...){
-                      std::cout << "format changed fail!" << std::endl;
-                  }
-                  aInput->setData(stgCVMat(ret, QString(aInput->data())))->out();
-            }, rea::Json("name", "transformImageShow"))->actName()))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 auto dt = aInput->data();
                 auto ch = m_show_cache.value(dt);
@@ -653,7 +626,8 @@ private:
                 auto objs = rea::Json("img_" + m_current_image, rea::Json(
                                  "type", "image",
                                  "range", rea::JArray(0, 0, img.width(), img.height()),
-                                 "path", pth));
+                                 "path", pth,
+                                 "transform", getImageShow()));
                 auto shps = getShapes(m_image);
                 for (auto i : shps.keys()){
                     auto shp = shps.value(i).toObject();
@@ -823,11 +797,11 @@ private:
         ->nextB(0, "project_image_listViewSelected", rea::Json("tag", "manual"))
         ->nextB(0, "deepsightwriteJson", QJsonObject());
 
-        rea::pipeline::add<QString, rea::pipePartial>([this](rea::stream<QString>* aInput){
+        rea::pipeline::add<QJsonObject, rea::pipePartial>([this](rea::stream<QJsonObject>* aInput){
             if (m_current_image != ""){
                 auto nms = getImageName(m_images.value(m_current_image).toObject());
                 auto img = "project/" + m_project_id + "/image/" + m_current_image + "/" + nms[0].toString();
-                aInput->setData(img)->out();
+                aInput->setData(rea::Json("image", img, "show", getImageShow()))->out();
             }
         }, rea::Json("name", "getProjectCurrentImage"));
     }
@@ -885,12 +859,15 @@ private:
             if (mdy){
                 setImageShow(show);
                 aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
-                m_current_image = "";
-                aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
+                if (m_current_image != ""){
+                    auto cnt = getChannelCount();
+                    for (int i = 0; i < cnt; ++i)
+                        rea::pipeline::run<QJsonObject>("updateQSGAttr_projectimage_gridder" + QString::number(i),
+                                                        rea::Json("obj", "img_" + m_current_image, "key", rea::JArray("transform"), "val", show));
+                }
             }
         }), rea::Json("tag", setImageShow0))
-            ->nextB(0, "deepsightwriteJson", QJsonObject())
-            ->next("project_image_listViewSelected", rea::Json("tag", "manual"));
+            ->nextB(0, "deepsightwriteJson", QJsonObject());
     }
 public:
     project(){

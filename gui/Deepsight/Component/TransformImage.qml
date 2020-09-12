@@ -170,7 +170,7 @@ TWindow{
 
     onVisibleChanged: {
         if (visible){
-            Pipeline2.run("getProjectCurrentImage", "", {tag: "transformImage"})
+            Pipeline2.run("getProjectCurrentImage", {}, {tag: "transformImage"})
         }
     }
     Component.onCompleted: {

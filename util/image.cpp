@@ -55,6 +55,7 @@ private:
     int m_select_operator = - 1;
     rea::pipe0* m_image_src;
     rea::pipe0* m_map_image;
+    QJsonObject m_image_show;
     QJsonObject prepareImageOperationListGUI(const QString& aTitle, const QJsonObject& aOperations){
         QJsonArray data;
         for (auto i : aOperations.keys())
@@ -79,7 +80,8 @@ private:
 
         auto objs = rea::Json("img_background", rea::Json("type", "image",
                                                 "range", rea::JArray(0, 0, img.width(), img.height()),
-                                                "path", aPath));
+                                                "path", aPath,
+                                                "transform", m_image_show));
         return rea::Json("width", img.width(),
                          "height", img.height(),
                          "objects", objs);
@@ -108,11 +110,12 @@ public:
         //trig show
         m_image_src =
             rea::pipeline::find("getProjectCurrentImage")
-                ->next(rea::pipeline::add<QString>([](rea::stream<QString>* aInput){
-                           aInput->out<stgCVMat>(stgCVMat(cv::Mat(), aInput->data()));
+                ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                           auto dt = aInput->data();
+                           m_image_show = dt.value("show").toObject();
+                           aInput->out<stgCVMat>(stgCVMat(cv::Mat(), aInput->data().value("image").toString()));
                        }), rea::Json("tag", "transformImage"))
                 ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
-                ->next(rea::local("transformImageShow"))
                 ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                     auto dt = aInput->data();
                     aInput->out<QJsonObject>(matToShow(QString(dt), dt.getData()), "updateQSGModel_imagebefore");
@@ -198,7 +201,7 @@ public:
             m_used_operations.push_back(m_map_image->actName());
             for (int i = 0; i < m_used_operations.size() - 1; ++i)
                 rea::pipeline::find(m_used_operations[i])->next(m_used_operations[i + 1]);
-            aInput->out<QString>("", "getProjectCurrentImage");
+            aInput->out<QJsonObject>(QJsonObject(), "getProjectCurrentImage");
         }, rea::Json("name", "transformImage"))
             ->next("getProjectCurrentImage", rea::Json("tag", "transformImage"));
 
