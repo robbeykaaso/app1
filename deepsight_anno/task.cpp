@@ -42,7 +42,19 @@ private:
         //select task label group
         rea::pipeline::find("task_label_listViewSelected")
             ->next("getProjectLabel", rea::Json("tag", "task_manual"))
-            ->next(rea::local("updateCandidateLabelGUI"), rea::Json("tag", "task_manual"));
+            ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                   auto dt = aInput->data();
+                   auto lbls = getLabels();
+                   auto key = dt.value("key").toString();
+                   auto val = lbls.value(key).toObject();
+                   auto proj_val = dt.value("val").toObject();
+                   for (auto i : val.keys())
+                       val.insert(i, proj_val.value(i));
+                   aInput->out<QJsonObject>(rea::Json("key", key, "val", val), "updateTaskLabelGUI");
+                   aInput->out<QJsonObject>(dt, "updateCandidateLabelGUI");
+               }), rea::Json("tag", "task_manual"))
+            ->nextB(0, "updateCandidateLabelGUI", QJsonObject())
+            ->next("updateTaskLabelGUI");
 
         //select candidate label group
         rea::pipeline::find("candidate_label_listViewSelected")
@@ -97,9 +109,40 @@ private:
             ->nextB(0, "task_label_updateListView", QJsonObject())
             ->nextB(0, "task_label_listViewSelected", rea::Json("tag", "task_manual"));
 
-        //add label
+        //add/remove label
+        auto addLabel = rea::buffer<QJsonArray>(2);
+        auto addLabel_nm = "addTaskLabel";
+        auto addLabel_tag = rea::Json("tag", addLabel_nm);
+        rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            aInput->out<QJsonArray>(rea::JArray(dt.value("label"), dt.value("add")));
+            aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
+        }, rea::Json("name", addLabel_nm))
+            ->nextB(0, addLabel, QJsonObject())
+            ->next("task_label_listViewSelected", addLabel_tag)
+            ->next(addLabel, addLabel_tag)
+            ->next(rea::pipeline::add<std::vector<QJsonArray>>([this](rea::stream<std::vector<QJsonArray>>* aInput){
+                auto dt = aInput->data();
+                auto lbl = dt[0][0].toString();
+                auto add = dt[0][1].toBool();
+                auto sel = dt[1][0].toInt();
+                auto grps = getLabels();
+                auto lbls = (grps.begin() + sel)->toObject();
 
-        //remove label
+                if (add){
+                    if (!lbls.contains(lbl))
+                        lbls.insert(lbl, QJsonObject());
+                    else
+                        return;
+                }else
+                    lbls.remove(lbl);
+                grps.insert((grps.begin() + sel).key(), lbls);
+                setLabels(grps);
+                aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+                aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
+            }))
+            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->nextB(0, "task_label_listViewSelected", rea::Json("tag", "task_manual"));
     }
 public:
     task(){

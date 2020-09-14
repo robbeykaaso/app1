@@ -78,7 +78,12 @@ TabView{
                                     name: "candidatelabels2"
                                     size: [2, 2]
                                     com: LabelButton{
-                                        enabled: false
+                                        headbutton: {
+                                            "cap": "+",
+                                            "func": function(aLabel){
+                                                Pipeline2.run("addTaskLabel", {label: aLabel, add: true})
+                                            }
+                                        }
                                     }
                                     width: parent.width
                                     height: 70
@@ -115,18 +120,32 @@ TabView{
                             Column{
                                 anchors.fill: parent
                                 Gridder{
-                                    name: "usedlabels"
+                                    id: tasklabelgroup
+                                    name: "tasklabels"
                                     size: [2, 2]
                                     com: LabelButton{
                                         headbutton: {
                                             "cap": "X",
                                             "func": function(aLabel){
-
+                                                Pipeline2.run("addTaskLabel", {label: aLabel, add: false})
                                             }
                                         }
                                     }
                                     width: parent.width
                                     height: 70
+                                }
+
+                                Component.onCompleted: {
+                                    Pipeline2.add(function(aInput){
+                                        var lbls = aInput["val"] || {}
+                                        var cnt = Object.keys(lbls).length
+                                        tasklabelgroup.updateViewCount(cnt)
+                                        var idx = 0
+                                        for (var i in lbls){
+                                            tasklabelgroup.children[idx].clr = lbls[i]["color"] || "steelblue"
+                                            tasklabelgroup.children[idx++].text = i
+                                        }
+                                    }, {name: "updateTaskLabelGUI"})
                                 }
                                 Label{
                                     text: qsTr("Used")
@@ -136,9 +155,6 @@ TabView{
                                     height: 30
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
-                                }
-                                Component.onCompleted: {
-
                                 }
                             }
                         }
@@ -195,12 +211,6 @@ TabView{
                             name: "candidatelabels2"
                             size: [2, 2]
                             com: LabelButton{
-                                headbutton: {
-                                    "cap": "+",
-                                    "func": function(aLabel){
-
-                                    }
-                                }
                             }
                             width: parent.width
                             height: 70
