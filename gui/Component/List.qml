@@ -4,6 +4,7 @@ import Pipeline2 1.0
 
 Column {
     property string name: ""
+    property string selectSuffix: ""
     property var title: ["attr0", "attr1", "attr2"]
     property var selects: []
     property string selcolor: "lightskyblue"
@@ -98,7 +99,7 @@ Column {
                         view.currentIndex = index
                         selects = [index]
                     }
-                    Pipeline2.run(name + "_listViewSelected", [], {tag: "manual"})
+                    Pipeline2.run(name + "_listViewSelected", [], {tag: selectSuffix + "manual"})
                 }
             }
         }

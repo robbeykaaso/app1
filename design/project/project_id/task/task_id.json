@@ -10,8 +10,18 @@
         "ratio_mode": "bool"
     },
     "images": ["image_id"],
-    "labels": ["label_id"],
-    "label_groups": ["group_id"],
+    "labels": {
+        "shape": {
+            "labelName": {
+                "color": ""
+            }
+        },
+        "groupName": {
+            "labelName": {
+                "color": ""
+            }
+        }
+    },
     "scatter_display": "bool",
     "image_filter": {
         "type": "",

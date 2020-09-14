@@ -7,6 +7,18 @@ QString model::getProjectName(const QJsonObject& aProject){
     return aProject.value("name").toString();
 }
 
+QJsonObject model::getLabels(){
+    return value("labels").toObject();
+}
+QJsonObject model::prepareLabelListGUI(const QJsonObject& aLabels){
+    QJsonArray data;
+    for (auto i : aLabels.keys())
+        data.push_back(rea::Json("entry", rea::JArray(i)));
+    return rea::Json("title", rea::JArray("group"),
+                     "selects", aLabels.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                     "data", data);
+}
+
 class imageObjectEx : public rea::imageObject{
 private:
     cv::Mat m_image;

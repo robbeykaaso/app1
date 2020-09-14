@@ -27,142 +27,162 @@ TabView{
     Tab{
         title: qsTr("Labels")
         active: true
-        Row{
+        TabView{
             anchors.fill: parent
-            Rectangle{
-                width: 180
-                height: parent.height
-                TabView{
+            Tab{
+                title: qsTr("used")
+                active: true
+                Row{
                     anchors.fill: parent
-                    Tab{
-                        title: qsTr("used")
-                        active: true
-                        Column{
-                            anchors.fill: parent
-                            List{
-                                name: "task_label"
-                                width: parent.width
-                                height: parent.height - 30
-                            }
-                            Row{
-                                width: parent.width
-                                height: 30
-                                Button{
-                                    text: qsTr("remove")
-                                    height: 30
-                                    width: parent.width
-                                    onClicked: {
-                                        //Pipeline2.run("_newObject", {title: qsTr("new group"), content: {group: ""}, tag: {tag: "newLabelGroup"}})
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Tab{
-                        title: qsTr("candidate")
-                        active: true
-                        Column{
-                            anchors.fill: parent
-                            List{
-                                name: "candidate_label"
-                                width: parent.width
-                                height: parent.height - 30
-                            }
-                            Row{
-                                width: parent.width
-                                height: 30
-                                Button{
-                                    text: qsTr("use")
-                                    height: 30
-                                    width: parent.width
-                                    onClicked: {
-                                        //Pipeline2.run("_newObject", {title: qsTr("new group"), content: {group: ""}, tag: {tag: "newLabelGroup"}})
-                                    }
-                                }
-                            }
-                            Component.onCompleted: {
-                                Pipeline2.find("project_label_updateListView").nextL("candidate_label_updateListView")
-                            }
-                        }
-                    }
-                }
-            }
-            Column{
-                width: parent.width - 180
-                height: parent.height
-                Rectangle{
-                    width: parent.width
-                    height: 100
                     Column{
-                        anchors.fill: parent
-                        Label{
-                            text: qsTr("Candidate")
-                            font.pixelSize: 14
-                            padding: 5
+                        width: 180
+                        height: parent.height
+                        List{
+                            name: "task_label"
+                            selectSuffix: "task_"
+                            width: parent.width
+                            height: parent.height - 30
+                        }
+                        Row{
                             width: parent.width
                             height: 30
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-                        Gridder{
-                            name: "candidatelabels"
-                            size: [2, 2]
-                            com: LabelButton{
-                            }
-                            width: parent.width
-                            height: 70
-                        }
-
-                        Component.onCompleted: {
-
-                        }
-                    }
-                }
-                Grid{
-                    id: label_operation
-                    property var buttons: [
-                        {cap: qsTr("add"), func: function(){
-                            //Pipeline2.run("_newObject", {title: qsTr("new label"), content: {label: ""}, tag: {tag: "newLabel"}})
-                        }},
-                        {cap: qsTr("remove"), func: function(){
-                            //Pipeline2.run("_newObject", {title: qsTr("new label"), content: {label: ""}, tag: {tag: "newLabel"}})
-                        }}
-                    ]
-                    width: parent.width
-                    height: parent.height - 200
-                    rows: 1
-                    columns: 2
-                    Repeater{
-                        model: 2
-                        delegate: Item{
-                            width: parent.width / parent.columns
-                            height: parent.height / parent.rows
                             Button{
-                                width: parent.width * 0.4
-                                height: width
-                                text: label_operation.buttons[index].cap
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                onClicked: label_operation.buttons[index].func()
+                                text: qsTr("remove")
+                                height: 30
+                                width: parent.width
+                                onClicked: {
+                                    Pipeline2.run("task_label_listViewSelected", [], {tag: "removeTaskLabelGroup"})
+                                }
                             }
                         }
                     }
-                }
-                Rectangle{
-                    width: parent.width
-                    height: 100
                     Column{
-                        anchors.fill: parent
-                        Gridder{
-                            name: "usedlabels"
-                            size: [2, 2]
-                            com: LabelButton{
-                            }
+                        width: parent.width - 180
+                        height: parent.height
+                        Rectangle{
                             width: parent.width
-                            height: 70
+                            height: 100
+                            Column{
+                                anchors.fill: parent
+                                Label{
+                                    text: qsTr("Candidate")
+                                    font.pixelSize: 14
+                                    padding: 5
+                                    width: parent.width
+                                    height: 30
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                Gridder{
+                                    id: candidatelabelgroup
+                                    name: "candidatelabels2"
+                                    size: [2, 2]
+                                    com: LabelButton{
+                                        enabled: false
+                                    }
+                                    width: parent.width
+                                    height: 70
+                                }
+
+                                Component.onCompleted: {
+                                    Pipeline2.add(function(aInput){
+                                        var lbls = aInput["val"] || {}
+                                        var cnt = Object.keys(lbls).length
+                                        candidatelabelgroup.updateViewCount(cnt)
+                                        var idx = 0
+                                        for (var i in lbls){
+                                            candidatelabelgroup.children[idx].clr = lbls[i]["color"] || "steelblue"
+                                            candidatelabelgroup.children[idx++].text = i
+                                        }
+                                    }, {name: "updateCandidateLabelGUI"})
+                                }
+                            }
                         }
+                        Rectangle{
+                            width: parent.width
+                            height: parent.height - 200
+                            color: "lightskyblue"
+                            Label{
+                                text: "v\nv\nv\nv\n"
+                                font.pixelSize: 20
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+                        Rectangle{
+                            width: parent.width
+                            height: 100
+                            Column{
+                                anchors.fill: parent
+                                Gridder{
+                                    name: "usedlabels"
+                                    size: [2, 2]
+                                    com: LabelButton{
+                                        headbutton: {
+                                            "cap": "X",
+                                            "func": function(aLabel){
+
+                                            }
+                                        }
+                                    }
+                                    width: parent.width
+                                    height: 70
+                                }
+                                Label{
+                                    text: qsTr("Used")
+                                    font.pixelSize: 14
+                                    padding: 5
+                                    width: parent.width
+                                    height: 30
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+                                Component.onCompleted: {
+
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+            }
+            Tab{
+                title: qsTr("candidate")
+                active: true
+                Row{
+                    anchors.fill: parent
+                    Column{
+                        width: 180
+                        height: parent.height
+                        List{
+                            name: "candidate_label"
+                            selectSuffix: "candidate_"
+                            width: parent.width
+                            height: parent.height - 30
+                        }
+                        Row{
+                            width: parent.width
+                            height: 30
+                            Button{
+                                text: qsTr("use")
+                                height: 30
+                                width: parent.width
+                                onClicked: {
+                                    Pipeline2.run("candidate_label_listViewSelected", [], {tag: "addTaskLabelGroup"})
+                                }
+                            }
+                        }
+                        Component.onCompleted: {
+                            Pipeline2.find("project_label_updateListView").nextL("candidate_label_updateListView")
+                        }
+                    }
+                    Column{
+                        width: parent.width - 180
+                        height: 100
                         Label{
-                            text: qsTr("Used")
+                            id: candidatelabelgrouptitle
+                            text: qsTr("Group") + ":"
                             font.pixelSize: 14
                             padding: 5
                             width: parent.width
@@ -170,15 +190,41 @@ TabView{
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
-                        Component.onCompleted: {
+                        Gridder{
+                            id: candidatelabelgroup2
+                            name: "candidatelabels2"
+                            size: [2, 2]
+                            com: LabelButton{
+                                headbutton: {
+                                    "cap": "+",
+                                    "func": function(aLabel){
 
+                                    }
+                                }
+                            }
+                            width: parent.width
+                            height: 70
+                        }
+
+                        Component.onCompleted: {
+                            Pipeline2.add(function(aInput){
+                                candidatelabelgrouptitle.text = qsTr("Group") + ":" + (aInput["key"] || "")
+                                var lbls = aInput["val"] || {}
+                                var cnt = Object.keys(lbls).length
+                                candidatelabelgroup2.updateViewCount(cnt)
+                                var idx = 0
+                                for (var i in lbls){
+                                    candidatelabelgroup2.children[idx].clr = lbls[i]["color"] || "steelblue"
+                                    candidatelabelgroup2.children[idx++].text = i
+                                }
+                            }, {name: "updateCandidateLabelGUI2"})
                         }
                     }
                 }
             }
-
         }
     }
+
     Tab{
         title: qsTr("Image")
         active: true
@@ -230,9 +276,6 @@ TabView{
                                     text: qsTr("use")
                                     height: 30
                                     width: parent.width
-                                    onClicked: {
-                                        //Pipeline2.run("_newObject", {title: qsTr("new group"), content: {group: ""}, tag: {tag: "newLabelGroup"}})
-                                    }
                                 }
                             }
                             Component.onCompleted: {

@@ -9,6 +9,7 @@ _sample_:
         name: "hello"
     }
 ```  
+* selectSuffix: the suffix for the tag of the manual trigged selected pipe  
 </br>
 
 # Usage
@@ -47,7 +48,7 @@ _sample_:
 ```
     Pipeline2.find("_listViewSelected").next(function(aInput){
         console.log(aInput)
-    }, {tag: "manual"}, {vtype: []})
+    }, {tag: "manual"}, {vtype: []})  //selectSuffix + "manual"
 ```  
 </br>
 

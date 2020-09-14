@@ -4,6 +4,7 @@ import Pipeline2 1.0
 
 Button{
     property string name
+    property var headbutton
     property string clr: "steelblue"
     width: parent.width / parent.columns
     height: parent.height / parent.rows
@@ -14,23 +15,11 @@ Button{
         border.color: "white"
     }
 
-    onClicked: {
-        var svs = "modifyLabelColor"
-        Pipeline2.find("_selectColor")
-        .next(function(aInput){
-            return {out: [{out: [text, aInput], next: svs},
-                          {out: [], next: "project_label_listViewSelected"}]}
-        }, {tag: svs}, {name: "getButtonLabelText", vtype: ""})
-        .nextB(svs)
-        .next("project_label_listViewSelected", {tag: svs})
-        Pipeline2.run("_selectColor", {tag: {tag: svs}})
-    }
-
     Button{
         height: 14
         width: 14
         contentItem: Text{
-            text: "X"
+            text: headbutton ? headbutton["cap"] : ""
             color: "white"
             font.pixelSize: 14
             horizontalAlignment: Text.AlignHCenter
@@ -42,7 +31,8 @@ Button{
         anchors.right: parent.right
         anchors.top: parent.top
         onClicked: {
-            Pipeline2.run("deleteLabel", parent.text)
+            if (headbutton)
+                headbutton["func"](parent.text)
         }
     }
 }

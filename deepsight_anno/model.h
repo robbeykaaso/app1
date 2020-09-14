@@ -31,6 +31,8 @@ public:
     }*/
 protected:
     QString getProjectName(const QJsonObject& aProject);
+    QJsonObject getLabels();
+    QJsonObject prepareLabelListGUI(const QJsonObject& aLabels);
 };
 
 #endif

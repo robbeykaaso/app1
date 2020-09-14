@@ -113,6 +113,7 @@ TabView{
                 height: parent.height
                 List{
                     name: "project_label"
+                    selectSuffix: "project_"
                     width: parent.width
                     height: parent.height - 30
                 }
@@ -158,9 +159,26 @@ TabView{
                         }
                         Gridder{
                             id: labelgroup
-                            name: "labels"
+                            name: "projectlabels"
                             size: [2, 2]
                             com: LabelButton{
+                                headbutton: {
+                                    "cap": "X",
+                                    "func": function(aLabel){
+                                        Pipeline2.run("deleteLabel", aLabel)
+                                    }
+                                }
+                                onClicked: {
+                                    var svs = "modifyLabelColor"
+                                    Pipeline2.find("_selectColor")
+                                    .next(function(aInput){
+                                        return {out: [{out: [text, aInput], next: svs},
+                                                      {out: [], next: "project_label_listViewSelected"}]}
+                                    }, {tag: svs}, {name: "getButtonLabelText", vtype: ""})
+                                    .nextB(svs)
+                                    .next("project_label_listViewSelected", {tag: svs})
+                                    Pipeline2.run("_selectColor", {tag: {tag: svs}})
+                                }
                             }
                             width: parent.width
                             height: 70
@@ -177,7 +195,7 @@ TabView{
                                     labelgroup.children[idx].clr = lbls[i]["color"] || "steelblue"
                                     labelgroup.children[idx++].text = i
                                 }
-                            }, {name: "updateLabelGUI"})
+                            }, {name: "updateProjectLabelGUI"})
                         }
                     }
                 }
