@@ -27,7 +27,7 @@ QString model::getImageStringName(const QJsonObject& aImage){
 
 class imageObjectEx : public rea::imageObject{
 private:
-    cv::Mat m_image;
+    QImage m_image;
 public:
     imageObjectEx(const QJsonObject& aConfig) : imageObject(aConfig){
 
@@ -42,7 +42,7 @@ public:
     }
     QImage updateImagePath(bool aForce = false) override{
         auto img = imageObject::updateImagePath(aForce);
-        m_image = QImage2cvMat(img);
+        m_image = img;
         return img;
     }
     void appendToParent(QSGNode* aTransformNode) override{
@@ -61,7 +61,7 @@ public:
         auto origin0 = inv_trans.map(QPoint(0, 0)), origin1 = inv_trans.map(QPoint(m_window->width(), m_window->height()));
 
         int left = std::max(0, origin0.x()), bottom = std::max(0, origin0.y()),
-            right = std::min(origin1.x(), m_image.cols), top = std::min(origin1.y(), m_image.rows);
+            right = std::min(origin1.x(), m_image.width()), top = std::min(origin1.y(), m_image.height());
 
         if (right <= left || top <= bottom)
             return;
@@ -69,14 +69,15 @@ public:
         cv::Mat img0;
         auto fmt = cfg.value("colorFormat").toString();
         try{
+            auto src = QImage2cvMat(m_image);
             if (fmt == "BayerRG2RGB")
-                cv::cvtColor(m_image, img0, cv::COLOR_BayerRG2BGR);
+                cv::cvtColor(src, img0, cv::COLOR_BayerRG2BGR);
             else if (fmt == "BayerRG2Gray")
-                cv::cvtColor(m_image, img0, cv::COLOR_BayerRG2GRAY);
+                cv::cvtColor(src, img0, cv::COLOR_BayerRG2GRAY);
             else if (fmt == "RGB2Gray")
-                cv::cvtColor(m_image, img0, cv::COLOR_RGB2GRAY);
+                cv::cvtColor(src, img0, cv::COLOR_RGB2GRAY);
             else
-                img0 = m_image;
+                img0 = src;
         }catch(...){
             std::cout << "format changed fail!" << std::endl;
         }
@@ -100,7 +101,6 @@ public:
             cv::resize(dst0, img, img.size(), 0, 0, cv::InterpolationFlags::INTER_LANCZOS4);
         else
             cv::resize(dst0, img, img.size(), 0, 0, cv::InterpolationFlags::INTER_LINEAR);
-
         m_node->setTexture(m_window->window()->createTextureFromImage(cvMat2QImage(img)));
         m_node->setRect(origin0.x(), origin0.y(), origin1.x() - origin0.x(), origin1.y() - origin0.y());
         m_node->markDirty(QSGNode::DirtyMaterial);
