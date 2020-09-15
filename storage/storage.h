@@ -4,7 +4,8 @@
 #include "opencv2/opencv.hpp"
 #include <QString>
 #include <QJsonObject>
-#include <QImage>
+#include "qsgModel.h"
+//#include <QImage>
 
 template <typename T>
 class stgData : public QString{

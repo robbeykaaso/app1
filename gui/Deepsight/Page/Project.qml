@@ -195,6 +195,7 @@ TabView{
                                     labelgroup.children[idx].clr = lbls[i]["color"] || "steelblue"
                                     labelgroup.children[idx++].text = i
                                 }
+                                return {out: {}}
                             }, {name: "updateProjectLabelGUI"})
                         }
                     }
@@ -389,7 +390,7 @@ TabView{
                                 projectimage.children[i].children[0].beforeDestroy()
 
                             return {out: {}}
-                        }, {}, {name: "removeWholeQSGNodes", vtype: []})
+                        }, {}, {name: "removeWholeProjectQSGNodes", vtype: []})
 
                         Pipeline2.add(function(aInput){
                             for (var i = 0; i < projectimage.children.length; ++i)
@@ -549,6 +550,7 @@ TabView{
                     }
                 }
             }
+
         }
     }
     TransformImage{

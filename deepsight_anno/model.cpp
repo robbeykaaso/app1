@@ -10,13 +10,19 @@ QString model::getProjectName(const QJsonObject& aProject){
 QJsonObject model::getLabels(){
     return value("labels").toObject();
 }
-QJsonObject model::prepareLabelListGUI(const QJsonObject& aLabels){
-    QJsonArray data;
-    for (auto i : aLabels.keys())
-        data.push_back(rea::Json("entry", rea::JArray(i)));
-    return rea::Json("title", rea::JArray("group"),
-                     "selects", aLabels.size() > 0 ? rea::JArray("0") : QJsonArray(),
-                     "data", data);
+
+QJsonArray model::getImageName(const QJsonObject& aImage){
+    return aImage.value("name").toArray();
+}
+QString model::getImageStringName(const QJsonObject& aImage){
+    auto nms = getImageName(aImage);
+    QString ret = "";
+    if (nms.size() > 0){
+        ret += nms[0].toString();
+        if (nms.size() > 1)
+            ret += "\n...";
+    }
+    return ret;
 }
 
 class imageObjectEx : public rea::imageObject{

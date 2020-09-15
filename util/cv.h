@@ -3,7 +3,6 @@
 
 #include "opencv2/opencv.hpp"
 #include "qsgModel.h"
-#include <QImage>
 
 QImage cvMat2QImage(const cv::Mat& mat);
 cv::Mat QImage2cvMat(QImage image);

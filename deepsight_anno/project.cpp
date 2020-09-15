@@ -41,19 +41,6 @@ private:
     QString getTaskName(const QJsonObject& aTask){
         return aTask.value("name").toString();
     }
-    QJsonArray getImageName(const QJsonObject& aImage){
-        return aImage.value("name").toArray();
-    }
-    QString getImageStringName(const QJsonObject& aImage){
-        auto nms = getImageName(aImage);
-        QString ret = "";
-        if (nms.size() > 0){
-            ret += nms[0].toString();
-            if (nms.size() > 1)
-                ret += "\n...";
-        }
-        return ret;
-    }
     QString getImageTime(const QJsonObject& aImage){
         return aImage.value("time").toString();
     }
@@ -67,6 +54,14 @@ private:
         return rea::Json("title", rea::JArray("name", "time"),
                          "entrycount", 30,
                          "selects", aImages.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "data", data);
+    }
+    QJsonObject prepareLabelListGUI(const QJsonObject& aLabels){
+        QJsonArray data;
+        for (auto i : aLabels.keys())
+            data.push_back(rea::Json("entry", rea::JArray(i)));
+        return rea::Json("title", rea::JArray("group"),
+                         "selects", aLabels.size() > 0 ? rea::JArray("0") : QJsonArray(),
                          "data", data);
     }
     QJsonObject prepareTaskListGUI(const QJsonArray& aTasks){
@@ -89,16 +84,19 @@ private:
 private:
     void projectManagement(){
         //open project
-        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
-            auto dt = aInput->data();
-            if (dt.value("id") != m_project_id){
-                m_project_id = dt.value("id").toString();
-                m_project_abstract = dt.value("abstract").toObject();
-                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task.json"));
-                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image.json"));
-                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
-            }
+        rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+            aInput->out();
         }, rea::Json("name", "openProject"))
+            ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                auto dt = aInput->data();
+                if (dt.value("id") != m_project_id){
+                    m_project_id = dt.value("id").toString();
+                    m_project_abstract = dt.value("abstract").toObject();
+                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task.json"));
+                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image.json"));
+                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
+                }
+            }))
             ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
             ->next(rea::buffer<stgJson>(3))
             ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
@@ -233,7 +231,12 @@ private:
                            auto tsks = getTasks();
                            auto id = tsks[dt[0].toInt()].toString();
                            aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract), getTaskName(m_tasks.value(id).toObject())}), "title_updateStatus");
-                           aInput->out<QJsonObject>(rea::Json("id", m_project_id + "/task/" + id), openTask);
+                           aInput->out<QJsonObject>(rea::Json("id", m_project_id + "/task/" + id,
+                                                              "labels", getLabels(),
+                                                              "images", m_images,
+                                                              "channel", getChannelCount(),
+                                                              "project", m_project_id,
+                                                              "imageshow", getImageShow()), openTask);
                        }
                    }), rea::Json("tag", openTask))
             ->nextB(0, "title_updateStatus", QJsonObject())
@@ -571,8 +574,7 @@ private:
                        if (dt.size() == 0){
                            rea::pipeline::run<QJsonArray>("updateQSGCtrl_projectimage_gridder0", QJsonArray());  //must be before "updateQSGModel_projectimage_gridder"
                            m_current_image = "";
-                           int cnt = getChannelCount();
-                           for (int i = 0; i < cnt; ++i)
+                           for (int i = 0; i < m_show_count; ++i)
                                rea::pipeline::run<QJsonObject>("updateQSGModel_projectimage_gridder" + QString::number(i), QJsonObject());
                            aInput->out<QJsonObject>(QJsonObject(), "updateProjectImageGUI");
                        }
@@ -715,12 +717,13 @@ private:
             ->next(rea::pipeline::add<double>([this](rea::stream<double>* aInput){
                 if (aInput->data() == 1.0){
                     aInput->out<stgJson>(stgJson(m_images, "project/" + m_project_id + "/image.json"), "deepsightwriteJson");
-                    aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
+                    aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"));
                     aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
                 }
             }))
             ->nextB(0, "project_image_updateListView", QJsonObject())
-            ->next("deepsightwriteJson");
+            ->nextB(0, rea::local("deepsightwriteJson", rea::Json("thread", 11)), QJsonObject())
+            ->next("deepsightwriteJson", rea::Json("tag", "updateProjectImages"));
 
         //modify image
         rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
@@ -786,6 +789,7 @@ private:
         ->nextB(0, "project_image_listViewSelected", rea::Json("tag", "manual"))
         ->nextB(0, "deepsightwriteJson", QJsonObject());
 
+        //get project current image info
         rea::pipeline::add<QJsonObject, rea::pipePartial>([this](rea::stream<QJsonObject>* aInput){
             if (m_current_image != ""){
                 auto nms = getImageName(m_images.value(m_current_image).toObject());
