@@ -35,8 +35,8 @@ private:
         insert("tasks", aTasks);
     }
     void setLabels(const QJsonObject& aLabels){
-        rea::pipeline::run<QJsonObject>("projectLabelChanged", aLabels);
         insert("labels", aLabels);
+        rea::pipeline::run<QJsonObject>("projectLabelChanged", aLabels);
     }
     QString getTaskName(const QJsonObject& aTask){
         return aTask.value("name").toString();
@@ -462,10 +462,6 @@ private:
         aImageShow.insert("colorFormat", aColorFormat);
     }
 
-    QJsonObject getShapes(const QJsonObject& aImage){
-        return aImage.value("shapes").toObject();
-    }
-
     QJsonObject getFilter(){
         return value("filter").toObject();
     }
@@ -473,11 +469,6 @@ private:
     void setFilter(const QJsonObject& aFilter){
         insert("filter", aFilter);
     }
-
-    QJsonObject getImageLabels(const QJsonObject& aImageAbstract){
-        return aImageAbstract.value("image_label").toObject();
-    }
-
     void setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels){
         aImageAbstract.insert("image_label", aLabels);
     }

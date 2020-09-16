@@ -11,6 +11,14 @@ QJsonObject model::getLabels(){
     return value("labels").toObject();
 }
 
+QJsonObject model::getImageLabels(const QJsonObject& aImageAbstract){
+    return aImageAbstract.value("image_label").toObject();
+}
+
+QJsonObject model::getShapes(const QJsonObject& aImage){
+    return aImage.value("shapes").toObject();
+}
+
 QJsonArray model::getImageName(const QJsonObject& aImage){
     return aImage.value("name").toArray();
 }
@@ -106,7 +114,7 @@ public:
         m_node->markDirty(QSGNode::DirtyMaterial);
     }
 };
-
+/*
 static rea::regPip<QJsonObject, rea::pipePartial> create_image([](rea::stream<QJsonObject>* aInput){
     aInput->out<std::shared_ptr<rea::qsgObject>>(std::make_shared<imageObjectEx>(aInput->data()));
-}, rea::Json("name", "create_qsgobject_image"));
+}, rea::Json("name", "create_qsgobject_image"));*/

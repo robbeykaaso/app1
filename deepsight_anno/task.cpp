@@ -6,6 +6,7 @@
 class task : public model{
 private:
     void setLabels(const QJsonObject& aLabels){
+        rea::pipeline::run<QJsonObject>("taskLabelChanged", aLabels);
         insert("labels", aLabels);
     }
     QString getImageStage(const QJsonObject& aImage){
@@ -76,6 +77,7 @@ private:
             ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
                 auto dt = aInput->data();
                 dt[0].getData().swap(*this);
+                setLabels(value("labels").toObject());
 
                 aInput->out<QJsonObject>(prepareLabelListGUI(getLabels()), "task_label_updateListView");
                 aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
@@ -93,12 +95,16 @@ private:
             ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
                 if (m_task_id == "")
                     return;
-                m_project_labels = aInput->data();
+                auto dt = aInput->data();
+                if (m_project_labels.value("shape") != dt.value("shape")){
+                    m_current_image = "";
+                }
+                m_project_labels = dt;
                 aInput->out<QJsonObject>(prepareLabelListGUI(getLabels()), "task_label_updateListView");
                 aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
             }))
             ->nextB(0, "task_label_updateListView", QJsonObject())
-            ->next("task_label_listViewSelected", rea::Json("tag", "task_manual"));
+            ->nextB(0, "task_label_listViewSelected", rea::Json("tag", "task_manual"));
 
         //select task label group
         rea::pipeline::find("task_label_listViewSelected")
@@ -157,10 +163,17 @@ private:
                 setLabels(grps);
                 aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
                 aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
+                m_current_image = "";
+                aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
             }))
             ->nextB(0, "task_label_updateListView", QJsonObject())
             ->nextB(0, "deepsightwriteJson", QJsonObject())
-            ->nextB(0, "task_label_listViewSelected", rea::Json("tag", "task_manual"));
+            ->nextB(0, "task_label_listViewSelected", rea::Json("tag", "task_manual"))
+            ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+
+        rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+            aInput->out();
+        }, rea::Json("name", "taskLabelChanged"));
     }
 private:
     QString m_current_image = "";
@@ -211,18 +224,30 @@ private:
                                    aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img));
                                }
                            }
-                           //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateProjectImageGUI");
+                           //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateTaskImageGUI");
                        }else{
-                           aInput->out<QJsonObject>(QJsonObject(), "updateProjectImageGUI");
+                           aInput->out<QJsonObject>(QJsonObject(), "updateTaskImageGUI");
                        }
                    }
                }), rea::Json("tag", "manual"))
             ->nextB(0, "updateQSGCtrl_projectimage_gridder0", QJsonObject())
             ->nextB(0, "deepsightreadJson", selectTaskImage, rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
-                        m_image = aInput->data().getData();
-                        //aInput->out<QJsonObject>(rea::Json(m_image, "image_label", getImageLabels(m_images.value(m_current_image).toObject())), "updateProjectImageGUI");
-                    }), selectTaskImage, "updateProjectImageGUI", QJsonObject())
-            //->nextB(0, "updateProjectImageGUI", QJsonObject())
+                m_image = aInput->data().getData();
+                auto img_lbls = getImageLabels(m_project_images.value(m_current_image).toObject());
+                auto tsk_lbls = getLabels();
+                std::vector<QString> dels;
+                for (auto i : img_lbls.keys()){
+                    auto lbl0 = tsk_lbls.value(i).toObject();
+                    auto lbl1 = m_project_labels.value(i).toObject();
+                    auto lbl = img_lbls.value(i).toString();
+                    if (!lbl0.contains(lbl) || !lbl1.contains(lbl))
+                        dels.push_back(i);
+                }
+                for (auto  i: dels)
+                    img_lbls.remove(i);
+                aInput->out<QJsonObject>(rea::Json(m_image, "image_label", img_lbls), "updateTaskImageGUI");
+            }), selectTaskImage, "updateTaskImageGUI", QJsonObject())
+            ->nextB(0, "updateTaskImageGUI", QJsonObject())
             ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 auto dt = aInput->data();
@@ -236,26 +261,32 @@ private:
                                                                     "range", rea::JArray(0, 0, img.width(), img.height()),
                                                                     "path", pth,
                                                                     "transform", m_image_show));
-                /*auto shps = getShapes(m_image);
+
+                auto tsk_shp_lbls = getLabels().value("shape").toObject(), prj_shp_lbls = m_project_labels.value("shape").toObject();
+
+                auto shps = getShapes(m_image);
                 for (auto i : shps.keys()){
                     auto shp = shps.value(i).toObject();
-                    if (shp.value("type") == "ellipse"){
-                        objs.insert(i, rea::Json("type", "ellipse",
-                                                 "caption", shp.value("label"),
-                                                 "center", shp.value("center"),
-                                                 "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
-                                                 "angle", shp.value("angle")));
-                    }else if (shp.value("type") == "polyline"){
-                        QJsonArray pts;
-                        pts.push_back(shp.value("points"));
-                        auto holes = shp.value("holes").toArray();
-                        for (auto i : holes)
-                            pts.push_back(i);
-                        objs.insert(i, rea::Json("type", "poly",
-                                                 "caption", shp.value("label"),
-                                                 "points", pts));
+                    auto lbl = shp.value("label").toString();
+                    if (tsk_shp_lbls.contains(lbl) && prj_shp_lbls.contains(lbl)){
+                        if (shp.value("type") == "ellipse"){
+                            objs.insert(i, rea::Json("type", "ellipse",
+                                                     "caption", shp.value("label"),
+                                                     "center", shp.value("center"),
+                                                     "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
+                                                     "angle", shp.value("angle")));
+                        }else if (shp.value("type") == "polyline"){
+                            QJsonArray pts;
+                            pts.push_back(shp.value("points"));
+                            auto holes = shp.value("holes").toArray();
+                            for (auto i : holes)
+                                pts.push_back(i);
+                            objs.insert(i, rea::Json("type", "poly",
+                                                     "caption", shp.value("label"),
+                                                     "points", pts));
+                        }
                     }
-                }*/
+                }
 
                 auto cfg = rea::Json("id", "project/" + m_project_id + "/image/" + m_current_image + ".json",
                                      "width", img.width(),

@@ -64,7 +64,7 @@ QJsonObject fsStorage::readJson(const QString& aPath){
 }
 
 cv::Mat fsStorage::readCVMat(const QString& aPath){
-    return cv::imread((stgRoot(aPath)).toLocal8Bit().toStdString().data(), cv::IMREAD_UNCHANGED);
+    return cv::imread((stgRoot(aPath)).toUtf8().toStdString().data(), cv::IMREAD_UNCHANGED);
 }
 
 QImage fsStorage::readQImage(const QString& aPath){

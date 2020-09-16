@@ -32,6 +32,8 @@ public:
 protected:
     QString getProjectName(const QJsonObject& aProject);
     QJsonObject getLabels();
+    QJsonObject getImageLabels(const QJsonObject& aImageAbstract);
+    QJsonObject getShapes(const QJsonObject& aImage);
     QJsonArray getImageName(const QJsonObject& aImage);
     QString getImageStringName(const QJsonObject& aImage);
 };

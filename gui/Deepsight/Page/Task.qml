@@ -245,6 +245,8 @@ TabView{
                         Row{
                             id: imglbls
                             property var labels: ({})
+                            property var proj_lbls
+                            property var tsk_lbls
                             height: 30
                             width: parent.width
                             topPadding: 10
@@ -264,26 +266,54 @@ TabView{
                                     }
                                 }
                             }
+
+                            function getActLabels(){
+                                var ret = {}
+                                for (var i in proj_lbls)
+                                    if (tsk_lbls[i] !== undefined){
+                                        var lbl = {}
+                                        for (var j in proj_lbls[i])
+                                            if (tsk_lbls[i][j] !== undefined)
+                                                lbl[j] = proj_lbls[i][j]
+                                        ret[i] = lbl
+                                    }
+                                return ret
+                            }
+
                             Component.onCompleted: {
-                               /* Pipeline2.find("projectLabelChanged").next(function(aInput){
+                                proj_lbls = {}
+                                tsk_lbls = {}
+                                Pipeline2.find("taskLabelChanged").next(function(aInput){
                                     for (var i = 1; i < children.length; ++i)
                                         children[i].destroy()
-                                    for (var j in aInput)
+                                    tsk_lbls = aInput
+                                    var lbls = getActLabels()
+                                    for (var j in lbls)
                                         if (j !== "shape"){
-                                            lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(aInput)
+                                            lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(lbls)
                                         }
-                                })*/
+                                })
+                                Pipeline2.find("projectLabelChanged").next(function(aInput){
+                                    for (var i = 1; i < children.length; ++i)
+                                        children[i].destroy()
+                                    proj_lbls = aInput
+                                    var lbls = getActLabels()
+                                    for (var j in lbls)
+                                        if (j !== "shape"){
+                                            lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(lbls)
+                                        }
+                                })
                             }
                         }
                         Component.onCompleted: {
-                            /*Pipeline2.add(function(aInput){
+                            Pipeline2.add(function(aInput){
                                 children[0].text = qsTr("Name: ") + (aInput["source"] || "")
                                 children[1].text = qsTr("Size: ") + (aInput["width"] || "") + ";" + (aInput["height"] || "")
                                 children[2].text = qsTr("Channel: ") + (aInput["channel"] || "")
                                 imglbls.labels = aInput["image_label"] || {}
                                 for (var i = 1; i < imglbls.children.length; ++i)
                                     imglbls.children[i].label = imglbls.labels[imglbls.children[i].group] || ""
-                            }, {name: "updateProjectImageGUI"})*/
+                            }, {name: "updateTaskImageGUI"})
                         }
                     }
                 }
