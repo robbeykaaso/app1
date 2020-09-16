@@ -280,7 +280,7 @@ TabView{
                         Component.onCompleted: {
                             Pipeline2.add(function(aInput){
                                 children[0].label = aInput["type"]
-                                search.text = aInput["value"]
+                                search.text = aInput["value"] || ""
                             }, {name: "updateProjectImageFilterGUI"})
                         }
                     }

@@ -462,13 +462,6 @@ private:
         aImageShow.insert("colorFormat", aColorFormat);
     }
 
-    QJsonObject getFilter(){
-        return value("filter").toObject();
-    }
-
-    void setFilter(const QJsonObject& aFilter){
-        insert("filter", aFilter);
-    }
     void setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels){
         aImageAbstract.insert("image_label", aLabels);
     }

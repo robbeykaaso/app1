@@ -169,23 +169,21 @@ TabView{
                             height: parent.height
                             width: 50
                             onUpdatelabel: function(aLabel){
-                                /*if (aLabel === "all"){
-                                    Pipeline2.run("filterProjectImages", {type: label})
+                                if (aLabel === "all" || aLabel === "used"){
+                                    Pipeline2.run("filterTaskImages", {type: label})
                                     search.hint = ""
                                     search.text = ""
-                                }else if (aLabel === "time")
-                                    search.hint = "input time"
-                                else if (aLabel === "name")
-                                    search.hint = "input name"*/
+                                }else if (aLabel === "stage")
+                                    search.hint = "input stage"
                             }
                             Component.onCompleted: {
-                                updateMenu({filter: {"all": "", "stage": ""}})
-                                /*Pipeline2.find("projectimage_Searched")
+                                updateMenu({filter: {"all": "", "used": "", "stage": ""}})
+                                Pipeline2.find("taskimage_Searched")
                                 .next(function(aInput){
-                                    if (label !== "all")
-                                        return {out: [{out: {type: label, value: aInput}, next: "filterProjectImages"}]}
+                                    if (label !== "all" && label !== "used")
+                                        return {out: [{out: {type: label, value: aInput}, next: "filterTaskImages"}]}
                                 }, {tag: "manual"}, {vtype: ""})
-                                .next("filterProjectImages")*/
+                                .next("filterTaskImages")
                             }
                         }
                         Search {
@@ -197,10 +195,10 @@ TabView{
                             width: parent.width - 50
                         }
                         Component.onCompleted: {
-                           /* Pipeline2.add(function(aInput){
+                            Pipeline2.add(function(aInput){
                                 children[0].label = aInput["type"]
-                                search.text = aInput["value"]
-                            }, {name: "updateProjectImageFilterGUI"})*/
+                                search.text = aInput["value"] || ""
+                            }, {name: "updateTaskImageFilterGUI"})
                         }
                     }
                     PageList{
@@ -214,12 +212,18 @@ TabView{
                         Button{
                             text: qsTr("use")
                             height: 30
-                            width: parent.width * 0.5
+                            width: parent.width / 3
+                            onClicked: Pipeline2.run("useTaskImage", true)
                         }
                         Button{
                             text: qsTr("remove")
                             height: 30
-                            width: parent.width * 0.5
+                            width: parent.width / 3
+                            onClicked: Pipeline2.run("useTaskImage", false)
+                        }
+                        StageButton{
+                            height: 30
+                            width: parent.width / 3
                         }
                     }
                 }
@@ -329,12 +333,12 @@ TabView{
                             return {out: {}}
                         }, {}, {name: "removeWholeTaskQSGNodes", vtype: []})
 
-                       /* Pipeline2.add(function(aInput){
-                            for (var i = 0; i < projectimage.children.length; ++i)
-                                Pipeline2.run("updateQSGAttr_" + projectimage.children[i].name, {key: ["transform"], type: "zoom"})
-                        }, {name: "fitProjectImageShow"})
-
                         Pipeline2.add(function(aInput){
+                            for (var i = 0; i < taskimage.children.length; ++i)
+                                Pipeline2.run("updateQSGAttr_" + taskimage.children[i].name, {key: ["transform"], type: "zoom"})
+                        }, {name: "fitTaskImageShow"})
+
+                        /*Pipeline2.add(function(aInput){
                             if (aInput["bound"]){
                                 projectimage.children[0].children[1].visible = true
                                 var bnd = aInput["bound"]
@@ -374,7 +378,7 @@ TabView{
                                 }
                             }
                             LabelEdit{
-                                sync: parent.name === "taskimage_gridder0"
+                                //sync: parent.name === "taskimage_gridder0"
                                 visible: false
                                 onUpdatelabel: function(aLabel){
                                     if (taskimage.selects)
@@ -469,7 +473,7 @@ TabView{
                                 text: qsTr("fit")
                                 height: 30
                                 width: parent.width
-                               // onClicked: Pipeline2.run("fitProjectImageShow", {})
+                                onClicked: Pipeline2.run("fitTaskImageShow", {})
                             }
                             Button{
                                 text: qsTr("image")
@@ -486,6 +490,9 @@ TabView{
                                 text: qsTr("stage")
                                 height: 30
                                 width: parent.width
+                                onClicked: {
+                                    Pipeline2.run("_newObject", {title: qsTr("image stage"), content: {train: 0, test: 0, validation: 0}, tag: {tag: "setImageStage"}})
+                                }
                             }
 
                             /*Button{

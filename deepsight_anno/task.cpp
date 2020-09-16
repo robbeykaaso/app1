@@ -12,8 +12,14 @@ private:
     QString getImageStage(const QJsonObject& aImage){
         return aImage.value("stage").toString();
     }
+    void setImageStage(QJsonObject& aImage, const QString& aStage){
+        aImage.insert("stage", aStage);
+    }
     QJsonObject getImages(){
         return value("images").toObject();
+    }
+    void setImages(const QJsonObject& aImages){
+        insert("images", aImages);
     }
     QJsonArray getImageList(){
         if (contains("image_list"))
@@ -24,6 +30,12 @@ private:
                 ret.push_back(i);
             return ret;
         }
+    }
+    void setImageList(const QJsonArray& aList, bool aRemove = false){
+        if (aRemove)
+            remove("image_list");
+        else
+            insert("image_list", aList);
     }
     QJsonObject prepareLabelListGUI(const QJsonObject& aLabels){
         QJsonArray data;
@@ -83,11 +95,13 @@ private:
                 aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
                 aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
                 aInput->out<QJsonObject>(rea::Json("count", 1), "scatterTaskImageShow");
+                aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
             }))
             ->nextB(0, "task_label_updateListView", QJsonObject())
             ->nextB(0, "task_label_listViewSelected", rea::Json("tag", "task_manual"))
             ->nextB(0, "task_image_updateListView", QJsonObject())
-            ->nextB(0, "scatterTaskImageShow", QJsonObject());
+            ->nextB(0, "scatterTaskImageShow", QJsonObject())
+            ->nextB(0, "updateTaskImageFilterGUI", QJsonObject());
     }
     void labelManagement(){
         //update project labels
@@ -300,6 +314,144 @@ private:
                 rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + QString::number(ch), cfg);
                 //aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder0");
             }));
+
+        //use task image
+        auto useTaskImage = rea::buffer<QJsonArray>(2);
+        const QString useTaskImage_nm = "useTaskImage";
+        rea::pipeline::add<bool>([](rea::stream<bool>* aInput){
+            aInput->out<QJsonArray>(rea::JArray(aInput->data()));
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+        }, rea::Json("name", useTaskImage_nm))
+            ->nextB(0, "task_image_listViewSelected", rea::Json("tag", useTaskImage_nm), useTaskImage, rea::Json("tag", useTaskImage_nm))
+            ->next(useTaskImage)
+            ->next(rea::pipeline::add<std::vector<QJsonArray>>([this](rea::stream<std::vector<QJsonArray>>* aInput){
+                auto dt = aInput->data();
+                auto lst = getImageList();
+                auto imgs = getImages();
+                auto add = dt[0][0].toBool();
+                auto sels = dt[1];
+                bool mdy = false;
+                for (auto i : sels){
+                    auto img = lst[i.toInt()].toString();
+                    if (!imgs.contains(img) == add){
+                        if (add)
+                            imgs.insert(img, QJsonObject());
+                        else
+                            imgs.remove(img);
+                        mdy = true;
+                    }
+                }
+                if (mdy){
+                    setImages(imgs);
+                    aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+                    aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
+                    aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+                }
+            }))
+            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->nextB(0, "task_image_updateListView", QJsonObject())
+            ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+
+        //filter images
+        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            QJsonArray lst;
+            auto imgs = getImages();
+            if (dt.value("type") == "all"){
+                setImageList(lst, true);
+            }else if (dt.value("type") == "used"){
+                for (auto i : imgs.keys())
+                    lst.push_back(i);
+                setImageList(lst);
+            }else if (dt.value("type") == "stage"){
+                auto stg = dt.value("value").toString();
+                for (auto i : imgs.keys()){
+                    auto img = imgs.value(i).toObject();
+                    if (img.value("stage") == stg)
+                        lst.push_back(i);
+                }
+                setImageList(lst);
+            }else
+                return;
+            setFilter(dt);
+            aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+            aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+        }, rea::Json("name", "filterTaskImages"))
+            ->nextB(0, "task_image_updateListView", QJsonObject())
+            ->nextB(0, "task_image_listViewSelected", rea::Json("tag", "manual"))
+            ->nextB(0, "deepsightwriteJson", QJsonObject());
+
+        //automatic set image stage
+        if (!rea::pipeline::find("automaticSetImageStage", false))
+            rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+                auto dt = aInput->data();
+                auto imgs = dt.value("images").toObject();
+                std::cout << dt.value("train").toString().toInt() << std::endl;
+                std::cout << dt.value("test").toString().toInt() << std::endl;
+                std::cout << dt.value("validation").toString().toInt() << std::endl;
+                for (auto i : imgs.keys()){
+                    auto img = imgs.value(i).toObject();
+                    img.insert("stage", "test");
+                    imgs.insert(i, img);
+                }
+                aInput->setData(rea::Json(dt, "images", imgs))->out();
+            }, rea::Json("name", "automaticSetImageStage"));
+
+        const QString setImageStage_nm = "setImageStage";
+        auto setImageStage_tag = rea::Json("tag", setImageStage_nm);
+        rea::pipeline::find("_newObject")
+        ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            aInput->setData(rea::Json(dt, "images", getImages()))->out();
+        }), setImageStage_tag)
+        ->next("automaticSetImageStage")
+        ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            auto imgs = dt.value("images").toObject();
+            setImages(imgs);
+            aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+            aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+        }))
+        ->nextB(0, "task_image_updateListView", QJsonObject())
+        ->nextB(0, "task_image_listViewSelected", rea::Json("tag", "manual"))
+        ->nextB(0, "deepsightwriteJson", QJsonObject());
+
+        //manual set image stage
+        auto setImageStage = rea::buffer<QJsonArray>(2);
+        rea::pipeline::add<QString>([](rea::stream<QString>* aInput){
+            aInput->out<QJsonArray>(rea::JArray(aInput->data()));
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+        }, rea::Json("name", setImageStage_nm))
+        ->nextB(0, "task_image_listViewSelected", setImageStage_tag, setImageStage, setImageStage_tag)
+        ->next(setImageStage)
+        ->next(rea::pipeline::add<std::vector<QJsonArray>>([this](rea::stream<std::vector<QJsonArray>>* aInput){
+            auto dt = aInput->data();
+            auto stg = dt[0][0].toString();
+            auto sels = dt[1];
+            auto lst = getImageList();
+            auto imgs = getImages();
+            bool mdy = false;
+            for (auto i : sels){
+                auto nm = lst[i.toInt()].toString();
+                if (imgs.contains(nm)){
+                    auto img = imgs.value(nm).toObject();
+                    this->setImageStage(img, stg);
+                    imgs.insert(nm, img);
+                    mdy = true;
+                }
+            }
+            if (mdy){
+                setImages(imgs);
+                aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
+                aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+                aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+            }
+        }))
+        ->nextB(0, "task_image_updateListView", QJsonObject())
+        ->nextB(0, "task_image_listViewSelected", rea::Json("tag", "manual"))
+        ->nextB(0, "deepsightwriteJson", QJsonObject());
     }
 private:
     void guiManagement(){

@@ -36,6 +36,8 @@ protected:
     QJsonObject getShapes(const QJsonObject& aImage);
     QJsonArray getImageName(const QJsonObject& aImage);
     QString getImageStringName(const QJsonObject& aImage);
+    QJsonObject getFilter();
+    void setFilter(const QJsonObject& aFilter);
 };
 
 #endif

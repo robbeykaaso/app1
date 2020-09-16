@@ -33,6 +33,14 @@ QString model::getImageStringName(const QJsonObject& aImage){
     return ret;
 }
 
+QJsonObject model::getFilter(){
+    return value("filter").toObject();
+}
+
+void model::setFilter(const QJsonObject& aFilter){
+    insert("filter", aFilter);
+}
+
 class imageObjectEx : public rea::imageObject{
 private:
     QImage m_image;
