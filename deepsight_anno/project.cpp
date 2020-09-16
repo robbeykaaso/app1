@@ -853,8 +853,7 @@ private:
                 setImageShow(show);
                 aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
                 if (m_current_image != ""){
-                    auto cnt = getChannelCount();
-                    for (int i = 0; i < cnt; ++i)
+                    for (int i = 0; i < m_show_count; ++i)
                         rea::pipeline::run<QJsonObject>("updateQSGAttr_projectimage_gridder" + QString::number(i),
                                                         rea::Json("obj", "img_" + m_current_image, "key", rea::JArray("transform"), "val", show));
                 }
