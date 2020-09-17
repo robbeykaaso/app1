@@ -8,6 +8,19 @@ import Pipeline2 1.0
 import QSGBoard 1.0
 
 TabView{
+    function getActLabels(aProjectLabels, aTaskLabels){
+        var ret = {}
+        for (var i in aProjectLabels)
+            if (aTaskLabels[i] !== undefined){
+                var lbl = {}
+                for (var j in aProjectLabels[i])
+                    if (aTaskLabels[i][j] !== undefined)
+                        lbl[j] = aProjectLabels[i][j]
+                ret[i] = lbl
+            }
+        return ret
+    }
+
     style: TabViewStyle {
         frameOverlap: 1
         tab: Rectangle {
@@ -266,22 +279,9 @@ TabView{
                                 LabelEdit{
                                     height: 20
                                     onUpdatelabel: function(aLabel){
-                                        //Pipeline2.run("modifyImageLabel", {group: group, label: aLabel})
+                                        Pipeline2.run("modifyTaskImageLabel", {group: group, label: aLabel})
                                     }
                                 }
-                            }
-
-                            function getActLabels(){
-                                var ret = {}
-                                for (var i in proj_lbls)
-                                    if (tsk_lbls[i] !== undefined){
-                                        var lbl = {}
-                                        for (var j in proj_lbls[i])
-                                            if (tsk_lbls[i][j] !== undefined)
-                                                lbl[j] = proj_lbls[i][j]
-                                        ret[i] = lbl
-                                    }
-                                return ret
                             }
 
                             Component.onCompleted: {
@@ -291,7 +291,7 @@ TabView{
                                     for (var i = 1; i < children.length; ++i)
                                         children[i].destroy()
                                     tsk_lbls = aInput
-                                    var lbls = getActLabels()
+                                    var lbls = getActLabels(proj_lbls, tsk_lbls)
                                     for (var j in lbls)
                                         if (j !== "shape"){
                                             lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(lbls)
@@ -301,7 +301,7 @@ TabView{
                                     for (var i = 1; i < children.length; ++i)
                                         children[i].destroy()
                                     proj_lbls = aInput
-                                    var lbls = getActLabels()
+                                    var lbls = getActLabels(proj_lbls, tsk_lbls)
                                     for (var j in lbls)
                                         if (j !== "shape"){
                                             lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(lbls)
@@ -338,25 +338,25 @@ TabView{
                                 Pipeline2.run("updateQSGAttr_" + taskimage.children[i].name, {key: ["transform"], type: "zoom"})
                         }, {name: "fitTaskImageShow"})
 
-                        /*Pipeline2.add(function(aInput){
+                        Pipeline2.add(function(aInput){
                             if (aInput["bound"]){
-                                projectimage.children[0].children[1].visible = true
+                                taskimage.children[0].children[1].visible = true
                                 var bnd = aInput["bound"]
-                                projectimage.children[0].children[1].x = bnd[0] + (bnd[2] - bnd[0] - 80) * 0.5
-                                projectimage.children[0].children[1].y = bnd[1] - 35
+                                taskimage.children[0].children[1].x = bnd[0] + (bnd[2] - bnd[0] - 80) * 0.5
+                                taskimage.children[0].children[1].y = bnd[1] - 35
                                 var shps = aInput["shapes"]
                                 var lbl = ""
                                 var idx = 0
-                                projectimage.selects = shps
+                                taskimage.selects = shps
                                 for (var i in shps){
                                     if (idx++)
                                         lbl += ";"
                                     lbl += shps[i]["caption"] || ""
                                 }
-                                projectimage.children[0].children[1].label = lbl
+                                taskimage.children[0].children[1].label = lbl
                             }else
-                                projectimage.children[0].children[1].visible = false
-                        }, {name: "updateQSGSelects_projectimage_gridder0"})*/
+                                taskimage.children[0].children[1].visible = false
+                        }, {name: "updateQSGSelects_taskimage_gridder0"})
                     }
                     Gridder{
                         id: taskimage
@@ -378,13 +378,28 @@ TabView{
                                 }
                             }
                             LabelEdit{
-                                //sync: parent.name === "taskimage_gridder0"
+                                property var proj_lbls
+                                property var tsk_lbls
                                 visible: false
                                 onUpdatelabel: function(aLabel){
                                     if (taskimage.selects)
                                         for (var j = 0; j < taskimage.children.length; ++j)
                                             for (var i in taskimage.selects)
                                                 Pipeline2.run("updateQSGAttr_" + taskimage.children[j].name, {obj: i, key: ["caption"], val: aLabel, cmd: true})
+                                }
+                                Component.onCompleted: {
+                                    proj_lbls = {}
+                                    tsk_lbls = {}
+                                    if (parent.name === "taskimage_gridder0"){
+                                        Pipeline2.find("taskLabelChanged").next(function(aInput){
+                                            tsk_lbls = aInput
+                                            updateMenu(getActLabels(proj_lbls, tsk_lbls))
+                                        })
+                                        Pipeline2.find("projectLabelChanged").next(function(aInput){
+                                            proj_lbls = aInput
+                                            updateMenu(getActLabels(proj_lbls, tsk_lbls))
+                                        })
+                                    }
                                 }
                             }
                         }
@@ -401,67 +416,67 @@ TabView{
                                 text: qsTr("select")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "select"}])
+                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "select"}])
                             }
                             Button{
                                 text: qsTr("free")
                                 height: 30
                                 width: parent.width
-                              //  onClicked:  Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawfree"}])
+                                onClicked:  Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawfree"}])
                             }
                             Button{
                                 text: qsTr("rect")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawrect"}])
+                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawrect"}])
                             }
                             Button{
                                 text: qsTr("ellipse")
                                 height: 30
                                 width: parent.width
-                              // onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawellipse"}])
+                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawellipse"}])
                             }
                             Button{
                                 text: qsTr("circle")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawcircle"}])
+                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawcircle"}])
                             }
                             Button{
                                 text: qsTr("node")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "editnode"}])
+                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "editnode"}])
                             }
                             Button{
                                 text: qsTr("delete")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("projectimage_gridder0_deleteShapes", {})
+                                onClicked: Pipeline2.run("taskimage_gridder0_deleteShapes", {})
                             }
                             Button{
                                 text: qsTr("copy")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("projectimage_gridder0_copyShapes", {})
+                                onClicked: Pipeline2.run("taskimage_gridder0_copyShapes", {})
                             }
                             Button{
                                 text: qsTr("paste")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("projectimage_gridder0_pasteShapes", {})
+                                onClicked: Pipeline2.run("taskimage_gridder0_pasteShapes", {})
                             }
                             Button{
                                 text: qsTr("undo")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("doCommand", - 1, {tag: "manual"})
+                                onClicked: Pipeline2.run("doCommand", - 1, {tag: "manual"})
                             }
                             Button{
                                 text: qsTr("redo")
                                 height: 30
                                 width: parent.width
-                              //  onClicked: Pipeline2.run("doCommand", 1, {tag: "manual"})
+                                onClicked: Pipeline2.run("doCommand", 1, {tag: "manual"})
                             }
                             Button{
                                 text: qsTr("scatter")
@@ -479,7 +494,7 @@ TabView{
                                 text: qsTr("image")
                                 height: 30
                                 width: parent.width
-                               // onClicked: transformimg.show()
+                                onClicked: Pipeline2.run("showTransformImageWindow", "getTaskCurrentImage")
                             }
                             Button{
                                 text: qsTr("roi")

@@ -1,28 +1,33 @@
 #include "model.h"
 #include "qsgModel.h"
 #include "../util/cv.h"
+#include "storage/storage.h"
 #include <QQuickItem>
 
 QString model::getProjectName(const QJsonObject& aProject){
     return aProject.value("name").toString();
 }
 
-QJsonObject model::getLabels(){
+QJsonObject imageModel::getLabels(){
     return value("labels").toObject();
 }
 
-QJsonObject model::getImageLabels(const QJsonObject& aImageAbstract){
+QJsonObject imageModel::getImageLabels(const QJsonObject& aImageAbstract){
     return aImageAbstract.value("image_label").toObject();
 }
 
-QJsonObject model::getShapes(const QJsonObject& aImage){
+void imageModel::setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels){
+    aImageAbstract.insert("image_label", aLabels);
+}
+
+QJsonObject imageModel::getShapes(const QJsonObject& aImage){
     return aImage.value("shapes").toObject();
 }
 
-QJsonArray model::getImageName(const QJsonObject& aImage){
+QJsonArray imageModel::getImageName(const QJsonObject& aImage){
     return aImage.value("name").toArray();
 }
-QString model::getImageStringName(const QJsonObject& aImage){
+QString imageModel::getImageStringName(const QJsonObject& aImage){
     auto nms = getImageName(aImage);
     QString ret = "";
     if (nms.size() > 0){
@@ -33,12 +38,121 @@ QString model::getImageStringName(const QJsonObject& aImage){
     return ret;
 }
 
-QJsonObject model::getFilter(){
+QJsonObject imageModel::getFilter(){
     return value("filter").toObject();
 }
 
-void model::setFilter(const QJsonObject& aFilter){
+void imageModel::setFilter(const QJsonObject& aFilter){
     insert("filter", aFilter);
+}
+
+void imageModel::setShapes(QJsonObject& aImage, const QJsonObject& aShapes){
+    aImage.insert("shapes", aShapes);
+}
+
+bool imageModel::modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath){
+    bool modified = false;
+    for (auto i : aModification){
+        auto dt = i.toObject();
+        if (dt.value("cmd").toBool()){
+            if (dt.contains("id") && dt.value("id") != aPath){
+                aPath = dt.value("id").toString();
+                return false;
+            }
+            auto shps = getShapes(aImage);
+            if (dt.value("key") == QJsonArray({"objects"})){
+                if (dt.value("type") == "add"){
+                    auto shp = dt.value("val").toObject();
+                    auto key = dt.value("tar").toString();
+                    if (shp.value("type") == "ellipse"){
+                        auto r = shp.value("radius").toArray();
+                        shps.insert(key, rea::Json("type", "ellipse",
+                                                   "label", shp.value("caption"),
+                                                   "center", shp.value("center"),
+                                                   "xradius", r[0],
+                                                   "yradius", r[1]));
+                        setShapes(aImage, shps);
+                        modified = true;
+                    }else if (shp.value("type") == "poly"){
+                        auto pts = shp.value("points").toArray();
+                        QJsonArray holes;
+                        for (int i = 1; i < pts.size(); ++i)
+                            holes.push_back(pts[i]);
+                        shps.insert(key, rea::Json("type", "polyline",
+                                                   "label", shp.value("caption"),
+                                                   "points", pts[0],
+                                                   "holes", holes));
+                        setShapes(aImage, shps);
+                        modified = true;
+                    }
+                }else if (dt.value("type") == "del"){
+                    shps.remove(dt.value("tar").toString());
+                    setShapes(aImage, shps);
+                    modified = true;
+                }
+            }else{
+                auto nm = dt.value("obj").toString();
+                if (shps.contains(nm)){
+                    auto shp = shps.value(nm).toObject();
+                    auto key = dt.value("key").toArray()[0].toString();
+                    if (shp.value("type") == "ellipse"){
+                        if (key == "caption"){
+                            shp.insert("label", dt.value("val"));
+                        }else if (key == "radius"){
+                            auto r = dt.value("val").toArray();
+                            shp.insert("xradius", r[0]);
+                            shp.insert("yradius", r[1]);
+                        }else
+                            shp.insert(key, dt.value("val"));
+                        shps.insert(nm, shp);
+                        setShapes(aImage, shps);
+                        modified = true;
+                    }else if (shp.value("type") == "polyline"){
+                        if (key == "caption"){
+                            shp.insert("label", dt.value("val"));
+                        }else if (key == "points"){
+                            auto pts = dt.value("val").toArray();
+                            shp.insert("points", pts[0]);
+                            QJsonArray holes;
+                            for (int j = 1; j < pts.size(); ++j)
+                                holes.push_back(pts[j]);
+                            shp.insert("holes", holes);
+                        }else
+                            shp.insert(key, dt.value("val"));
+                        shps.insert(nm, shp);
+                        setShapes(aImage, shps);
+                        modified = true;
+                    }
+                }
+            }
+        }
+    }
+    return modified;
+}
+
+void imageModel::modifyImage0(const QString& aName){
+    //modify image
+    rea::pipeline::find("QSGAttrUpdated_" + aName + "image_gridder0")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            if (m_current_image == "")
+                return;
+            QString cur = "project/" + m_project_id + "/image/" + m_current_image + ".json";
+            QString pth = cur;
+            if (modifyImage(aInput->data(), m_image, pth))
+                aInput->out<stgJson>(stgJson(m_image, pth), "deepsightwriteJson");
+            else if (pth != cur){
+                aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
+            }
+        }))
+        ->nextB(0, "deepsightwriteJson", QJsonObject())
+        ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
+        ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+            auto dt = aInput->data().getData();
+            auto pth = QString(aInput->data());
+            modifyImage(aInput->cacheData<QJsonArray>(0), dt, pth);
+            aInput->out<stgJson>(stgJson(dt, pth), "deepsightwriteJson");
+        }))
+        ->next("deepsightwriteJson");
 }
 
 class imageObjectEx : public rea::imageObject{

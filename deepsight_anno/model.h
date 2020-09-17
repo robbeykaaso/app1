@@ -31,13 +31,35 @@ public:
     }*/
 protected:
     QString getProjectName(const QJsonObject& aProject);
+};
+
+class imageModel : public model{
+protected:
     QJsonObject getLabels();
     QJsonObject getImageLabels(const QJsonObject& aImageAbstract);
+    void setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels);
     QJsonObject getShapes(const QJsonObject& aImage);
     QJsonArray getImageName(const QJsonObject& aImage);
     QString getImageStringName(const QJsonObject& aImage);
     QJsonObject getFilter();
     void setFilter(const QJsonObject& aFilter);
+    void modifyImage0(const QString& aName);
+protected:
+    QString m_project_id = "";
+    QJsonObject m_image;
+    QString m_current_image = "";
+private:
+    void setShapes(QJsonObject& aImage, const QJsonObject& aShapes);
+    bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
+};
+
+class IProjectInfo : public QJsonObject{
+public:
+    IProjectInfo(QJsonObject* aProjectImages, const QJsonObject& aProjectInfo) : QJsonObject(aProjectInfo){
+        project_images = aProjectImages;
+    }
+    IProjectInfo() : QJsonObject(){}
+    QJsonObject* project_images;
 };
 
 #endif

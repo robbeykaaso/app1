@@ -32,17 +32,19 @@ public:
             }))
             ->next("imageOperationsLoaded");
 
-        rea::pipeline::add<optSrc>([](rea::stream<optSrc>* aInput){
-            cv::Mat ret;
-            auto th = aInput->data().value("threshold").toDouble();
-            threshold(aInput->data().image, ret, th, 255, cv::THRESH_BINARY);
-            aInput->setData(optSrc(ret))->out();
-        }, rea::Json("name", binarization));
+        if (!rea::pipeline::find(binarization, false))
+            rea::pipeline::add<optSrc>([](rea::stream<optSrc>* aInput){
+                cv::Mat ret;
+                auto th = aInput->data().value("threshold").toDouble();
+                threshold(aInput->data().image, ret, th, 255, cv::THRESH_BINARY);
+                aInput->setData(optSrc(ret))->out();
+            }, rea::Json("name", binarization));
 
-        rea::pipeline::add<optSrc>([](rea::stream<optSrc>* aInput){
-            auto rg = aInput->data().value("range").toArray();
-            aInput->setData(optSrc(aInput->data().image(cv::Rect(rg[0].toDouble(), rg[1].toDouble(), rg[2].toDouble(), rg[3].toDouble()))))->out();
-        }, rea::Json("name", crop));
+        if (!rea::pipeline::find(crop, false))
+            rea::pipeline::add<optSrc>([](rea::stream<optSrc>* aInput){
+                auto rg = aInput->data().value("range").toArray();
+                aInput->setData(optSrc(aInput->data().image(cv::Rect(rg[0].toDouble(), rg[1].toDouble(), rg[2].toDouble(), rg[3].toDouble()))))->out();
+            }, rea::Json("name", crop));
     }
 };
 
@@ -56,6 +58,7 @@ private:
     rea::pipe0* m_image_src;
     rea::pipe0* m_map_image;
     QJsonObject m_image_show;
+    QString m_image;
     QJsonObject prepareImageOperationListGUI(const QString& aTitle, const QJsonObject& aOperations){
         QJsonArray data;
         for (auto i : aOperations.keys())
@@ -107,14 +110,16 @@ private:
     }
 public:
     imageTransform(){
+        const QString transformImage_nm = "transformImage";
+
         //trig show
         m_image_src =
-            rea::pipeline::find("getProjectCurrentImage")
-                ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
                            auto dt = aInput->data();
                            m_image_show = dt.value("show").toObject();
-                           aInput->out<stgCVMat>(stgCVMat(cv::Mat(), aInput->data().value("image").toString()));
-                       }), rea::Json("tag", "transformImage"))
+                           m_image = dt.value("image").toString();
+                           aInput->out<stgCVMat>(stgCVMat(cv::Mat(), m_image));
+                       }, rea::Json("name", "showTransformImage"))
                 ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
                 ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                     auto dt = aInput->data();
@@ -201,9 +206,9 @@ public:
             m_used_operations.push_back(m_map_image->actName());
             for (int i = 0; i < m_used_operations.size() - 1; ++i)
                 rea::pipeline::find(m_used_operations[i])->next(m_used_operations[i + 1]);
-            aInput->out<QJsonObject>(QJsonObject(), "getProjectCurrentImage");
+            aInput->out<QJsonObject>(rea::Json("image", m_image, "show", m_image_show), "showTransformImage");
         }, rea::Json("name", "transformImage"))
-            ->next("getProjectCurrentImage", rea::Json("tag", "transformImage"));
+            ->next("showTransformImage");
 
         //load operators
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){

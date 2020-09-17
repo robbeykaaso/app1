@@ -3,7 +3,6 @@ import QtQuick.Controls 2.5
 import Pipeline2 1.0
 
 Rectangle{
-    property bool sync: false
     property string group: "shape"
     property string label
     property int fontsize: 16
@@ -49,11 +48,6 @@ Rectangle{
         }
     }*/
 
-    Component.onDestruction: {
-        if (sync)
-            Pipeline2.find("projectLabelChanged").removeNext("projectLabelChanged_UI_" + group)
-    }
-
     function updateMenu(aLabels){
         var lbls = aLabels[group]
         for (var i = lblmenu.count - 1; i >= 0; --i)
@@ -69,14 +63,6 @@ Rectangle{
             src += "}}"
             lblmenu.addItem(Qt.createQmlObject(src, lblmenu))
             //lblmenu.addItem(lbl.createObject(lblmenu, {text: j}))
-        }
-    }
-
-    Component.onCompleted: {
-        if (sync){
-            Pipeline2.find("projectLabelChanged").next(function(aInput){
-                updateMenu(aInput)
-            }, {}, {name: "projectLabelChanged_UI_" + group})
         }
     }
 }

@@ -168,12 +168,12 @@ TWindow{
         }}
     ]
 
-    onVisibleChanged: {
-        if (visible){
-            Pipeline2.run("getProjectCurrentImage", {}, {tag: "transformImage"})
-        }
-    }
     Component.onCompleted: {
         Pipeline2.run("loadImageOperations", {})
+        Pipeline2.add(function(aInput){
+            Pipeline2.find(aInput).next("showTransformImage", {tag: "transformImage"})
+            Pipeline2.run(aInput, {}, {tag: "transformImage"})
+            show()
+        }, {name: "showTransformImageWindow", vtype: ""})
     }
 }

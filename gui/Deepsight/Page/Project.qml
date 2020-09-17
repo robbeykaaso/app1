@@ -353,7 +353,7 @@ TabView{
                                 LabelEdit{
                                     height: 20
                                     onUpdatelabel: function(aLabel){
-                                        Pipeline2.run("modifyImageLabel", {group: group, label: aLabel})
+                                        Pipeline2.run("modifyProjectImageLabel", {group: group, label: aLabel})
                                     }
                                 }
                             }
@@ -437,13 +437,19 @@ TabView{
                                 }
                             }
                             LabelEdit{
-                                sync: parent.name === "projectimage_gridder0"
                                 visible: false
                                 onUpdatelabel: function(aLabel){
                                     if (projectimage.selects)
                                         for (var j = 0; j < projectimage.children.length; ++j)
                                             for (var i in projectimage.selects)
                                                 Pipeline2.run("updateQSGAttr_" + projectimage.children[j].name, {obj: i, key: ["caption"], val: aLabel, cmd: true})
+                                }
+                                Component.onCompleted: {
+                                    if (parent.name === "projectimage_gridder0"){
+                                        Pipeline2.find("projectLabelChanged").next(function(aInput){
+                                            updateMenu(aInput)
+                                        })
+                                    }
                                 }
                             }
                         }
@@ -538,7 +544,7 @@ TabView{
                                 text: qsTr("image")
                                 height: 30
                                 width: parent.width
-                                onClicked: transformimg.show()
+                                onClicked: Pipeline2.run("showTransformImageWindow", "getProjectCurrentImage")
                             }
                             /*Button{
                                 text: qsTr("camera")
@@ -554,7 +560,7 @@ TabView{
         }
     }
     TransformImage{
-        id: transformimg
+
     }
     /*Camera{
         id: camera

@@ -7,7 +7,7 @@
 #include <QRandomGenerator>
 #include <QQueue>
 
-class project : public model{
+class project : public imageModel{
 protected:
    // ABSTRACT(Task)
 private:
@@ -15,7 +15,6 @@ private:
     const QString importImage = "importImage";
 private:
     QJsonObject m_project_abstract;
-    QString m_project_id;
     QJsonObject m_tasks;
     QJsonObject m_images;
 private:
@@ -231,12 +230,11 @@ private:
                            auto tsks = getTasks();
                            auto id = tsks[dt[0].toInt()].toString();
                            aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract), getTaskName(m_tasks.value(id).toObject())}), "title_updateStatus");
-                           aInput->out<QJsonObject>(rea::Json("id", m_project_id + "/task/" + id,
+                           aInput->out<IProjectInfo>(IProjectInfo(&m_images, rea::Json("id", m_project_id + "/task/" + id,
                                                               "labels", getLabels(),
-                                                              "images", m_images,
                                                               "channel", getChannelCount(),
                                                               "project", m_project_id,
-                                                              "imageshow", getImageShow()), openTask);
+                                                              "imageshow", getImageShow())), openTask);
                        }
                    }), rea::Json("tag", openTask))
             ->nextB(0, "title_updateStatus", QJsonObject())
@@ -401,29 +399,26 @@ private:
             ->next("deepsightwriteJson");
 
         //modifyImageLabel
-        auto mdyImageLabel = rea::buffer<QJsonArray>(2);
+        const QString modifyImageLabel_nm = "modifyProjectImageLabel";
+        auto modifyImageLabel_tag = rea::Json("tag", modifyImageLabel_nm);
         rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
-            auto dt = aInput->data();
-            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
-            aInput->out<QJsonArray>(rea::JArray(dt.value("group"), dt.value("label")));
-        }, rea::Json("name", "modifyImageLabel"))
-        ->nextB(0, mdyImageLabel, QJsonObject())
-        ->next("project_image_listViewSelected", rea::Json("tag", "modifyImageLabel"))
-            ->next(mdyImageLabel, rea::Json("tag", "modifyImageLabel"))
-        ->next(rea::pipeline::add<std::vector<QJsonArray>>([this](rea::stream<std::vector<QJsonArray>>* aInput){
-            auto sels = aInput->data()[0];
-            auto lbl = aInput->data()[1];
+            aInput->cache<QJsonObject>(aInput->data())->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
+        }, rea::Json("name", modifyImageLabel_nm))
+        ->next("project_image_listViewSelected", modifyImageLabel_tag)
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            auto st = aInput->cacheData<QJsonObject>(0);
+            auto sels = aInput->data();
             auto imgs = getImages();
             for (auto i : sels){
                 auto img = imgs[i.toInt()].toString();
                 auto abs = m_images.value(img).toObject();
                 auto lbls = getImageLabels(abs);
-                lbls.insert(lbl[0].toString(), lbl[1]);
+                lbls.insert(st.value("group").toString(), st.value("label"));
                 setImageLabels(abs, lbls);
                 m_images.insert(img, abs);
             }
             aInput->out<stgJson>(stgJson(m_images, "project/" + m_project_id + "/image.json"), "deepsightwriteJson");
-        }))
+        }), modifyImageLabel_tag)
         ->next("deepsightwriteJson");
 
         rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
@@ -431,11 +426,8 @@ private:
         }, rea::Json("name", "projectLabelChanged"));
     }
 private:
-    QString m_current_image;
     std::vector<stgCVMat> m_cvmat_cache;
     QHash<QString, int> m_show_cache;
-    QQueue<QJsonArray> m_modify_cache;
-    QJsonObject m_image;
     const QJsonObject selectProjectImage = rea::Json("tag", "selectProjectImage");
 
     QJsonObject getImageShow(){
@@ -460,94 +452,6 @@ private:
 
     void setColorFormat(QJsonObject& aImageShow, const QString& aColorFormat){
         aImageShow.insert("colorFormat", aColorFormat);
-    }
-
-    void setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels){
-        aImageAbstract.insert("image_label", aLabels);
-    }
-
-    void setShapes(QJsonObject& aImage, const QJsonObject& aShapes){
-        aImage.insert("shapes", aShapes);
-    }
-
-    bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath){
-        bool modified = false;
-        for (auto i : aModification){
-            auto dt = i.toObject();
-            if (dt.value("cmd").toBool()){
-                if (dt.contains("id") && dt.value("id") != aPath){
-                    aPath = dt.value("id").toString();
-                    return false;
-                }
-                auto shps = getShapes(aImage);
-                if (dt.value("key") == QJsonArray({"objects"})){
-                    if (dt.value("type") == "add"){
-                        auto shp = dt.value("val").toObject();
-                        auto key = dt.value("tar").toString();
-                        if (shp.value("type") == "ellipse"){
-                            auto r = shp.value("radius").toArray();
-                            shps.insert(key, rea::Json("type", "ellipse",
-                                                       "label", shp.value("caption"),
-                                                       "center", shp.value("center"),
-                                                       "xradius", r[0],
-                                                       "yradius", r[1]));
-                            setShapes(aImage, shps);
-                            modified = true;
-                        }else if (shp.value("type") == "poly"){
-                            auto pts = shp.value("points").toArray();
-                            QJsonArray holes;
-                            for (int i = 1; i < pts.size(); ++i)
-                                holes.push_back(pts[i]);
-                            shps.insert(key, rea::Json("type", "polyline",
-                                                       "label", shp.value("caption"),
-                                                       "points", pts[0],
-                                                       "holes", holes));
-                            setShapes(aImage, shps);
-                            modified = true;
-                        }
-                    }else if (dt.value("type") == "del"){
-                        shps.remove(dt.value("tar").toString());
-                        setShapes(aImage, shps);
-                        modified = true;
-                    }
-                }else{
-                    auto nm = dt.value("obj").toString();
-                    if (shps.contains(nm)){
-                        auto shp = shps.value(nm).toObject();
-                        auto key = dt.value("key").toArray()[0].toString();
-                        if (shp.value("type") == "ellipse"){
-                            if (key == "caption"){
-                                shp.insert("label", dt.value("val"));
-                            }else if (key == "radius"){
-                                auto r = dt.value("val").toArray();
-                                shp.insert("xradius", r[0]);
-                                shp.insert("yradius", r[1]);
-                            }else
-                                shp.insert(key, dt.value("val"));
-                            shps.insert(nm, shp);
-                            setShapes(aImage, shps);
-                            modified = true;
-                        }else if (shp.value("type") == "polyline"){
-                            if (key == "caption"){
-                                shp.insert("label", dt.value("val"));
-                            }else if (key == "points"){
-                                auto pts = dt.value("val").toArray();
-                                shp.insert("points", pts[0]);
-                                QJsonArray holes;
-                                for (int j = 1; j < pts.size(); ++j)
-                                    holes.push_back(pts[j]);
-                                shp.insert("holes", holes);
-                            }else
-                                shp.insert(key, dt.value("val"));
-                            shps.insert(nm, shp);
-                            setShapes(aImage, shps);
-                            modified = true;
-                        }
-                    }
-                }
-            }
-        }
-        return modified;
     }
 
     void imageManagement(){
@@ -709,32 +613,6 @@ private:
             ->nextB(0, rea::local("deepsightwriteJson", rea::Json("thread", 11)), QJsonObject())
             ->next("deepsightwriteJson", rea::Json("tag", "updateProjectImages"));
 
-        //modify image
-        rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
-            ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-                if (m_current_image == "")
-                    return;
-                QString cur = "project/" + m_project_id + "/image/" + m_current_image + ".json";
-                QString pth = cur;
-                if (modifyImage(aInput->data(), m_image, pth))
-                    aInput->out<stgJson>(stgJson(m_image, pth), "deepsightwriteJson");
-                else if (pth != cur){
-                    m_modify_cache.push_back(aInput->data());
-                    aInput->out<stgJson>(stgJson(QJsonObject(), pth));
-                }
-            }))
-            ->nextB(0, "deepsightwriteJson", QJsonObject())
-            ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
-            ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
-                auto dt = aInput->data().getData();
-                auto pth = QString(aInput->data());
-                auto mdy = m_modify_cache.front();
-                modifyImage(mdy, dt, pth);
-                m_modify_cache.pop_front();
-                aInput->out<stgJson>(stgJson(dt, pth), "deepsightwriteJson");
-            }))
-            ->next("deepsightwriteJson");
-
         //filter images
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
             auto dt = aInput->data();
@@ -852,6 +730,7 @@ public:
         labelManagement();
         imageManagement();
         guiManagement();
+        modifyImage0("project");
     }
 };
 
