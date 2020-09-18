@@ -502,7 +502,7 @@ TabView{
                                 text: qsTr("delete")
                                 height: 30
                                 width: parent.width
-                                onClicked: Pipeline2.run("projectimage_gridder0_deleteShapes", {})
+                                onClicked: Pipeline2.run("projectimage_gridder0_deleteShapes", [])
                             }
                             Button{
                                 text: qsTr("copy")
@@ -559,9 +559,9 @@ TabView{
 
         }
     }
-    TransformImage{
+    /*TransformImage{
 
-    }
+    }*/
     /*Camera{
         id: camera
         name: "camera1"

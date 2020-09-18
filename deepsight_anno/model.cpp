@@ -130,31 +130,6 @@ bool imageModel::modifyImage(const QJsonArray& aModification, QJsonObject& aImag
     return modified;
 }
 
-void imageModel::modifyImage0(const QString& aName){
-    //modify image
-    rea::pipeline::find("QSGAttrUpdated_" + aName + "image_gridder0")
-        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-            if (m_current_image == "")
-                return;
-            QString cur = "project/" + m_project_id + "/image/" + m_current_image + ".json";
-            QString pth = cur;
-            if (modifyImage(aInput->data(), m_image, pth))
-                aInput->out<stgJson>(stgJson(m_image, pth), "deepsightwriteJson");
-            else if (pth != cur){
-                aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
-            }
-        }))
-        ->nextB(0, "deepsightwriteJson", QJsonObject())
-        ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
-        ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
-            auto dt = aInput->data().getData();
-            auto pth = QString(aInput->data());
-            modifyImage(aInput->cacheData<QJsonArray>(0), dt, pth);
-            aInput->out<stgJson>(stgJson(dt, pth), "deepsightwriteJson");
-        }))
-        ->next("deepsightwriteJson");
-}
-
 class imageObjectEx : public rea::imageObject{
 private:
     QImage m_image;

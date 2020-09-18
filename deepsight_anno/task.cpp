@@ -1,5 +1,6 @@
 #include "model.h"
 #include "imagePool.h"
+#include "command.h"
 #include "storage/storage.h"
 #include "../util/cv.h"
 
@@ -213,13 +214,153 @@ private:
         }, rea::Json("name", "taskLabelChanged"));
     }
 private:
+    bool m_roi_mode = false;
     int m_channel_count;
     int m_show_count = 1;
     QJsonObject m_image_show;
     QHash<QString, int> m_show_cache;    
     const QJsonObject selectTaskImage = rea::Json("tag", "selectTaskImage");
 
+    void getTaskShapeObjects(QJsonObject& aObjects){
+        auto tsk_shp_lbls = getLabels().value("shape").toObject(), prj_shp_lbls = m_project_labels.value("shape").toObject();
+
+        auto shps = getShapes(m_image);
+        for (auto i : shps.keys()){
+            auto shp = shps.value(i).toObject();
+            auto lbl = shp.value("label").toString();
+            if (lbl == "" || (tsk_shp_lbls.contains(lbl) && prj_shp_lbls.contains(lbl))){
+                if (shp.value("type") == "ellipse"){
+                    aObjects.insert(i, rea::Json("type", "ellipse",
+                                             "caption", shp.value("label"),
+                                             "center", shp.value("center"),
+                                             "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
+                                             "angle", shp.value("angle")));
+                }else if (shp.value("type") == "polyline"){
+                    QJsonArray pts;
+                    pts.push_back(shp.value("points"));
+                    auto holes = shp.value("holes").toArray();
+                    for (auto i : holes)
+                        pts.push_back(i);
+                    aObjects.insert(i, rea::Json("type", "poly",
+                                             "caption", shp.value("label"),
+                                             "points", pts));
+                }
+            }
+        }
+    }
+
+    QJsonObject getDefaultROI(){
+        auto w = m_image.value("width").toInt(), h = m_image.value("height").toInt();
+        return rea::Json("type", "poly", "color", "pink", "points", rea::JArray(QJsonArray(), rea::JArray(0, 0, w, 0, w, h, 0, h, 0, 0)));
+    }
+
+    QJsonObject getTaskROIObjects(QJsonObject& aObjects, const QImage& aImage){ //return roi gui info
+        auto roi = getROI(*this);
+        auto shps = getShapes(roi);
+        if (shps.empty()){
+            shps.insert("roi_0", getDefaultROI());
+            setShapes(roi, shps);
+            setROI(*this, roi);
+        }
+        for (auto i : shps.keys())
+            aObjects.insert(i, shps.value(i));
+        return rea::Json("count", shps.size(), "visible", true);
+    }
+
+    QJsonObject getROI(const QJsonObject& aTask){
+        return aTask.value("roi").toObject();
+    }
+
+    void setROI(QJsonObject& aTask, const QJsonObject& aROI){
+        aTask.insert("roi", aROI);
+    }
+
+    bool modifyROI(const QJsonArray& aModification, QJsonObject& aROI, QString& aPath){
+            bool modified = false;
+            for (auto i : aModification){
+                auto dt = i.toObject();
+                if (dt.value("cmd").toBool()){
+                    if (dt.contains("id") && dt.value("id") != aPath){
+                        aPath = dt.value("id").toString();
+                        return false;
+                    }
+                    auto shps = getShapes(aROI);
+                    if (dt.value("key") == QJsonArray({"objects"})){
+                        if (dt.value("type") == "add"){
+                            shps.insert(dt.value("tar").toString(), dt.value("val").toObject());
+                            setShapes(aROI, shps);
+                            modified = true;
+                        }else if (dt.value("type") == "del"){
+                            shps.remove(dt.value("tar").toString());
+                            setShapes(aROI, shps);
+                            modified = true;
+                        }
+                    }else{
+                        auto nm = dt.value("obj").toString();
+                        if (shps.contains(nm)){
+                            auto shp = shps.value(nm).toObject();
+                            auto key = dt.value("key").toArray()[0].toString();
+                            shp.insert(key, dt.value("val"));
+                            shps.insert(nm, shp);
+                            setShapes(aROI, shps);
+                            modified = true;
+                        }
+                    }
+                }
+            }
+            return modified;
+    }
+
     void imageManagement(){
+        //set ROI Mode
+        rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+            m_roi_mode = !m_roi_mode;
+            aInput->out<QJsonArray>(rea::JArray(rea::Json("type", m_roi_mode ? "roi" : "select")), "updateQSGCtrl_taskimage_gridder0");
+            m_current_image = "";
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+        }, rea::Json("name", "setROIMode"))
+            ->nextB(0, "updateQSGCtrl_taskimage_gridder0", QJsonObject())
+            ->nextB(0, "task_image_listViewSelected", rea::Json("tag", "manual"));
+
+        //update ROI count
+        rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+            auto cnt = int(aInput->data());
+            auto roi = getROI(*this);
+            auto shps = getShapes(roi);
+            QJsonArray dels;
+            for (int i = shps.size() - 1; i > cnt - 1; --i)
+                dels.push_back("roi_" + QString::number(i));
+            if (dels.size() > 0)
+                aInput->out<QJsonArray>(dels, "taskimage_gridder0_deleteShapes");
+            auto id = "project/" + m_task_id + ".json";
+            for (int i = shps.size(); i < cnt; ++i){
+                auto shp = "roi_" + QString::number(i);
+                auto val = getDefaultROI();
+                auto ad = [shp, id, val](){
+                    rea::pipeline::run("updateQSGAttr_taskimage_gridder0",
+                                       rea::Json("key", rea::JArray("objects"),
+                                                 "type", "add",
+                                                 "tar", shp,
+                                                 "val", val,
+                                                 "cmd", true,
+                                                 "id", id)
+                                       );
+                };
+                auto rm = [shp, id](){
+                    rea::pipeline::run("updateQSGAttr_taskimage_gridder0",
+                                       rea::Json("key", rea::JArray("objects"),
+                                                 "type", "del",
+                                                 "tar", shp,
+                                                 "cmd", true,
+                                                 "id", id));
+                };
+                ad();
+                aInput->out<rea::ICommand>(rea::ICommand(ad, rm), "addCommand");
+            }
+        }, rea::Json("name", "updateROICount"))
+            ->nextB(0, "taskimage_gridder0_deleteShapes", QJsonObject())
+            ->next("addCommand");
+
         //update project images
         rea::pipeline::find("deepsightwriteJson")
         ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
@@ -265,7 +406,7 @@ private:
                        }
                    }
                }), rea::Json("tag", "manual"))
-            ->nextB(0, "updateQSGCtrl_projectimage_gridder0", QJsonObject())
+            ->nextB(0, "updateQSGCtrl_taskimage_gridder0", QJsonObject())
             ->nextB(0, "deepsightreadJson", selectTaskImage, rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
                 m_image = aInput->data().getData();
                 auto img_lbls = getImageLabels(m_project_images->value(m_current_image).toObject());
@@ -296,31 +437,13 @@ private:
                                                                     "range", rea::JArray(0, 0, img.width(), img.height()),
                                                                     "path", pth,
                                                                     "transform", m_image_show));
-
-                auto tsk_shp_lbls = getLabels().value("shape").toObject(), prj_shp_lbls = m_project_labels.value("shape").toObject();
-
-                auto shps = getShapes(m_image);
-                for (auto i : shps.keys()){
-                    auto shp = shps.value(i).toObject();
-                    auto lbl = shp.value("label").toString();
-                    if (lbl == "" || (tsk_shp_lbls.contains(lbl) && prj_shp_lbls.contains(lbl))){
-                        if (shp.value("type") == "ellipse"){
-                            objs.insert(i, rea::Json("type", "ellipse",
-                                                     "caption", shp.value("label"),
-                                                     "center", shp.value("center"),
-                                                     "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
-                                                     "angle", shp.value("angle")));
-                        }else if (shp.value("type") == "polyline"){
-                            QJsonArray pts;
-                            pts.push_back(shp.value("points"));
-                            auto holes = shp.value("holes").toArray();
-                            for (auto i : holes)
-                                pts.push_back(i);
-                            objs.insert(i, rea::Json("type", "poly",
-                                                     "caption", shp.value("label"),
-                                                     "points", pts));
-                        }
-                    }
+                if (m_roi_mode){
+                    auto roi = getTaskROIObjects(objs, img);
+                    aInput->out<QJsonObject>(roi, "updateROIGUI");
+                }
+                else{
+                    getTaskShapeObjects(objs);
+                    aInput->out<QJsonObject>(QJsonObject(), "updateROIGUI");
                 }
 
                 auto cfg = rea::Json("id", "project/" + m_project_id + "/image/" + m_current_image + ".json",
@@ -330,11 +453,16 @@ private:
                                      "text", rea::Json("visible", true,
                                                        "size", rea::JArray(80, 30)
                                                        //"location", "bottom"
-                                                                                                                  ),
+                                                           ),
                                      "objects", objs);
+                if (m_roi_mode){
+                    cfg.remove("text");
+                    cfg.insert("id", "project/" + m_task_id + ".json");
+                }
                 rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + QString::number(ch), cfg);
                 //aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder0");
-            }));
+            }))
+            ->next("updateROIGUI");
 
         //use task image
         auto useTaskImage = rea::buffer<QJsonArray>(2);
@@ -474,12 +602,58 @@ private:
         ->nextB(0, "task_image_listViewSelected", rea::Json("tag", "manual"))
         ->nextB(0, "deepsightwriteJson", QJsonObject());
 
+        //modify image
+        rea::pipeline::find("QSGAttrUpdated_taskimage_gridder0")
+            ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                if (m_roi_mode){
+                    if (m_task_id == "")
+                        return;
+                    QString cur = "project/" + m_task_id + ".json";
+                    QString pth = cur;
+                    auto roi = getROI(*this);
+                    if (modifyROI(aInput->data(), roi, pth)){
+                        setROI(*this, roi);
+                        aInput->out<QJsonObject>(rea::Json("visible", true, "count", getShapes(roi).size()), "updateROIGUI");
+                        aInput->out<stgJson>(stgJson(*this, pth), "deepsightwriteJson");
+                    }else if (pth != cur){
+                        aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
+                    }
+                }else{
+                    if (m_current_image == "")
+                        return;
+                    QString cur = "project/" + m_project_id + "/image/" + m_current_image + ".json";
+                    QString pth = cur;
+                    if (modifyImage(aInput->data(), m_image, pth))
+                        aInput->out<stgJson>(stgJson(m_image, pth), "deepsightwriteJson");
+                    else if (pth != cur){
+                        aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
+                    }
+                }
+            }))
+            ->nextB(0, "updateROIGUI", QJsonObject())
+            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
+            ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+                auto dt = aInput->data().getData();
+                auto pth = QString(aInput->data());
+                if (m_roi_mode){
+                    auto roi = getROI(dt);
+                    modifyROI(aInput->cacheData<QJsonArray>(0), roi, pth);
+                    setROI(dt, roi);
+                }else
+                    modifyImage(aInput->cacheData<QJsonArray>(0), dt, pth);
+                aInput->out<stgJson>(stgJson(dt, pth), "deepsightwriteJson");
+            }))
+            ->next("deepsightwriteJson");
+
         //get task current image info
         rea::pipeline::add<QJsonObject, rea::pipePartial>([this](rea::stream<QJsonObject>* aInput){
             if (m_current_image != ""){
                 auto nms = getImageName(m_project_images->value(m_current_image).toObject());
-                auto img = "project/" + m_project_id + "/image/" + m_current_image + "/" + nms[0].toString();
-                aInput->setData(rea::Json("image", img, "show", m_image_show))->out();
+                QJsonArray imgs;
+                for (auto i : nms)
+                    imgs.push_back("project/" + m_project_id + "/image/" + m_current_image + "/" + i.toString());
+                aInput->setData(rea::Json("images", imgs, "show", m_image_show))->out();
             }
         }, rea::Json("name", "getTaskCurrentImage"));
     }
@@ -537,7 +711,6 @@ public:
         labelManagement();
         imageManagement();
         guiManagement();
-        modifyImage0("task");
     }
 };
 

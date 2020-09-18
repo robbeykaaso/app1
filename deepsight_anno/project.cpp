@@ -651,12 +651,37 @@ private:
         ->nextB(0, "project_image_listViewSelected", rea::Json("tag", "manual"))
         ->nextB(0, "deepsightwriteJson", QJsonObject());
 
+        //modify image
+        rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
+            ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                if (m_current_image == "")
+                    return;
+                QString cur = "project/" + m_project_id + "/image/" + m_current_image + ".json";
+                QString pth = cur;
+                if (modifyImage(aInput->data(), m_image, pth))
+                    aInput->out<stgJson>(stgJson(m_image, pth), "deepsightwriteJson");
+                else if (pth != cur){
+                    aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
+                }
+            }))
+            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
+            ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+                auto dt = aInput->data().getData();
+                auto pth = QString(aInput->data());
+                modifyImage(aInput->cacheData<QJsonArray>(0), dt, pth);
+                aInput->out<stgJson>(stgJson(dt, pth), "deepsightwriteJson");
+            }))
+            ->next("deepsightwriteJson");
+
         //get project current image info
         rea::pipeline::add<QJsonObject, rea::pipePartial>([this](rea::stream<QJsonObject>* aInput){
             if (m_current_image != ""){
                 auto nms = getImageName(m_images.value(m_current_image).toObject());
-                auto img = "project/" + m_project_id + "/image/" + m_current_image + "/" + nms[0].toString();
-                aInput->setData(rea::Json("image", img, "show", getImageShow()))->out();
+                QJsonArray imgs;
+                for (auto i : nms)
+                    imgs.push_back("project/" + m_project_id + "/image/" + m_current_image + "/" + i.toString());
+                aInput->setData(rea::Json("images", imgs, "show", getImageShow()))->out();
             }
         }, rea::Json("name", "getProjectCurrentImage"));
     }
@@ -730,7 +755,6 @@ public:
         labelManagement();
         imageManagement();
         guiManagement();
-        modifyImage0("project");
     }
 };
 

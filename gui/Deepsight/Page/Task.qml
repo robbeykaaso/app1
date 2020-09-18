@@ -321,201 +321,290 @@ TabView{
                         }
                     }
                 }
-                Row{
+                Item{
                     width: parent.width
                     height: parent.height - 100
+                    Row{
+                        anchors.fill: parent
+                        Component.onCompleted: {
+                            Pipeline2.find("title_updateStatus").next(function(aInput){
+                                for (var i = 0; i < taskimage.children.length; ++i)
+                                    taskimage.children[i].children[0].beforeDestroy()
 
-                    Component.onCompleted: {
-                        Pipeline2.find("title_updateStatus").next(function(aInput){
-                            for (var i = 0; i < taskimage.children.length; ++i)
-                                taskimage.children[i].children[0].beforeDestroy()
+                                return {out: {}}
+                            }, {}, {name: "removeWholeTaskQSGNodes", vtype: []})
 
-                            return {out: {}}
-                        }, {}, {name: "removeWholeTaskQSGNodes", vtype: []})
+                            Pipeline2.add(function(aInput){
+                                for (var i = 0; i < taskimage.children.length; ++i)
+                                    Pipeline2.run("updateQSGAttr_" + taskimage.children[i].name, {key: ["transform"], type: "zoom"})
+                            }, {name: "fitTaskImageShow"})
 
-                        Pipeline2.add(function(aInput){
-                            for (var i = 0; i < taskimage.children.length; ++i)
-                                Pipeline2.run("updateQSGAttr_" + taskimage.children[i].name, {key: ["transform"], type: "zoom"})
-                        }, {name: "fitTaskImageShow"})
-
-                        Pipeline2.add(function(aInput){
-                            if (aInput["bound"]){
-                                taskimage.children[0].children[1].visible = true
-                                var bnd = aInput["bound"]
-                                taskimage.children[0].children[1].x = bnd[0] + (bnd[2] - bnd[0] - 80) * 0.5
-                                taskimage.children[0].children[1].y = bnd[1] - 35
-                                var shps = aInput["shapes"]
-                                var lbl = ""
-                                var idx = 0
-                                taskimage.selects = shps
-                                for (var i in shps){
-                                    if (idx++)
-                                        lbl += ";"
-                                    lbl += shps[i]["caption"] || ""
+                            Pipeline2.add(function(aInput){
+                                if (aInput["bound"]){
+                                    taskimage.children[0].children[1].visible = true
+                                    var bnd = aInput["bound"]
+                                    taskimage.children[0].children[1].x = bnd[0] + (bnd[2] - bnd[0] - 80) * 0.5
+                                    taskimage.children[0].children[1].y = bnd[1] - 35
+                                    var shps = aInput["shapes"]
+                                    var lbl = ""
+                                    var idx = 0
+                                    taskimage.selects = shps
+                                    for (var i in shps){
+                                        if (idx++)
+                                            lbl += ";"
+                                        lbl += shps[i]["caption"] || ""
+                                    }
+                                    taskimage.children[0].children[1].label = lbl
+                                }else
+                                    taskimage.children[0].children[1].visible = false
+                            }, {name: "updateQSGSelects_taskimage_gridder0"})
+                        }
+                        Gridder{
+                            id: taskimage
+                            property var selects
+                            name: "taskimage"
+                            size: 1
+                            com: Rectangle{
+                                property string name
+                                width: parent.width / parent.columns
+                                height: parent.height / parent.rows
+                                color: "transparent"
+                                border.color: "black"
+                                QSGBoard{
+                                    name: parent.name
+                                    anchors.fill: parent
+                                    plugins: [{type: "transform"}]
+                                    Component.onDestruction: {
+                                        beforeDestroy()
+                                    }
                                 }
-                                taskimage.children[0].children[1].label = lbl
-                            }else
-                                taskimage.children[0].children[1].visible = false
-                        }, {name: "updateQSGSelects_taskimage_gridder0"})
-                    }
-                    Gridder{
-                        id: taskimage
-                        property var selects
-                        name: "taskimage"
-                        size: 1
-                        com: Rectangle{
-                            property string name
-                            width: parent.width / parent.columns
-                            height: parent.height / parent.rows
-                            color: "transparent"
-                            border.color: "black"
-                            QSGBoard{
-                                name: parent.name
-                                anchors.fill: parent
-                                plugins: [{type: "transform"}]
-                                Component.onDestruction: {
-                                    beforeDestroy()
-                                }
-                            }
-                            LabelEdit{
-                                property var proj_lbls
-                                property var tsk_lbls
-                                visible: false
-                                onUpdatelabel: function(aLabel){
-                                    if (taskimage.selects)
-                                        for (var j = 0; j < taskimage.children.length; ++j)
-                                            for (var i in taskimage.selects)
-                                                Pipeline2.run("updateQSGAttr_" + taskimage.children[j].name, {obj: i, key: ["caption"], val: aLabel, cmd: true})
-                                }
-                                Component.onCompleted: {
-                                    proj_lbls = {}
-                                    tsk_lbls = {}
-                                    if (parent.name === "taskimage_gridder0"){
-                                        Pipeline2.find("taskLabelChanged").next(function(aInput){
-                                            tsk_lbls = aInput
-                                            updateMenu(getActLabels(proj_lbls, tsk_lbls))
-                                        })
-                                        Pipeline2.find("projectLabelChanged").next(function(aInput){
-                                            proj_lbls = aInput
-                                            updateMenu(getActLabels(proj_lbls, tsk_lbls))
-                                        })
+                                LabelEdit{
+                                    property var proj_lbls
+                                    property var tsk_lbls
+                                    visible: false
+                                    onUpdatelabel: function(aLabel){
+                                        if (taskimage.selects)
+                                            for (var j = 0; j < taskimage.children.length; ++j)
+                                                for (var i in taskimage.selects)
+                                                    Pipeline2.run("updateQSGAttr_" + taskimage.children[j].name, {obj: i, key: ["caption"], val: aLabel, cmd: true})
+                                    }
+                                    Component.onCompleted: {
+                                        proj_lbls = {}
+                                        tsk_lbls = {}
+                                        if (parent.name === "taskimage_gridder0"){
+                                            Pipeline2.find("taskLabelChanged").next(function(aInput){
+                                                tsk_lbls = aInput
+                                                updateMenu(getActLabels(proj_lbls, tsk_lbls))
+                                            })
+                                            Pipeline2.find("projectLabelChanged").next(function(aInput){
+                                                proj_lbls = aInput
+                                                updateMenu(getActLabels(proj_lbls, tsk_lbls))
+                                            })
+                                        }
                                     }
                                 }
                             }
+                            width: parent.width - 60
+                            height: parent.height
                         }
-                        width: parent.width - 60
-                        height: parent.height
+                        Rectangle{
+                            width: 60
+                            height: parent.height
+                            color: "lightskyblue"
+                            Column{
+                                anchors.fill: parent
+                                Button{
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: {
+                                        Pipeline2.run("setROIMode", 0)
+                                    }
+                                    style: ButtonStyle{
+                                        label: Text{
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                            text: qsTr("roi")
+                                            color: "red"
+                                        }
+                                    }
+                                }
+                                Button{
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: {
+                                        Pipeline2.run("_newObject", {title: qsTr("image stage"), content: {train: 0, test: 0, validation: 0}, tag: {tag: "setImageStage"}})
+                                    }
+                                    style: ButtonStyle{
+                                        label: Text{
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                            text: qsTr("stage")
+                                            color: "red"
+                                        }
+                                    }
+                                }
+                                Button{
+                                    text: qsTr("select")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "select"}])
+                                }
+                                Button{
+                                    text: qsTr("free")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked:  Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawfree"}])
+                                }
+                                Button{
+                                    text: qsTr("rect")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawrect"}])
+                                }
+                                Button{
+                                    text: qsTr("ellipse")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawellipse"}])
+                                }
+                                Button{
+                                    text: qsTr("circle")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawcircle"}])
+                                }
+                                Button{
+                                    text: qsTr("node")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "editnode"}])
+                                }
+                                Button{
+                                    text: qsTr("delete")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("taskimage_gridder0_deleteShapes", [])
+                                }
+                                Button{
+                                    text: qsTr("copy")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("taskimage_gridder0_copyShapes", {})
+                                }
+                                Button{
+                                    text: qsTr("paste")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("taskimage_gridder0_pasteShapes", {})
+                                }
+                                Button{
+                                    text: qsTr("undo")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("doCommand", - 1, {tag: "manual"})
+                                }
+                                Button{
+                                    text: qsTr("redo")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("doCommand", 1, {tag: "manual"})
+                                }
+                                Button{
+                                    text: qsTr("scatter")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("scatterTaskImageShow", {})
+                                }
+                                Button{
+                                    text: qsTr("fit")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("fitTaskImageShow", {})
+                                }
+                                Button{
+                                    text: qsTr("image")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("showTransformImageWindow", "getTaskCurrentImage")
+                                }
+
+                                /*Button{
+                                    text: qsTr("camera")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: camera.show()
+                                }*/
+                            }
+                        }
                     }
                     Rectangle{
-                        width: 60
-                        height: parent.height
+                        visible: false
+                        width: 120
+                        height: 180
                         color: "lightskyblue"
+                        anchors.left: parent.left
+                        anchors.top: parent.top
                         Column{
                             anchors.fill: parent
-                            Button{
-                                text: qsTr("select")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "select"}])
-                            }
-                            Button{
-                                text: qsTr("free")
-                                height: 30
-                                width: parent.width
-                                onClicked:  Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawfree"}])
-                            }
-                            Button{
-                                text: qsTr("rect")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawrect"}])
-                            }
-                            Button{
-                                text: qsTr("ellipse")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawellipse"}])
-                            }
-                            Button{
-                                text: qsTr("circle")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawcircle"}])
-                            }
-                            Button{
-                                text: qsTr("node")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "editnode"}])
-                            }
-                            Button{
-                                text: qsTr("delete")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("taskimage_gridder0_deleteShapes", {})
-                            }
-                            Button{
-                                text: qsTr("copy")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("taskimage_gridder0_copyShapes", {})
-                            }
-                            Button{
-                                text: qsTr("paste")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("taskimage_gridder0_pasteShapes", {})
-                            }
-                            Button{
-                                text: qsTr("undo")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("doCommand", - 1, {tag: "manual"})
-                            }
-                            Button{
-                                text: qsTr("redo")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("doCommand", 1, {tag: "manual"})
-                            }
-                            Button{
-                                text: qsTr("scatter")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("scatterTaskImageShow", {})
-                            }
-                            Button{
-                                text: qsTr("fit")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("fitTaskImageShow", {})
-                            }
-                            Button{
-                                text: qsTr("image")
-                                height: 30
-                                width: parent.width
-                                onClicked: Pipeline2.run("showTransformImageWindow", "getTaskCurrentImage")
-                            }
-                            Button{
-                                text: qsTr("roi")
-                                height: 30
-                                width: parent.width
-                            }
-                            Button{
-                                text: qsTr("stage")
-                                height: 30
-                                width: parent.width
-                                onClicked: {
-                                    Pipeline2.run("_newObject", {title: qsTr("image stage"), content: {train: 0, test: 0, validation: 0}, tag: {tag: "setImageStage"}})
+                            topPadding: 15
+                            Spin{
+                                width: 80
+                                caption.text: qsTr("count") + ":"
+                                ratio: 0.4
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                spin.onValueChanged: {
+                                    if (spin.value < 1)
+                                        spin.value = 1
+                                    else{
+                                        Pipeline2.run("updateROICount", parseInt(spin.value))
+                                    }
                                 }
                             }
+                            Edit{
+                                width: 80
+                                caption.text: qsTr("x") + ":"
+                                ratio: 0.4
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            Edit{
+                                width: 80
+                                caption.text: qsTr("y") + ":"
+                                ratio: 0.4
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            Edit{
+                                width: 80
+                                caption.text: qsTr("width") + ":"
+                                ratio: 0.4
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            Edit{
+                                width: 80
+                                caption.text: qsTr("height") + ":"
+                                ratio: 0.4
+                                anchors.horizontalCenter: parent.horizontalCenter
+                            }
+                            AutoSize{
 
-                            /*Button{
-                                text: qsTr("camera")
-                                height: 30
-                                width: parent.width
-                                onClicked: camera.show()
-                            }*/
+                            }
+                            Component.onCompleted: {
+                                Pipeline2.add(function(aInput){
+                                    if (aInput["visible"]){
+                                        parent.visible = true
+                                        if (aInput["count"])
+                                            children[0].spin.value = aInput["count"]
+                                        if (aInput["x"] !== undefined)
+                                            children[1].input.text = Math.round(aInput["x"])
+                                        if (aInput["y"] !== undefined)
+                                            children[2].input.text = Math.round(aInput["y"])
+                                        if (aInput["w"] !== undefined)
+                                            children[3].input.text = Math.round(aInput["w"])
+                                        if (aInput["h"] !== undefined)
+                                            children[4].input.text = Math.round(aInput["h"])
+                                    }else
+                                        parent.visible = false
+                                }, {name: "updateROIGUI"})
+                            }
                         }
                     }
                 }

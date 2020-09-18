@@ -29,6 +29,7 @@ public:
                          "selects", a##MODEL##s.size() > 0 ? rea::JArray("0") : QJsonArray(),  \
                          "data", data);  \
     }*/
+    virtual ~model(){}
 protected:
     QString getProjectName(const QJsonObject& aProject);
 };
@@ -39,18 +40,16 @@ protected:
     QJsonObject getImageLabels(const QJsonObject& aImageAbstract);
     void setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels);
     QJsonObject getShapes(const QJsonObject& aImage);
+    void setShapes(QJsonObject& aImage, const QJsonObject& aShapes);
     QJsonArray getImageName(const QJsonObject& aImage);
     QString getImageStringName(const QJsonObject& aImage);
     QJsonObject getFilter();
     void setFilter(const QJsonObject& aFilter);
-    void modifyImage0(const QString& aName);
+    bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
 protected:
     QString m_project_id = "";
     QJsonObject m_image;
-    QString m_current_image = "";
-private:
-    void setShapes(QJsonObject& aImage, const QJsonObject& aShapes);
-    bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
+    QString m_current_image = "";   
 };
 
 class IProjectInfo : public QJsonObject{
