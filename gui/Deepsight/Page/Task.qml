@@ -561,28 +561,48 @@ TabView{
                                 }
                             }
                             Edit{
+                                id: roi_x
                                 width: 80
                                 caption.text: qsTr("x") + ":"
                                 ratio: 0.4
                                 anchors.horizontalCenter: parent.horizontalCenter
+                                input.onAccepted: Pipeline2.run("updateROIGeometry", [parseInt(roi_x.input.text),
+                                                                                         parseInt(roi_y.input.text),
+                                                                                         parseInt(roi_x.input.text) + parseInt(roi_w.input.text),
+                                                                                         parseInt(roi_y.input.text) + parseInt(roi_h.input.text)])
                             }
                             Edit{
+                                id: roi_y
                                 width: 80
                                 caption.text: qsTr("y") + ":"
                                 ratio: 0.4
                                 anchors.horizontalCenter: parent.horizontalCenter
+                                input.onAccepted: Pipeline2.run("updateROIGeometry", [parseInt(roi_x.input.text),
+                                                                                         parseInt(roi_y.input.text),
+                                                                                         parseInt(roi_x.input.text) + parseInt(roi_w.input.text),
+                                                                                         parseInt(roi_y.input.text) + parseInt(roi_h.input.text)])
                             }
                             Edit{
+                                id: roi_w
                                 width: 80
                                 caption.text: qsTr("width") + ":"
                                 ratio: 0.4
                                 anchors.horizontalCenter: parent.horizontalCenter
+                                input.onAccepted: Pipeline2.run("updateROIGeometry", [parseInt(roi_x.input.text),
+                                                                                         parseInt(roi_y.input.text),
+                                                                                         parseInt(roi_x.input.text) + parseInt(roi_w.input.text),
+                                                                                         parseInt(roi_y.input.text) + parseInt(roi_h.input.text)])
                             }
                             Edit{
+                                id: roi_h
                                 width: 80
                                 caption.text: qsTr("height") + ":"
                                 ratio: 0.4
                                 anchors.horizontalCenter: parent.horizontalCenter
+                                input.onAccepted: Pipeline2.run("updateROIGeometry", [parseInt(roi_x.input.text),
+                                                                                         parseInt(roi_y.input.text),
+                                                                                         parseInt(roi_x.input.text) + parseInt(roi_w.input.text),
+                                                                                         parseInt(roi_y.input.text) + parseInt(roi_h.input.text)])
                             }
                             AutoSize{
 
