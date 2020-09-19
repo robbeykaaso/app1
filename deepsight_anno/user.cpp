@@ -158,6 +158,9 @@ public:
                 if (nm == ""){
                     aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid name!"), "popMessage");
                     return;
+                }else if (proj.value("channel").toInt() <= 0){
+                    aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid channel count!"), "popMessage");
+                    return;
                 }else
                     projs = addProject(insertProject(proj));
             }

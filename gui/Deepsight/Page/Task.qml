@@ -643,6 +643,183 @@ TabView{
                     anchors.fill: parent
                 }
             }
+            Column{
+                width: parent.width - 180
+                height: parent.height
+                Rectangle{
+                    width: parent.width
+                    height: 100
+                    Column{
+                        anchors.fill: parent
+                        Repeater{
+                            model: 3
+                            delegate: Label{
+                                text: ""
+                                font.pixelSize: 16
+                                leftPadding: 10
+                                topPadding: 10
+                                height: 25
+                            }
+                        }
+                        Row{
+                            Label{
+                                text: qsTr("Progress") + ":"
+                                font.pixelSize: 16
+                            }
+                            ProgressBar{
+                                height: 10
+                                width: 100
+                                anchors.verticalCenter: parent.verticalCenter
+                                minimumValue: 0
+                                maximumValue: 1
+                                value: 0.5
+                            }
+                        }
+
+                        Component.onCompleted: {
+                            Pipeline2.add(function(aInput){
+                                //children[0].text = qsTr("Name: ") + (aInput["name"] || "")
+                                //children[1].text = qsTr("Time: ") + (aInput["time"] || "")
+                                //children[2].text = qsTr("Type: ") + (aInput["type"] || "")
+                            }, {name: "updateJobGUI"})
+                        }
+                    }
+                    Rectangle{
+                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.rightMargin: 5
+                        width: 60
+                        height: 30
+                        color: "red"
+                        radius: 15
+                        Label{
+                            text: qsTr("server")
+                            font.pixelSize: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                        }
+                        MouseArea{
+                            anchors.fill: parent
+                            onClicked: {
+                                Pipeline2.run("_newObject", {title: qsTr("set server"), content: {ip: "", port: "", auto: false}, tag: {tag: "setServer"}})
+                            }
+                        }
+                        Component.onCompleted: {
+                            Pipeline2.add(function(aInput){
+                                if (aInput["value"] === "socket is connected")
+                                    color = "green"
+                                else if (aInput["value"] === "socket is unconnected")
+                                    color = "red"
+                                else if (aInput["value"] === "finding server...")
+                                    color = "yellow"
+                            }, {name: "clientBoardcast"})
+                        }
+                    }
+                }
+                TabView{
+                    width: parent.width
+                    height: parent.height - 100
+                    Tab{
+                        title: qsTr("control")
+                        Column{
+                            anchors.fill: parent
+                            Rectangle{
+                                width: parent.width
+                                height: 60
+                                color: "steelblue"
+                                Row{
+                                    anchors.fill: parent
+                                    leftPadding: 5
+                                    /*Edit{
+                                        width: 180
+                                        caption.text: qsTr("parameter") + ":"
+                                        ratio: 0.3
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Button{
+                                        text: qsTr("...")
+                                        width: 26
+                                        height: width
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+
+                                    Item{
+                                        width: 50
+                                        height: parent.height
+                                    }*/
+
+                                    Button{
+                                        text: qsTr("train")
+                                        width: 60
+                                        height: 30
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Button{
+                                        text: qsTr("infer")
+                                        width: 60
+                                        height: 30
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Button{
+                                        text: qsTr("stop")
+                                        width: 60
+                                        height: 30
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Item{
+                                        width: parent.width - 250
+                                        height: parent.height
+                                    }
+                                    Button{
+                                        text: qsTr("parameter")
+                                        width: 60
+                                        height: 30
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        menu: Menu{
+                                            MenuItem{
+                                                text: qsTr("path")
+                                            }
+                                            MenuItem{
+                                                text: qsTr("edit")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            Rectangle{
+                                width: parent.width
+                                height: parent.height - 60
+                                color: "black"
+                                ListView{
+                                    anchors.fill: parent
+                                    clip: true
+                                    model: ListModel{
+                                        ListElement{
+                                            cap: "..."
+                                        }
+                                        ListElement{
+                                            cap: "..."
+                                        }
+                                        ListElement{
+                                            cap: "..."
+                                        }
+                                    }
+                                    delegate: Label{
+                                        text: cap
+                                        color: "white"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Tab{
+                        title: qsTr("result")
+                        Column{
+                            anchors.fill: parent
+                        }
+                    }
+                }
+            }
         }
     }
 }

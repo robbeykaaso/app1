@@ -3,6 +3,7 @@ import QtQuick.Controls 2.5
 
 Column {
     id: column
+    property alias titlebar: row
     property alias loglist: loglist
     property alias typelist: typelist
     property alias closepanel: closepanel

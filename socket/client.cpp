@@ -19,7 +19,7 @@ normalClient::normalClient(const QJsonObject& aConfig) : QObject()
         //rea::pipeline::run<QJsonObject>("clientBoardcast", rea::Json("value", dt.value("type")));
 
         m_socket.write(QJsonDocument(dt).toJson(QJsonDocument::Compact));
-        m_socket.flush();
+        m_socket.flush();  //waitForBytesWritten
         while (m_socket.bytesToWrite() > 0)
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }, rea::Json("name", "callServer", "param", rea::Json("delegate", "receiveFromServer")));
@@ -44,7 +44,8 @@ normalClient::normalClient(const QJsonObject& aConfig) : QObject()
 }
 
 normalClient::~normalClient(){
-    m_socket.abort();
+    m_socket.disconnectFromHost();
+    //m_socket.abort();
     search_timer_.stop();
 }
 

@@ -78,7 +78,7 @@ TabView{
                     id: operation
                     property var buttons: [
                         {cap: qsTr("New"), func: function(){
-                            Pipeline2.run("_newObject", {title: qsTr("new project"), content: {name: "", channel: ""}, tag: {tag: "newProject"}})
+                            Pipeline2.run("_newObject", {title: qsTr("new project"), content: {name: "", channel: 1}, tag: {tag: "newProject"}})
                         }},
                         {cap: qsTr("Import"), func: function(){
                             Pipeline2.run("_newObject", {title: qsTr("import project"), content: {id: ""}, tag: {tag: "newProject"}})

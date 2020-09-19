@@ -20,6 +20,29 @@ TWindow{
     }
 
     Component{
+        id: spn
+        Spin{
+            property string key
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 220
+            caption.text: qsTr(key) + ":"
+            ratio: 0.3
+            spin.value: 1
+        }
+    }
+
+    Component{
+        id: chk
+        Check{
+            property string key
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: 220
+            caption.text: qsTr(key) + ":"
+            ratio: 0.3
+        }
+    }
+
+    Component{
         id: cmb
         Combo{
             property string key
@@ -61,6 +84,10 @@ TWindow{
             for (var i = 0; i < itms.length; ++i)
                 if (itms[i] instanceof Edit)
                     dt[itms[i].key] = itms[i].input.text
+                else if (itms[i] instanceof Check)
+                    dt[itms[i].key] = itms[i].check.checked
+                else if (itms[i] instanceof Spin)
+                    dt[itms[i].key] = itms[i].spin.value
                 else if (itms[i] instanceof Combo)
                     dt[itms[i].key] = itms[i].combo.currentText
             return {data: dt, out: {}}
@@ -72,8 +99,12 @@ TWindow{
             for (var j = 0; j < sets.children.length; ++j)
                 sets.children[j].destroy()
             for (var i in cnt)
-                if (typeof cnt[i] == "object")
+                if (typeof cnt[i] == "object" && cnt[i]["model"])
                     cmb.createObject(sets, {key: i, mdl: cnt[i]["model"], idx: cnt[i]["index"]})
+                else if (typeof cnt[i] == "number")
+                    spn.createObject(sets, {key: i})
+                else if (typeof cnt[i] == "boolean")
+                    chk.createObject(sets, {key: i})
                 else
                     edit.createObject(sets, {key: i})
             setHeight(Object.keys(cnt).length * 30 + 100)

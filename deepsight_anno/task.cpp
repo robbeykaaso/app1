@@ -2,6 +2,8 @@
 #include "imagePool.h"
 #include "command.h"
 #include "storage/storage.h"
+#include "../socket/server.h"
+#include "../socket/client.h"
 #include "../util/cv.h"
 
 class task : public imageModel{
@@ -705,12 +707,39 @@ private:
                }
         }), rea::Json("tag", "setImageShow"));
     }
+private:
+    normalClient m_client;
+    void serverManagement(){
+        rea::pipeline::find("tryLinkServer")->previous(rea::pipeline::add<stgJson>([](rea::stream<stgJson>* aInput){
+            auto dt = aInput->data();
+            if (dt.getData().value("test_server").toBool()){
+                static normalServer server;
+                aInput->out<QJsonObject>(rea::Json("ip", "127.0.0.1",
+                                                   "port", "8081",
+                                                   "id", "hello"), "tryLinkServer");
+            }else
+                aInput->out<QJsonObject>(QJsonObject(), "tryLinkServer");
+        }))->previous(rea::local("readJson"))->execute(std::make_shared<rea::stream<stgJson>>((stgJson(QJsonObject(), "config_.json"))));
+
+        rea::pipeline::find("_newObject")
+            ->next(rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+                       auto dt = aInput->data();
+                       if (dt.value("auto").toBool())
+                           aInput->out<QJsonObject>(QJsonObject(), "tryLinkServer");
+                       else
+                           aInput->out<QJsonObject>(rea::Json("ip", dt.value("ip"),
+                                                              "port", dt.value("port"),
+                                                              "id", "hello"));
+            }), rea::Json("tag", "setServer"))
+            ->next("tryLinkServer");
+    }
 public:
     task(){
         taskManagement();
         labelManagement();
         imageManagement();
         guiManagement();
+        serverManagement();
     }
 };
 
