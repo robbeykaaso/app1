@@ -705,14 +705,15 @@ TabView{
                             }
                         }
                         Component.onCompleted: {
-                            Pipeline2.add(function(aInput){
+                            Pipeline2.find("clientBoardcast")
+                            .next(function(aInput){
                                 if (aInput["value"] === "socket is connected")
                                     color = "green"
                                 else if (aInput["value"] === "socket is unconnected")
                                     color = "red"
                                 else if (aInput["value"] === "finding server...")
                                     color = "yellow"
-                            }, {name: "clientBoardcast"})
+                            })
                         }
                     }
                 }

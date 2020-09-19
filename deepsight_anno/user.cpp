@@ -1,9 +1,32 @@
-#include "../storage/storage.h"
+//#include "../storage/storage.h"
+#include "../socket/protocal.h"
+#include "../storage/awsStorage.h"
 #include "../util/py.h"
 #include "util.h"
 #include "model.h"
 #include "reactive2.h"
 #include <QDateTime>
+
+class customAWSStorage : public awsStorage{
+public:
+    customAWSStorage(const QString& aType = "") : awsStorage(aType) {
+        //tell server aws info
+        rea::pipeline::find("clientBoardcast")
+        ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            if (aInput->data().value("value") == "socket is connected"){
+                aInput->out<QJsonObject>(rea::Json(protocal.value(protocal_connect).toObject().value("req").toObject(),
+                                                   "s3_ip_port", QString::fromStdString(m_aws.getIPPort()),
+                                                   "s3_access_key", QString::fromStdString(m_aws.getAccessKey()),
+                                                   "s3_secret_key", QString::fromStdString(m_aws.getSecretKey())),
+                                         "callServer");
+            }
+        }))
+        ->next("callServer")
+        ->next(rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+            assert(aInput->data().value("type") == "connect");
+        }), rea::Json("tag", protocal_connect));
+    }
+};
 
 class user : public model{
 protected:
@@ -188,12 +211,21 @@ public:
             aInput->out<double>(0, openUser);
         }))
         ->next(openUser);
+
+        //initialize storage
+        rea::pipeline::add<stgJson>([](rea::stream<stgJson>* aInput){
+            auto dt = aInput->data();
+            if (dt.getData().value("local_fs").toBool())
+                static fsStorage file_storage("deepsight");
+            else
+                static customAWSStorage minio_storage("deepsight");
+        })->previous(rea::local("readJson"))
+            ->execute(std::make_shared<rea::stream<stgJson>>((stgJson(QJsonObject(), "config_.json"))));
     }
 };
 
 static rea::regPip<QQmlApplicationEngine*> init_user([](rea::stream<QQmlApplicationEngine*>* aInput){
-    static fsStorage file_storage("deepsight");
     static fsStorage local_storage;
     static user cur_user;
     aInput->out();
-}, QJsonObject(), "regQML");
+}, rea::Json("name", "install1_user"), "regQML");

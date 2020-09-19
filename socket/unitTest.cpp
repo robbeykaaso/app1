@@ -9,16 +9,15 @@ void testSocket(){
     pipeline::find("receiveFromClient")  //server end
     ->next(FUNC(clientMessage,
         auto dt = aInput->data();
-        assert(dt.value("data").toObject().value("key") == "hello");
-        dt.insert("data", protocal.value(protocal_test).toObject().value("res"));
-        aInput->setData(dt)->out();
+        assert(dt.value("key") == "hello");
+        aInput->setData(protocal.value(protocal_test).toObject().value("res").toObject())->out();
     ), rea::Json("tag", protocal_test))
     ->next("callClient");
 
     pipeline::find("clientBoardcast")  //client end
     ->next(FUNC(QJsonObject,
         if (aInput->data().value("value") == "socket is connected"){
-            aInput->out<QJsonObject>(rea::Json("type", protocal_test, "data", protocal.value(protocal_test).toObject().value("req")), "callServer");
+            aInput->out<QJsonObject>(protocal.value(protocal_test).toObject().value("req").toObject(), "callServer");
         }
     ))
     ->next("callServer")

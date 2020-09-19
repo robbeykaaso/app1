@@ -4,6 +4,7 @@
 #include "storage/storage.h"
 #include "../socket/server.h"
 #include "../socket/client.h"
+#include "../socket/protocal.h"
 #include "../util/cv.h"
 
 class task : public imageModel{
@@ -710,6 +711,7 @@ private:
 private:
     normalClient m_client;
     void serverManagement(){
+        //initialize socket
         rea::pipeline::find("tryLinkServer")->previous(rea::pipeline::add<stgJson>([](rea::stream<stgJson>* aInput){
             auto dt = aInput->data();
             if (dt.getData().value("test_server").toBool()){
@@ -717,10 +719,19 @@ private:
                 aInput->out<QJsonObject>(rea::Json("ip", "127.0.0.1",
                                                    "port", "8081",
                                                    "id", "hello"), "tryLinkServer");
+
+                rea::pipeline::find("receiveFromClient")  //server end
+                    ->next(rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                            auto dt = aInput->data();
+                            auto ret = protocal.value(protocal_connect).toObject().value("res").toObject();
+                            aInput->setData(ret)->out();
+                       }), rea::Json("tag", protocal_connect))
+                    ->next("callClient");
             }else
                 aInput->out<QJsonObject>(QJsonObject(), "tryLinkServer");
         }))->previous(rea::local("readJson"))->execute(std::make_shared<rea::stream<stgJson>>((stgJson(QJsonObject(), "config_.json"))));
 
+        //manually link server
         rea::pipeline::find("_newObject")
             ->next(rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
                        auto dt = aInput->data();
@@ -746,4 +757,4 @@ public:
 static rea::regPip<QQmlApplicationEngine*> init_task([](rea::stream<QQmlApplicationEngine*>* aInput){
     static task cur_task;
     aInput->out();
-}, QJsonObject(), "regQML");
+}, rea::Json("name", "install2_task"), "regQML");

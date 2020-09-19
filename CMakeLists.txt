@@ -38,6 +38,7 @@ add_executable(${PROJECT_NAME}
     "storage/aws_s3.cpp"
     "storage/storage.h"
     "storage/storage.cpp"
+    "storage/awsStorage.h"
     "storage/awsStorage.cpp"
     "storage/mysql.cpp"
     "socket/protocal.h"

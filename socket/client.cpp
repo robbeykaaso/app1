@@ -94,6 +94,6 @@ void normalClient::ReceiveMessage()
         QJsonDocument doc = QJsonDocument::fromJson(msg.toUtf8());
         auto res = doc.object();
         rea::pipeline::run<QJsonObject>("clientBoardcast", rea::Json("value", "receive from server: " + res.value("type").toString()));
-        rea::pipeline::run<QJsonObject>("receiveFromServer", res.value("data").toObject(), rea::Json("tag", res.value("type")));
+        rea::pipeline::run<QJsonObject>("receiveFromServer", res, rea::Json("tag", res.value("type")));
     }
 }
