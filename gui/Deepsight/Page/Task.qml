@@ -803,29 +803,9 @@ TabView{
                                     }
                                 }
                             }
-                            Rectangle{
+                            JobLogPanel{
                                 width: parent.width
                                 height: parent.height - 60
-                                color: "black"
-                                ListView{
-                                    anchors.fill: parent
-                                    clip: true
-                                    model: ListModel{
-                                        ListElement{
-                                            cap: "..."
-                                        }
-                                        ListElement{
-                                            cap: "..."
-                                        }
-                                        ListElement{
-                                            cap: "..."
-                                        }
-                                    }
-                                    delegate: Label{
-                                        text: cap
-                                        color: "white"
-                                    }
-                                }
                             }
                         }
                     }

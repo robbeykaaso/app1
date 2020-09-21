@@ -50,5 +50,6 @@
         <file>gui/Basic/Spin.qml</file>
         <file>gui/Deepsight/Component/StageButton.qml</file>
         <file>gui/Deepsight/Component/JobParamButton.qml</file>
+        <file>gui/Deepsight/Component/JobLogPanel.qml</file>
     </qresource>
 </RCC>

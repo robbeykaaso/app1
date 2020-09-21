@@ -114,6 +114,7 @@ private:
                 setLabels(value("labels").toObject());
 
                 aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobProgress");
+                aInput->out<QJsonObject>(rea::Json("log", QJsonArray()), "updateTaskJobLog");
                 aInput->out<QJsonObject>(prepareLabelListGUI(getLabels()), "task_label_updateListView");
                 aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
                 aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
@@ -123,6 +124,7 @@ private:
                 aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
             }))
             ->nextB(0, "updateTaskJobProgress", QJsonObject())
+            ->nextB(0, "updateTaskJobLog", QJsonObject())
             ->nextB(0, "task_label_updateListView", QJsonObject())
             ->nextB(0, "task_label_listViewSelected", rea::Json("tag", "task_manual"))
             ->nextB(0, "task_image_updateListView", QJsonObject())
@@ -817,6 +819,7 @@ private:
     QString m_current_job = "";
     QJsonObject m_current_param;
     QString m_current_request = "";
+    QHash<QString, QJsonArray> m_log_cache;
     void insertJob(const QString& aID){
         auto tm0 = QDateTime::currentDateTime();
         auto tm = tm0.toString(Qt::DateFormat::ISODate);
@@ -895,9 +898,11 @@ private:
                    if (m_current_job != cur){
                        m_current_job = cur;
                        m_current_request = QString::number(QDateTime::currentDateTime().toTime_t()) + "_" + m_current_job;
+                       aInput->out<QJsonObject>(rea::Json("log", *rea::tryFind(&m_log_cache, m_current_job)), "updateTaskJobLog");
                        aInput->out<QString>(m_current_request, "requestJobState");
                    }
                }), rea::Json("tag", "manual"))
+            ->nextB(0, "updateTaskJobLog", QJsonObject())
             ->next(rea::pipeline::add<QString>([this](rea::stream<QString>* aInput){
                 if (aInput->data() != m_current_request)
                     return;
@@ -949,7 +954,7 @@ private:
             ->nextB(0, "deepsightwriteJson", QJsonObject())
             ->next("requestJobState");
 
-        //monitor job progress
+        //update job progress
         rea::pipeline::find("receiveFromServer")
             ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
                 auto dt = aInput->data();
@@ -959,7 +964,17 @@ private:
             }), rea::Json("tag", protocal_progress_push))
             ->next("updateTaskJobProgress");
 
-        //monitor job log
+        //update job log
+        rea::pipeline::find("receiveFromServer")
+            ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                auto dt = aInput->data();
+                auto job = dt.value("job_id").toString();
+                auto entry = dt.value("log_level").toString() + ": " + dt.value("log_msg").toString();
+                rea::tryFind(&m_log_cache, job)->push_back(entry);
+                if (job == m_current_job)
+                    aInput->out<QJsonObject>(rea::Json("log_new", entry), "updateTaskJobLog");
+            }), rea::Json("tag", protocal_log_push))
+            ->next("updateTaskJobLog");
 
         //delete Job
         rea::pipeline::find("task_job_listViewSelected")
