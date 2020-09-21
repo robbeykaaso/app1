@@ -213,12 +213,12 @@ public:
         ->next(openUser);
 
         //initialize storage
-        rea::pipeline::add<stgJson>([](rea::stream<stgJson>* aInput){
+        rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
             auto dt = aInput->data();
             if (dt.getData().value("local_fs").toBool())
-                static fsStorage file_storage("deepsight");
+                static fsStorage file_storage(s3_bucket_name);
             else
-                static customAWSStorage minio_storage("deepsight");
+                static customAWSStorage minio_storage(s3_bucket_name);
         })->previous(rea::local("readJson"))
             ->execute(std::make_shared<rea::stream<stgJson>>((stgJson(QJsonObject(), "config_.json"))));
     }

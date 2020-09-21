@@ -1,6 +1,7 @@
 {
     "job_id": {
         "status": "",
-        "param_id": ""
+        "param_id": "",
+        "time": ""
     }
 }

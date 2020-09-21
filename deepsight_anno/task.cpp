@@ -63,10 +63,27 @@ private:
                          "selects", lst.size() > 0 ? rea::JArray("0") : QJsonArray(),
                          "data", data);
     }
+    QJsonObject prepareJobListGUI(){
+        QJsonArray data;
+        for (auto i : m_jobs){
+            auto job = i.toObject();
+            data.push_back(rea::Json("entry", rea::JArray(job.value("time"))));
+        }
+        return rea::Json("title", rea::JArray("time"),
+                         "entrycount", 30,
+                         "selects", m_jobs.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "data", data);
+    }
 private:
     QString m_task_id = "";
     QJsonObject m_project_labels;
     QJsonObject* m_project_images;
+    QString getJobsJsonPath(){
+        return "project/" + m_project_id + "/task/" + m_task_id + "/jobs.json";
+     }
+    QString getTaskJsonPath(){
+        return "project/" + m_project_id + "/task/" + m_task_id + ".json";
+    }
     void taskManagement(){
         //open project
         rea::pipeline::find("openProject")
@@ -84,26 +101,34 @@ private:
                 m_channel_count = dt.value("channel").toInt();
                 m_project_id = dt.value("project").toString();
                 m_image_show = dt.value("imageshow").toObject();
-                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_task_id + ".json"));
+                aInput->out<stgJson>(stgJson(QJsonObject(), getTaskJsonPath()));
+                aInput->out<stgJson>(stgJson(QJsonObject(), getJobsJsonPath()));
             }
         }, rea::Json("name", "openTask"))
             ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
-            ->next(rea::buffer<stgJson>(1))
+            ->next(rea::buffer<stgJson>(2))
             ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
                 auto dt = aInput->data();
                 dt[0].getData().swap(*this);
+                m_jobs = dt[1].getData();
                 setLabels(value("labels").toObject());
 
+                aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobProgress");
                 aInput->out<QJsonObject>(prepareLabelListGUI(getLabels()), "task_label_updateListView");
                 aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
                 aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
                 aInput->out<QJsonObject>(rea::Json("count", 1), "scatterTaskImageShow");
+                aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
+                aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
                 aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
             }))
+            ->nextB(0, "updateTaskJobProgress", QJsonObject())
             ->nextB(0, "task_label_updateListView", QJsonObject())
             ->nextB(0, "task_label_listViewSelected", rea::Json("tag", "task_manual"))
             ->nextB(0, "task_image_updateListView", QJsonObject())
             ->nextB(0, "scatterTaskImageShow", QJsonObject())
+            ->nextB(0, "task_job_updateListView", QJsonObject())
+            ->nextB(0, "task_job_listViewSelected", rea::Json("tag", "manual"))
             ->nextB(0, "updateTaskImageFilterGUI", QJsonObject());
     }
     void labelManagement(){
@@ -178,7 +203,7 @@ private:
                 if (updatelist)
                     aInput->out<QJsonObject>(rea::Json(prepareLabelListGUI(grps), "selects", rea::JArray(sel)), "task_label_updateListView");
                 setLabels(grps);
-                aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+                aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), "deepsightwriteJson");
                 aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
                 m_current_image = "";
                 aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
@@ -335,7 +360,7 @@ private:
                 dels.push_back("roi_" + QString::number(i));
             if (dels.size() > 0)
                 aInput->out<QJsonArray>(dels, "taskimage_gridder0_deleteShapes");
-            auto id = "project/" + m_task_id + ".json";
+            auto id = getTaskJsonPath();
             for (int i = shps.size(); i < cnt; ++i){
                 auto shp = "roi_" + QString::number(i);
                 auto val = getDefaultROI();
@@ -460,7 +485,7 @@ private:
                                      "objects", objs);
                 if (m_roi_mode){
                     cfg.remove("text");
-                    cfg.insert("id", "project/" + m_task_id + ".json");
+                    cfg.insert("id", getTaskJsonPath());
                 }
                 rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + QString::number(ch), cfg);
                 //aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder0");
@@ -495,7 +520,7 @@ private:
                 }
                 if (mdy){
                     setImages(imgs);
-                    aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+                    aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), "deepsightwriteJson");
                     aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
                     aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
                 }
@@ -528,7 +553,7 @@ private:
             setFilter(dt);
             aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
             aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-            aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+            aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), "deepsightwriteJson");
         }, rea::Json("name", "filterTaskImages"))
             ->nextB(0, "task_image_updateListView", QJsonObject())
             ->nextB(0, "task_image_listViewSelected", rea::Json("tag", "manual"))
@@ -564,7 +589,7 @@ private:
             setImages(imgs);
             aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
             aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-            aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+            aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), "deepsightwriteJson");
         }))
         ->nextB(0, "task_image_updateListView", QJsonObject())
         ->nextB(0, "task_image_listViewSelected", rea::Json("tag", "manual"))
@@ -598,7 +623,7 @@ private:
                 setImages(imgs);
                 aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
                 aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-                aInput->out<stgJson>(stgJson(*this, "project/" + m_task_id + ".json"), "deepsightwriteJson");
+                aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), "deepsightwriteJson");
             }
         }))
         ->nextB(0, "task_image_updateListView", QJsonObject())
@@ -611,7 +636,7 @@ private:
                 if (m_roi_mode){
                     if (m_task_id == "")
                         return;
-                    QString cur = "project/" + m_task_id + ".json";
+                    QString cur = getTaskJsonPath();
                     QString pth = cur;
                     auto roi = getROI(*this);
                     if (modifyROI(aInput->data(), roi, pth)){
@@ -710,23 +735,66 @@ private:
     }
 private:
     normalClient m_client;
-    void serverManagement(){
+    void serverManagement(){        
         //initialize socket
         rea::pipeline::find("tryLinkServer")->previous(rea::pipeline::add<stgJson>([](rea::stream<stgJson>* aInput){
             auto dt = aInput->data();
             if (dt.getData().value("test_server").toBool()){
                 static normalServer server;
+                static QHash<QString, int> job_states;
                 aInput->out<QJsonObject>(rea::Json("ip", "127.0.0.1",
                                                    "port", "8081",
                                                    "id", "hello"), "tryLinkServer");
 
                 rea::pipeline::find("receiveFromClient")  //server end
-                    ->next(rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                    ->nextB(0, rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
                             auto dt = aInput->data();
                             auto ret = protocal.value(protocal_connect).toObject().value("res").toObject();
                             aInput->setData(ret)->out();
-                       }), rea::Json("tag", protocal_connect))
-                    ->next("callClient");
+                            }), rea::Json("tag", protocal_connect), "callClient", QJsonObject())
+                    ->nextB(0, rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                            auto dt = aInput->data();
+                            auto ret = protocal.value(protocal_training).toObject().value("res").toObject();
+
+                            auto tm0 = QDateTime::currentDateTime();
+                            auto id = rea::generateUUID();
+                            ret.insert("job_id", QString::number(tm0.toTime_t()) + "_" + id);
+
+                            aInput->setData(ret)->out();
+                        }), rea::Json("tag", protocal_training), "callClient", QJsonObject())
+                    ->nextB(0, rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                            auto dt = aInput->data();
+                            auto ret = protocal.value(protocal_task_state).toObject().value("res").toObject();
+                            auto id = dt.value("id").toString();
+                            ret.insert("id", id);
+                            auto job_id = id.mid(id.indexOf("_") + 1, id.length());
+                            auto cnt = job_states.value(job_id) + 1;
+                            job_states.insert(job_id, cnt);
+                            if (cnt == 1000)
+                                ret.insert("state", "process_finish");
+                            else if (cnt < 2000){
+                                ret.insert("state", "running");
+                            }else
+                                ret.insert("state", "upload_finish");
+                            auto res = clientMessage(ret);
+                            res.client_socket = aInput->data().client_socket;
+                            aInput->out<clientMessage>(res, "callClient");
+
+                            res = clientMessage(rea::Json(protocal.value(protocal_progress_push).toObject().value("res").toObject(),
+                                                          "job_id", dt.value("job_id"),
+                                                          "progress", cnt * 100.0 / 2000,
+                                                          "progress_msg", "..."));
+                            res.client_socket = aInput->data().client_socket;
+                            aInput->out<clientMessage>(res, "callClient");
+
+                            res = clientMessage(rea::Json(protocal.value(protocal_log_push).toObject().value("res").toObject(),
+                                                          "job_id", dt.value("job_id"),
+                                                          "log_level", cnt % 2 == 0 ? "info" : "warning",
+                                                          "log_msg", "..."));
+                            res.client_socket = aInput->data().client_socket;
+                            aInput->out<clientMessage>(res, "callClient");
+
+                        }), rea::Json("tag", protocal_task_state), "callClient", QJsonObject());
             }else
                 aInput->out<QJsonObject>(QJsonObject(), "tryLinkServer");
         }))->previous(rea::local("readJson"))->execute(std::make_shared<rea::stream<stgJson>>((stgJson(QJsonObject(), "config_.json"))));
@@ -744,6 +812,192 @@ private:
             }), rea::Json("tag", "setServer"))
             ->next("tryLinkServer");
     }
+private:
+    QJsonObject m_jobs;
+    QString m_current_job = "";
+    QJsonObject m_current_param;
+    QString m_current_request = "";
+    void insertJob(const QString& aID){
+        auto tm0 = QDateTime::currentDateTime();
+        auto tm = tm0.toString(Qt::DateFormat::ISODate);
+        auto tms = tm.split("T");
+        m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", "running"));
+    }
+
+    QJsonObject prepareTrainingData(){
+        QJsonArray uuid_list, image_label_list, image_dataset_list;
+        auto imgs = getImages();
+        auto tsk_lbls = getLabels();
+        tsk_lbls.remove("shape");
+        for (auto i : imgs.keys()){
+            auto img = imgs.value(i).toObject();
+            uuid_list.push_back(i);
+            image_dataset_list.push_back(getImageStage(img));
+
+            auto img_lbls = getImageLabels(m_project_images->value(i).toObject());
+            QJsonArray lbls;
+            for (auto j : tsk_lbls.keys())
+                lbls.push_back(img_lbls.value(j).toString());
+            image_label_list.push_back(lbls);
+        }
+        return rea::Json("s3_bucket_name", s3_bucket_name,
+                         "image_root", "project/" + m_project_id + "/image",
+                         "json_root", "project/" + m_project_id + "/image",
+                         "uuid_list", uuid_list,
+                         "image_label_list", image_label_list,
+                         "image_dataset_list", image_dataset_list);
+    }
+
+    QString getJobState(const QJsonObject& aJob){
+        return aJob.value("state").toString();
+    }
+
+    void setJobState(QJsonObject& aJob, const QString& aState){
+        aJob.insert("state", aState);
+    }
+
+    void jobManagement(){
+        //start Job
+        rea::pipeline::add<QString>([this](rea::stream<QString>* aInput){
+            auto prm = rea::Json(protocal.value(protocal_training).toObject().value("req").toObject(),
+                                 "project_id", m_project_id,
+                                 "task_id", m_task_id,
+                                 "data", prepareTrainingData(),
+                                 "task_type", value("type"),
+                                 "params", rea::Json(
+                                               ));
+            aInput->out<QJsonObject>(prm, "callServer");
+        }, rea::Json("name", "startJob"))
+            ->next("callServer")
+            ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                auto res = aInput->data();
+                if (res.value("err_code").toInt()){
+                    aInput->out<QJsonObject>(rea::Json("title", "error", "text", res.value("msg")), "popMessage");
+                }else{
+                    insertJob(res.value("job_id").toString());
+                    aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
+                    aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), "deepsightwriteJson");
+                    aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
+                }
+            }), rea::Json("tag", protocal_training))
+            ->nextB(0, "task_job_updateListView", QJsonObject())
+            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->nextB(0, "task_job_listViewSelected", rea::Json("tag", "manual"))
+            ->next("popMessage");
+
+        //select Job
+        rea::pipeline::find("task_job_listViewSelected")
+            ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                   auto dt = aInput->data();
+                   if (dt.size() == 0)
+                       return;
+                   auto cur = (m_jobs.begin() + dt[0].toInt()).key();
+                   if (m_current_job != cur){
+                       m_current_job = cur;
+                       m_current_request = QString::number(QDateTime::currentDateTime().toTime_t()) + "_" + m_current_job;
+                       aInput->out<QString>(m_current_request, "requestJobState");
+                   }
+               }), rea::Json("tag", "manual"))
+            ->next(rea::pipeline::add<QString>([this](rea::stream<QString>* aInput){
+                if (aInput->data() != m_current_request)
+                    return;
+                auto job = m_jobs.value(m_current_job).toObject();
+                if (getJobState(job) == "running"){
+                    aInput->out<QJsonObject>(rea::Json(protocal.value(protocal_task_state).toObject().value("req").toObject(),
+                                                       "project_id", m_project_id,
+                                                       "task_id", m_task_id,
+                                                       "job_id", m_current_job,
+                                                       "id", aInput->data()),
+                                             "callServer");
+                }else if (getJobState(job) == "process_finish"){
+                    aInput->out<QJsonObject>(rea::Json(protocal.value(protocal_upload).toObject().value("req").toObject(),
+                                                       "job_id", m_current_job,
+                                                       "s3_bucket_name", s3_bucket_name,
+                                                       "data_root", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job),
+                                             "callServer");
+                }else if (getJobState(job) == "upload_finish"){
+                    aInput->out<QJsonObject>(job, "updateTaskJobGUI");
+                    aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobProgress");
+                }else
+                    aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobProgress");
+            }, rea::Json("name", "requestJobState", "thread", 5)))
+            ->nextB(0, "updateTaskJobProgress", QJsonObject())
+            ->nextB(0, "updateTaskJobGUI", QJsonObject())
+            ->next("callServer")
+            ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                   auto res = aInput->data();
+                   auto id = res.value("id").toString();
+                   if (m_current_job == "" || id.indexOf(m_current_job) < 0)
+                       return;
+                   auto job = m_jobs.value(m_current_job).toObject();
+                   auto st = getJobState(res);
+                   if (st != getJobState(job)){
+                       setJobState(job, st);
+                       if (st == "process_finish"){
+                           setJobState(job, "running");
+                           m_jobs.insert(m_current_job, job);
+                       }
+                       else
+                           m_jobs.insert(m_current_job, job);
+                       aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), "deepsightwriteJson");
+                   }
+                   std::this_thread::sleep_for(std::chrono::microseconds(500));
+                   aInput->out<QJsonObject>(job, "updateTaskJobGUI");
+                   aInput->out<QString>(id, "requestJobState");
+            }, rea::Json("thread", 5)), rea::Json("tag", protocal_task_state))
+            ->nextB(0, "updateTaskJobGUI", QJsonObject())
+            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->next("requestJobState");
+
+        //monitor job progress
+        rea::pipeline::find("receiveFromServer")
+            ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                auto dt = aInput->data();
+                if (dt.value("job_id") != m_current_job)
+                    return;
+                aInput->out();
+            }), rea::Json("tag", protocal_progress_push))
+            ->next("updateTaskJobProgress");
+
+        //monitor job log
+
+        //delete Job
+        rea::pipeline::find("task_job_listViewSelected")
+            ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                auto dt = aInput->data();
+                if (dt.size() > 0){
+                    std::vector<int> idxes;
+                    for (auto i : dt)
+                        idxes.push_back(i.toInt());
+                    std::sort(idxes.begin(), idxes.end(), std::greater<int>());
+                    for (auto i : idxes)
+                        m_jobs.erase(m_jobs.begin() + i);
+                    aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
+                    aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), "deepsightwriteJson");
+                    aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
+                }
+            }), rea::Json("tag", "deleteJob"))
+            ->nextB(0, "task_job_updateListView", QJsonObject())
+            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->nextB(0, "task_job_listViewSelected", rea::Json("tag", "manual"));
+
+        //set job parameter
+        rea::pipeline::find("_selectFile")
+            ->next(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
+                auto pths = aInput->data();
+                if (pths.size() > 0){
+                    aInput->out<stgJson>(stgJson(QJsonObject(), pths[0].toString()), "readJson");
+                }
+            }), rea::Json("tag", "setJobParameter"))
+            ->next(rea::local("readJson", rea::Json("thread", 10)))
+            ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+                m_current_param = aInput->data().getData();
+            }));
+        rea::pipeline::find("editJobParam")
+            ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+                m_current_param = aInput->data();
+            }));
+    }
 public:
     task(){
         taskManagement();
@@ -751,6 +1005,7 @@ public:
         imageManagement();
         guiManagement();
         serverManagement();
+        jobManagement();
     }
 };
 

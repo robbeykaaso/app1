@@ -230,7 +230,7 @@ private:
                            auto tsks = getTasks();
                            auto id = tsks[dt[0].toInt()].toString();
                            aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract), getTaskName(m_tasks.value(id).toObject())}), "title_updateStatus");
-                           aInput->out<IProjectInfo>(IProjectInfo(&m_images, rea::Json("id", m_project_id + "/task/" + id,
+                           aInput->out<IProjectInfo>(IProjectInfo(&m_images, rea::Json("id", id,
                                                               "labels", getLabels(),
                                                               "channel", getChannelCount(),
                                                               "project", m_project_id,

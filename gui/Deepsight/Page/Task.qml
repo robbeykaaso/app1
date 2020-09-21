@@ -640,6 +640,7 @@ TabView{
                 width: 180
                 height: parent.height
                 List{
+                    name: "task_job"
                     anchors.fill: parent
                 }
             }
@@ -652,36 +653,44 @@ TabView{
                     Column{
                         anchors.fill: parent
                         Repeater{
-                            model: 3
+                            model: 2
                             delegate: Label{
                                 text: ""
                                 font.pixelSize: 16
-                                leftPadding: 10
-                                topPadding: 10
+                                leftPadding: 15
+                                topPadding: 15
                                 height: 25
                             }
                         }
                         Row{
+                            leftPadding: 15
                             Label{
+                                topPadding: 15
                                 text: qsTr("Progress") + ":"
                                 font.pixelSize: 16
                             }
                             ProgressBar{
                                 height: 10
                                 width: 100
-                                anchors.verticalCenter: parent.verticalCenter
+                                y: 17
                                 minimumValue: 0
-                                maximumValue: 1
-                                value: 0.5
+                                maximumValue: 100
+                                value: 50
+                                Component.onCompleted: {
+                                    Pipeline2.add(function(aInput){
+                                        visible = aInput["type"] !== undefined || (aInput["progress"] === 100)
+                                        if (visible)
+                                            value = aInput["progress"]
+                                    }, {name: "updateTaskJobProgress"})
+                                }
                             }
                         }
 
                         Component.onCompleted: {
                             Pipeline2.add(function(aInput){
-                                //children[0].text = qsTr("Name: ") + (aInput["name"] || "")
-                                //children[1].text = qsTr("Time: ") + (aInput["time"] || "")
-                                //children[2].text = qsTr("Type: ") + (aInput["type"] || "")
-                            }, {name: "updateJobGUI"})
+                                children[0].text = qsTr("Start time: ") + (aInput["time"] || "")
+                                children[1].text = qsTr("State: ") + (aInput["state"] || "")
+                            }, {name: "updateTaskJobGUI"})
                         }
                     }
                     Rectangle{
@@ -748,12 +757,21 @@ TabView{
                                         width: 50
                                         height: parent.height
                                     }*/
-
                                     Button{
-                                        text: qsTr("train")
-                                        width: 60
                                         height: 30
+                                        width: 60
                                         anchors.verticalCenter: parent.verticalCenter
+                                        onClicked: {
+                                            Pipeline2.run("startJob", "")
+                                        }
+                                        style: ButtonStyle{
+                                            label: Text{
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                                text: qsTr("train")
+                                                color: "red"
+                                            }
+                                        }
                                     }
                                     Button{
                                         text: qsTr("infer")
@@ -767,23 +785,21 @@ TabView{
                                         height: 30
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
-                                    Item{
-                                        width: parent.width - 250
-                                        height: parent.height
-                                    }
                                     Button{
-                                        text: qsTr("parameter")
+                                        text: qsTr("delete")
                                         width: 60
                                         height: 30
                                         anchors.verticalCenter: parent.verticalCenter
-                                        menu: Menu{
-                                            MenuItem{
-                                                text: qsTr("path")
-                                            }
-                                            MenuItem{
-                                                text: qsTr("edit")
-                                            }
-                                        }
+                                        onClicked: Pipeline2.run("task_job_listViewSelected", [], {tag: "deleteJob"})
+                                    }
+                                    Item{
+                                        width: parent.width - 310
+                                        height: parent.height
+                                    }
+                                    JobParamButton{
+                                        width: 60
+                                        height: 30
+                                        anchors.verticalCenter: parent.verticalCenter
                                     }
                                 }
                             }
