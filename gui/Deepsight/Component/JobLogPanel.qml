@@ -36,10 +36,12 @@ Rectangle{
                     model.clear()
                     for (var i in aInput["log"])
                         model.append({cap: aInput["log"][i]})
-                    currentIndex = count - 1
+                    positionViewAtEnd()  //https://forum.qt.io/topic/45016/solved-set-the-currentindex-of-listview-immediately-without-animation/2
+                    //currentIndex = count - 1
                 }else if (aInput["log_new"]){
                     model.append({cap: aInput["log_new"]})
-                    currentIndex = count - 1
+                    positionViewAtEnd()
+                    //currentIndex = count - 1
                 }
             }, {name: "updateTaskJobLog"})
         }

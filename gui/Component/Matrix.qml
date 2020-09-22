@@ -8,6 +8,7 @@ Nest{
     property string name
     property alias rowcap: rowcap
     property alias colcap: colcap
+    property int fontsize: 16
     property var content: []
     rows: 5
     columns: 5
@@ -46,8 +47,11 @@ Nest{
         }
         delegate: Label{
             text: cap
+            clip: true
+            elide: Text.ElideRight
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
+            font.pixelSize: fontsize
             MouseArea{
                 anchors.fill: parent
                 onClicked: {
@@ -58,6 +62,9 @@ Nest{
     }
 
     function updateGUI(aFit){
+        mdl.clear()
+        if (content.length == 0)
+            return
         size = [1, 1, 1]
         columns = 2 * content[0].length + 1
         size.push(2 * content[0].length)
@@ -69,13 +76,15 @@ Nest{
             size.push(2)
             size.push(2)
         }
-        mdl.clear()
         for (var j in content)
             for (var k in content[j]){
                 mdl.append({cap: content[j][k].toString()})
             }
         if (aFit)
-            fitLayout()
+            if (mdl.count > 0)
+                fitLayout()
+            else
+                size = []
     }
 
     Component.onCompleted: {

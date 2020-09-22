@@ -10,6 +10,7 @@ const auto protocal_task_state = "task_state";
 const auto protocal_upload = "upload";
 const auto protocal_progress_push = "task_progress_push";
 const auto protocal_log_push = "task_log";
+const auto protocal_stop_job = "stop_job";
 const auto protocal = rea::Json(protocal_test,
                                 rea::Json("req", rea::Json(
                                                      "type", protocal_test,
@@ -64,6 +65,17 @@ const auto protocal = rea::Json(protocal_test,
                                 protocal_log_push,
                                 rea::Json("res", rea::Json(
                                                      "type", protocal_log_push
+                                                     )),
+                                protocal_stop_job,
+                                rea::Json("req", rea::Json(
+                                                     "type", protocal_stop_job,
+                                                     "token", protocal_stop_job,
+                                                     "soft_stop", true
+                                                     ),
+                                          "res", rea::Json(
+                                                     "type", protocal_stop_job,
+                                                     "err_code", 0,
+                                                     "msg", "..."
                                                      ))
                                     );
 

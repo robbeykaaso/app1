@@ -851,6 +851,7 @@ ApplicationWindow {
         content: Nest{
             rows: 10
             columns: 10
+            anchors.fill: parent
             size: [1, 2, 7, 8, 8, 2, 2, 8, 1, 10]
             Rectangle {
                 color: "red"
@@ -877,6 +878,7 @@ ApplicationWindow {
             id: mtx
             rowcap.text: "hello"
             colcap.text: "world"
+            anchors.fill: parent
             content: [[1, 2], [3, 4], [5, 6]]
         }
         footbuttons: [

@@ -731,6 +731,7 @@ TabView{
                     height: parent.height - 100
                     Tab{
                         title: qsTr("control")
+                        active: true
                         Column{
                             anchors.fill: parent
                             Rectangle{
@@ -762,7 +763,7 @@ TabView{
                                         width: 60
                                         anchors.verticalCenter: parent.verticalCenter
                                         onClicked: {
-                                            Pipeline2.run("startJob", "")
+                                            Pipeline2.run("startJob", {})
                                         }
                                         style: ButtonStyle{
                                             label: Text{
@@ -784,6 +785,14 @@ TabView{
                                         width: 60
                                         height: 30
                                         anchors.verticalCenter: parent.verticalCenter
+                                        onClicked: Pipeline2.run("task_job_listViewSelected", [], {tag: "stopJob"})
+                                    }
+                                    Button{
+                                        text: qsTr("continue")
+                                        width: 60
+                                        height: 30
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        onClicked: Pipeline2.run("task_job_listViewSelected", [], {tag: "continueJob"})
                                     }
                                     Button{
                                         text: qsTr("delete")
@@ -793,7 +802,7 @@ TabView{
                                         onClicked: Pipeline2.run("task_job_listViewSelected", [], {tag: "deleteJob"})
                                     }
                                     Item{
-                                        width: parent.width - 310
+                                        width: parent.width - 370
                                         height: parent.height
                                     }
                                     JobParamButton{
@@ -811,8 +820,38 @@ TabView{
                     }
                     Tab{
                         title: qsTr("result")
+                        active: true
                         Column{
                             anchors.fill: parent
+                            Matrix{
+                                name: "result_abstract"
+                                fontsize: 12
+                                width: parent.width
+                                height: 60
+                                //content: [["date", "job_type", "number_of_train_data", "number_of_val_data", "number_of_test_data", "training_time", "min_loss", "epoch", "precision", "recall", "overkill"],
+                                //          ["2020-05-19 12:05:04", "training", 318, 186, 489, "0:05:22.133895", 0.101811, 30, 0.7878895, 0.9282603333333, 0.0436530000]]
+                            }
+                            LineChart{
+                                width: parent.width
+                                height: (parent.height - 60) * 0.5
+                            }
+                            Row{
+                                width: parent.width
+                                height: (parent.height - 60) * 0.5
+                                THistogram{
+                                    width: parent.width * 0.5
+                                    height: parent.height
+                                }
+                                Matrix{
+                                    name: "result_confuse"
+                                    fontsize: 12
+                                    width: parent.width * 0.5
+                                    height: parent.height
+                                    rowcap.text: "hello"
+                                    colcap.text: "world"
+                                    content: [[1, 2], [3, 4], [5, 6]]
+                                }
+                            }
                         }
                     }
                 }

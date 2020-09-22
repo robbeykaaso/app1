@@ -3,7 +3,6 @@ import QtQuick.Layouts 1.12
 //https://stackoverflow.com/questions/34027727/how-can-i-create-a-qml-gridlayout-with-items-of-proportionate-sizes
 GridLayout{
     property var size: []
-    anchors.fill: parent
     rowSpacing: 0
     columnSpacing: 0
 
