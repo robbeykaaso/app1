@@ -506,6 +506,7 @@ private:
                                  "type", "image",
                                  "range", rea::JArray(0, 0, img.width(), img.height()),
                                  "path", pth,
+                                 "text", QJsonObject(),
                                  "transform", getImageShow()));
                 auto shps = getShapes(m_image);
                 for (auto i : shps.keys()){

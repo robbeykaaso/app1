@@ -244,8 +244,7 @@ private:
     bool m_roi_mode = false;
     int m_channel_count;
     int m_show_count = 1;
-    QJsonObject m_image_show;
-    QHash<QString, int> m_show_cache;    
+    QJsonObject m_image_show;    
     const QJsonObject selectTaskImage = rea::Json("tag", "selectTaskImage");
 
     void getTaskShapeObjects(QJsonObject& aObjects){
@@ -425,12 +424,13 @@ private:
                                m_current_image = nm;
                                auto nms = getImageName(m_project_images->value(m_current_image).toObject());
                                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), "deepsightreadJson", selectTaskImage);
-                               aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/predictions/" + nm + ".json"), "deepsightreadJson", selectTaskImage);
+                               QHash<QString, int> show_cache;
                                for (auto i = 0; i < m_show_count; ++i){
                                    auto img = "project/" + m_project_id + "/image/" + nm + "/" + nms[i].toString();
-                                   m_show_cache.insert(img, i);
+                                   show_cache.insert(img, i);
                                    aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img));
                                }
+                               aInput->cache<QHash<QString, int>>(show_cache);
                            }
                            //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateTaskImageGUI");
                        }else{
@@ -439,8 +439,8 @@ private:
                    }
                }), rea::Json("tag", "manual"))
             ->nextB(0, "updateQSGCtrl_taskimage_gridder0", QJsonObject())
-            ->nextB(0, "deepsightreadJson", selectTaskImage, rea::buffer<stgJson>(2), selectTaskImage, rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
-                m_image = aInput->data()[0].getData();
+            ->nextB(0, "deepsightreadJson", selectTaskImage, rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+                m_image = aInput->data().getData();
                 auto img_lbls = getImageLabels(m_project_images->value(m_current_image).toObject());
                 auto tsk_lbls = getLabels();
                 std::vector<QString> dels;
@@ -454,14 +454,12 @@ private:
                 for (auto  i: dels)
                     img_lbls.remove(i);
                 aInput->out<QJsonObject>(rea::Json(m_image, "image_label", img_lbls), "updateTaskImageGUI");
-
-                m_image_result = aInput->data()[1].getData();
-            }), QJsonObject(), "updateTaskImageGUI", QJsonObject())
+            }), selectTaskImage, "updateTaskImageGUI", QJsonObject())
             ->nextB(0, "updateTaskImageGUI", QJsonObject())
             ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 auto dt = aInput->data();
-                auto ch = m_show_cache.value(dt);
+                auto ch = aInput->cacheData<QHash<QString, int>>(0).value(dt);
                 auto pth = QString(dt);
                 auto img = cvMat2QImage(dt.getData());
                 rea::imagePool::cacheImage(pth, img);
@@ -470,34 +468,33 @@ private:
                                                                     "type", "image",
                                                                     "range", rea::JArray(0, 0, img.width(), img.height()),
                                                                     "path", pth,
+                                                                    "text", QJsonObject(),
                                                                     "transform", m_image_show));
-                if (m_roi_mode){
-                    auto roi = getTaskROIObjects(objs, img);
-                    aInput->out<QJsonObject>(roi, "updateROIGUI");
-                }
-                else{
+                QJsonObject roi_cfg;
+                if (m_roi_mode)
+                    roi_cfg = getTaskROIObjects(objs, img);
+                else
                     getTaskShapeObjects(objs);
-                    getResultShapeObjects(objs);
-                    aInput->out<QJsonObject>(QJsonObject(), "updateROIGUI");
-                }
 
                 auto cfg = rea::Json("id", "project/" + m_project_id + "/image/" + m_current_image + ".json",
                                      "width", img.width(),
                                      "height", img.height(),
                                      "face", 100,
                                      "text", rea::Json("visible", true,
-                                                       "size", rea::JArray(80, 30)
-                                                       //"location", "bottom"
-                                                           ),
+                                                       "size", rea::JArray(80, 30)),
                                      "objects", objs);
                 if (m_roi_mode){
                     cfg.remove("text");
                     cfg.insert("id", getTaskJsonPath());
                 }
                 rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + QString::number(ch), cfg);
+
+                if (ch == m_show_count - 1){
+                    rea::pipeline::run<QJsonObject>("updateROIGUI", roi_cfg);
+                    rea::pipeline::run<stgJson>("deepsightreadJson", stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/predictions/" + m_current_image + ".json"), rea::Json("tag", "updateImageResult"));
+                }
                 //aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder0");
-            }))
-            ->next("updateROIGUI");
+            }));
 
         //use task image
         auto useTaskImage = rea::buffer<QJsonArray>(2);
@@ -841,6 +838,8 @@ private:
     QJsonObject m_current_param;
     QString m_current_request = "";
     QHash<QString, QJsonArray> m_log_cache;
+
+    double m_min_threshold = 0, m_max_threshold = 0.7;
     void insertJob(const QString& aID){
         auto tm0 = QDateTime::currentDateTime();
         auto tm = tm0.toString(Qt::DateFormat::ISODate);
@@ -888,6 +887,84 @@ private:
         return m_current_param;
     }
 
+    QJsonArray getPredictShapes(const QJsonObject& aImageResult){
+        return aImageResult.value("predict_shapes").toArray();
+    }
+
+    QJsonArray updateResultObjects(const QJsonObject& aImageResult, int aIndex){
+        QJsonArray ret;
+        auto shps = getPredictShapes(m_image_result);
+        for (int i = 0; i < shps.size(); ++i)
+            ret.push_back(rea::Json("key", rea::JArray("objects"),
+                                    "type", "del",
+                                    "tar", "result_" + QString::number(i) + "_" + QString::number(aIndex)));
+
+        if (!m_roi_mode){
+            shps = getPredictShapes(aImageResult);
+            auto basis = aImageResult.value("predict_polygon_objs_basis").toArray();
+            double rx = 1, ry = 1;
+            if (basis.size() == 2){
+                rx = aImageResult.value("width").toInt() * 1.0 / basis[1].toInt();
+                ry = aImageResult.value("height").toInt() * 1.0 / basis[0].toInt();
+            }else
+                basis = rea::JArray(aImageResult.value("width"), aImageResult.value("height"));
+
+            for (int i = 0; i < shps.size(); ++i){
+                auto shp = shps[i].toObject();
+                auto nm = "result_" + QString::number(i) + "_" + QString::number(aIndex);
+                if (shp.value("type") == "rectangle"){
+                    if (shp.value("score").toDouble() > m_min_threshold){
+                        auto arr = shp.value("points").toArray();
+                        std::vector<double> pts{arr[0].toDouble() * rx, arr[1].toDouble() * ry, arr[2].toDouble() * rx, arr[3].toDouble() * ry};
+                        ret.push_back(rea::Json("key", rea::JArray("objects"),
+                                                "type", "add",
+                                                "tar", nm,
+                                                "val", rea::Json("type", "poly",
+                                                                 "caption", shp.value("label"),
+                                                                 "color", "green",
+                                                                 "text", rea::Json("visible", true,
+                                                                                   "size", rea::JArray(80, 30),
+                                                                                   "location", "bottom"),
+                                                                 "tag", "result",
+                                                                 "points", rea::JArray(QJsonArray(), rea::JArray(pts[0], pts[1], pts[2], pts[1], pts[2], pts[3], pts[0], pts[3], pts[0], pts[1])))));
+                    }
+                }else if (shp.value("type") == "score_map"){
+                    QImage img(basis[0].toInt(), basis[1].toInt(), QImage::Format_ARGB32);
+                    img.fill(QColor("transparent"));
+                    auto arr = shp.value("points").toArray(), scs = shp.value("scores").toArray();
+                    int bnd[4];
+                    auto clr = QColor("green");
+                    for (int i = 0; i < scs.size(); ++i){
+                        auto x = arr[i * 2].toInt(), y = arr[i * 2 + 1].toInt();
+                        if (scs[i].toDouble() > m_min_threshold)
+                            img.setPixelColor(x, y, QColor(clr.red(), clr.green(), clr.blue(), 125));
+                        if (i == 0){
+                            bnd[0] = x; bnd[1] = y; bnd[2] = x; bnd[3] = y;
+                        }else{
+                            bnd[0] = std::min(x, bnd[0]); bnd[1] = std::min(y, bnd[1]); bnd[2] = std::max(x, bnd[2]); bnd[3] = std::max(y, bnd[3]);
+                        }
+                    }
+                    img = img.copy(bnd[0], bnd[1], bnd[2] - bnd[0], bnd[3] - bnd[1]).scaled((bnd[2] - bnd[0]) * rx, (bnd[3] - bnd[1]) * ry);
+                    rea::imagePool::cacheImage(nm, img);
+                    ret.push_back(rea::Json("key", rea::JArray("objects"),
+                                            "type", "add",
+                                            "tar", nm,
+                                            "val", rea::Json("type", "image",
+                                                             "caption", shp.value("label"),
+                                                             "color", "green",
+                                                             "range", rea::JArray(bnd[0] * rx, bnd[1] * ry, bnd[2] * rx, bnd[3] * ry),
+                                                             "text", rea::Json("visible", true,
+                                                                               "size", rea::JArray(80, 30),
+                                                                               "location", "bottom"),
+                                                             "tag", "result",
+                                                             "path", nm)));
+                }
+            }
+        }
+        m_image_result = aImageResult;
+        return ret;
+    }
+
     void jobManagement(){
         //start Job
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
@@ -926,6 +1003,13 @@ private:
             ->nextB(0, "deepsightwriteJson", QJsonObject())
             ->nextB(0, "task_job_listViewSelected", rea::Json("tag", "manual"))
             ->next("popMessage");
+
+        //update image result
+        rea::pipeline::find("deepsightreadJson")
+            ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+               for (int i = 0; i < m_show_count; ++i)
+                   rea::pipeline::run<QJsonArray>("updateQSGAttrs_taskimage_gridder" + QString::number(i), updateResultObjects(aInput->data().getData(), i));
+            }), rea::Json("tag", "updateImageResult"));
 
         //select Job
         rea::pipeline::find("task_job_listViewSelected")
@@ -980,8 +1064,10 @@ private:
                     aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobProgress");
                     aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/result_summary.json"));
                     aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/result_statistics.json"));
+                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/predictions/" + m_current_image + ".json"), "deepsightreadJson");
                 }
             }, rea::Json("name", "requestJobState", "thread", 5)))
+            ->nextB(0, "deepsightreadJson", rea::Json("tag", "updateImageResult"))
             ->nextB(0, rea::local("deepsightreadJson", rea::Json("thread", 10)), QJsonObject(), rea::buffer<stgJson>(2), QJsonObject(),
                     rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
                         auto summary = aInput->data()[0].getData();
