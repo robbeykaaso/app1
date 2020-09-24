@@ -35,13 +35,17 @@ protected:
     const QString s3_bucket_name = "deepsight";
 };
 
-class imageModel : public model{
+class shapeModel{
+public:
+    QJsonObject getShapes(const QJsonObject& aImage);
+    void setShapes(QJsonObject& aImage, const QJsonObject& aShapes);
+};
+
+class imageModel : public model, public shapeModel{
 protected:
     QJsonObject getLabels();
     QJsonObject getImageLabels(const QJsonObject& aImageAbstract);
     void setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels);
-    QJsonObject getShapes(const QJsonObject& aImage);
-    void setShapes(QJsonObject& aImage, const QJsonObject& aShapes);
     QJsonArray getImageName(const QJsonObject& aImage);
     QString getImageStringName(const QJsonObject& aImage);
     QJsonObject getFilter();

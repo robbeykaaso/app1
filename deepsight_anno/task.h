@@ -7,10 +7,27 @@
 
 class task;
 
-class taskMode{
+class ITaskFriend{
 public:
-    taskMode(task* aParent){
-        m_parent = aParent;
+    ITaskFriend(task* aTask){
+        m_task = aTask;
+    }
+protected:
+    bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
+    QString getTaskJsonPath();
+    QString getImageJsonPath();
+    QJsonObject& getImageData();
+    QString getImageID();
+    QString getTaskID();
+    QJsonObject getTaskLabels();
+    QJsonObject getProjectLabels();
+    QJsonObject getImageShow();
+    task* m_task;
+};
+
+class taskMode : public shapeModel, public ITaskFriend{
+public:
+    taskMode(task* aTask) : ITaskFriend (aTask){
     }
     virtual ~taskMode(){}
     std::function<void(void)> showQSGModel(int aChannel, stgCVMat& aImage);
@@ -20,28 +37,28 @@ public:
 protected:
     virtual std::function<void(void)> prepareQSGObjects(QJsonObject& aObjects);
     virtual void updateShowConfig(QJsonObject& aConfig) {}
-    task* m_parent;
 };
 
 class roiMode : public taskMode{
 public:
-    roiMode(task* aParent) : taskMode(aParent){
-
-    }
-    ~roiMode() override;
+    roiMode(task* aParent);
     bool showResult() override {return false;}
     void tryModifyCurrentModel(rea::stream<QJsonArray>* aInput) override;
     void modifyRemoteModel(rea::stream<stgJson>* aInput) override;
 protected:
     std::function<void(void)> prepareQSGObjects(QJsonObject& aObjects) override;
     void updateShowConfig(QJsonObject& aConfig) override;
+private:
+    QJsonObject getROI(const QJsonObject& aTask);
+    void setROI(QJsonObject& aTask, const QJsonObject& aROI);
+    QJsonObject getDefaultROI();
+    bool modifyROI(const QJsonArray& aModification, QJsonObject& aROI, QString& aPath);
 };
 
 
 class task : public imageModel{
 private:
-    friend taskMode;
-    friend roiMode;
+    friend ITaskFriend;
 private:
     void setLabels(const QJsonObject& aLabels);
     QString getImageStage(const QJsonObject& aImage);
@@ -62,17 +79,14 @@ private:
     void taskManagement();
     void labelManagement();
 private:
-    std::shared_ptr<taskMode> m_task_mode;
+    std::shared_ptr<taskMode> getCurrentMode();
+    QHash<QString, std::shared_ptr<taskMode>> m_modes;
+    QString m_current_mode;
     int m_channel_count;
     int m_show_count = 1;
     QJsonObject m_image_show;
     const QJsonObject selectTaskImage = rea::Json("tag", "selectTaskImage");
     void getResultShapeObjects(QJsonObject& aObjects);
-    QJsonObject getDefaultROI();
-    QJsonObject getROI(const QJsonObject& aTask);
-    void setROI(QJsonObject& aTask, const QJsonObject& aROI);
-    bool modifyROI(const QJsonArray& aModification, QJsonObject& aROI, QString& aPath);
-
     void imageManagement();
 private:
     void guiManagement();

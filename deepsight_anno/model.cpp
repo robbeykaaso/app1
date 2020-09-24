@@ -20,10 +20,6 @@ void imageModel::setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& 
     aImageAbstract.insert("image_label", aLabels);
 }
 
-QJsonObject imageModel::getShapes(const QJsonObject& aImage){
-    return aImage.value("shapes").toObject();
-}
-
 QJsonArray imageModel::getImageName(const QJsonObject& aImage){
     return aImage.value("name").toArray();
 }
@@ -46,7 +42,11 @@ void imageModel::setFilter(const QJsonObject& aFilter){
     insert("filter", aFilter);
 }
 
-void imageModel::setShapes(QJsonObject& aImage, const QJsonObject& aShapes){
+QJsonObject shapeModel::getShapes(const QJsonObject& aImage){
+    return aImage.value("shapes").toObject();
+}
+
+void shapeModel::setShapes(QJsonObject& aImage, const QJsonObject& aShapes){
     aImage.insert("shapes", aShapes);
 }
 
