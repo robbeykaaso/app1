@@ -61,6 +61,7 @@ ChartView {
         Pipeline2.add(function(aInput){
             content = aInput
             updateGUI()
+            return {out: {}}
         }, {name: name + "_updateLineChart", vtype: []})
     }
 }

@@ -194,6 +194,12 @@ ChartView{
         }
     }
 
+    function clear(){
+        goodarea.clear()
+        interarea.clear()
+        badarea.clear()
+    }
+
     function drawHistoGram(aHistogram){
         if (aHistogram !== undefined)
             histogram = aHistogram
@@ -212,9 +218,7 @@ ChartView{
             histogram[k]++;
         }*/
 
-        goodarea.clear()
-        interarea.clear()
-        badarea.clear()
+        clear()
         var mx = 0;
         for (var j in histogram){
             if (histogram[j] > mx)
@@ -240,9 +244,7 @@ ChartView{
         maxthreshold.setX(maxthreshold.x)
     }
     Component.onCompleted: {
-        goodarea.clear()
-        interarea.clear()
-        badarea.clear()
+        clear()
         if (oneThreshold)
             maxthreshold.setX(minthreshold.x)
     }

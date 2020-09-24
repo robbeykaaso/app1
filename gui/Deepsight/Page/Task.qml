@@ -417,7 +417,7 @@ TabView{
                                     height: 30
                                     width: parent.width
                                     onClicked: {
-                                        Pipeline2.run("setROIMode", 0)
+                                        Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "roi"}])
                                     }
                                     style: ButtonStyle{
                                         label: Text{
@@ -526,6 +526,17 @@ TabView{
                                     height: 30
                                     width: parent.width
                                     onClicked: Pipeline2.run("showTransformImageWindow", "getTaskCurrentImage")
+                                }
+
+                                Button{
+                                    text: qsTr("result")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: {
+                                        result.x = mainwindow.x + mainwindow.width
+                                        result.y = mainwindow.y
+                                        result.show()
+                                    }
                                 }
 
                                 /*Button{
@@ -817,45 +828,30 @@ TabView{
                                 height: parent.height - 60
                             }
                         }
+                        onVisibleChanged: {
+                            if (visible)
+                                result.close()
+                        }
                     }
                     Tab{
                         title: qsTr("result")
                         active: true
-                        Column{
-                            anchors.fill: parent
-                            Matrix{
-                                name: "result_abstract"
-                                fontsize: 12
-                                width: parent.width
-                                height: 60
-                                //content: [["date", "job_type", "number_of_train_data", "number_of_val_data", "number_of_test_data", "training_time", "min_loss", "epoch", "precision", "recall", "overkill"],
-                                //          ["2020-05-19 12:05:04", "training", 318, 186, 489, "0:05:22.133895", 0.101811, 30, 0.7878895, 0.9282603333333, 0.0436530000]]
-                            }
-                            LineChart{
-                                width: parent.width
-                                height: (parent.height - 60) * 0.5
-                            }
-                            Row{
-                                width: parent.width
-                                height: (parent.height - 60) * 0.5
-                                THistogram{
-                                    width: parent.width * 0.5
-                                    height: parent.height
-                                }
-                                Matrix{
-                                    name: "result_confuse"
-                                    fontsize: 12
-                                    width: parent.width * 0.5
-                                    height: parent.height
-                                    rowcap.text: "hello"
-                                    colcap.text: "world"
-                                    content: [[1, 2], [3, 4], [5, 6]]
-                                }
-                            }
+                        onVisibleChanged: {
+                            if (visible){
+                                result.x = mainwindow.x + 180 + 1
+                                result.y = mainwindow.y + 200
+                                result.width = width
+                                result.height = height - 3
+                                result.show()
+                            }else
+                                result.close()
                         }
                     }
                 }
             }
         }
+    }
+    ResultWindow{
+        id: result
     }
 }

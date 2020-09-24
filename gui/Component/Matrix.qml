@@ -103,6 +103,7 @@ Nest{
                 content = aInput["content"]
                 updateGUI(true)
             }
+            return {out: {}}
         }, {name: name + "_updateMatrix"})
     }
 }

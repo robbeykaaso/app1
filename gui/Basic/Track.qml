@@ -36,7 +36,7 @@ Row {
 
         function updateInterval(){
             var idx = 0
-            if (interval > 1){
+            if (interval >= 1){
                 var step = 100 / interval
                 idx = Math.round(value / step)
                 value = idx * step
@@ -53,7 +53,7 @@ Row {
             handle: Rectangle
             {
                 implicitWidth: 8
-                implicitHeight:16
+                implicitHeight:12
                 color:"#1f9b98"
                 //radius:8
             }

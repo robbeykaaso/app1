@@ -9,11 +9,23 @@ import "Deepsight/Component"
 import Pipeline2 1.0
 
 ApplicationWindow {
+    id: mainwindow
+    property int orgx
+    property int orgy
     visible: true
     width: 800
     height: 700
     //Universal.theme: Universal.Dark
     title: qsTr("DeepsightInspection V4.0/REA V7.0")
+
+    onXChanged: function(aInput){
+        Pipeline2.run("mainWindowPositionChanged", {dx: aInput - orgx})
+        orgx = aInput
+    }
+    onYChanged: function(aInput){
+        Pipeline2.run("mainWindowPositionChanged", {dy: aInput - orgy})
+        orgy = aInput
+    }
     Column{
         anchors.fill: parent
         Status{
