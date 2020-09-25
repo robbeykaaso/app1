@@ -86,7 +86,6 @@ private:
     int m_show_count = 1;
     QJsonObject m_image_show;
     const QJsonObject selectTaskImage = rea::Json("tag", "selectTaskImage");
-    void getResultShapeObjects(QJsonObject& aObjects);
     void imageManagement();
 private:
     void guiManagement();
@@ -101,9 +100,7 @@ private:
     QString m_current_request = "";
     QHash<QString, QJsonArray> m_log_cache;
 
-    double m_min_threshold = 0, m_max_threshold = 0.7;
     void insertJob(const QString& aID);
-
     QJsonObject prepareTrainingData();
     QString getJobState(const QJsonObject& aJob);
     void setJobState(QJsonObject& aJob, const QString& aState);
@@ -114,6 +111,21 @@ private:
     QJsonArray updateResultObjects(const QJsonObject& aImageResult, int aIndex);
 
     void jobManagement();
+private:
+    void updateStatisticsModel(const QJsonObject& aStatistics);
+    int getIOUIndex(double aIOU);
+    int getThresholdIndex(double aThreshold);
+    int calcThresholdIndex();
+    QJsonObject m_statistics;
+    double m_min_threshold = 0, m_max_threshold = 0.7;
+    double m_iou = 0;
+    bool m_for_image = true;
+    std::vector<double> m_threshold_list;
+    std::vector<double> m_iou_list;
+    QMap<QString, QMap<QString, QJsonArray>> m_image_level_statistics;
+    QMap<QString, QMap<QString, QJsonArray>> m_instance_level_statistics;
+    QMap<QString, QJsonObject> m_images_statistics;
+    QMap<QString, QJsonObject> m_instances_statistics;
 public:
     task();
 };

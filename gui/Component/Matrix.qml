@@ -95,10 +95,10 @@ Nest{
         }, {name: name + "_matrixSelected", type: "Partial", vtype: 0})
 
         Pipeline2.add(function(aInput){
-            if (aInput["rowcap"])
-                rowcap.text = aInput["rowcap"]
-            if (aInput["colcap"])
-                colcap.text = aInput["colcap"]
+            //if (aInput["rowcap"])
+                rowcap.text = aInput["rowcap"] || ""
+            //if (aInput["colcap"])
+                colcap.text = aInput["colcap"] || ""
             if (aInput["content"]){
                 content = aInput["content"]
                 updateGUI(true)
