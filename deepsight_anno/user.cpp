@@ -78,8 +78,8 @@ public:
             aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
             aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
         }, rea::Json("name", openUser))
-        ->nextB(0, "user_listViewSelected", rea::Json("tag", "manual"))
-        ->nextB(0, "title_updateStatus", QJsonObject())
+        ->nextB("user_listViewSelected", rea::Json("tag", "manual"))
+        ->nextB("title_updateStatus")
         ->next("user_updateListView");
 
         rea::pipeline::find("user_listViewSelected")  //select project
@@ -138,9 +138,9 @@ public:
                aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
            }
         }))
-        ->nextB(0, "user_updateListView", QJsonObject())
-        ->nextB(0, "user_listViewSelected", rea::Json("tag", "manual"))
-        ->nextB(0, "deepsightdeletePath", QJsonObject())
+        ->nextB("user_updateListView")
+        ->nextB("user_listViewSelected", rea::Json("tag", "manual"))
+        ->nextB("deepsightdeletePath")
         ->next("deepsightwriteJson");
 
         //open project
@@ -154,7 +154,7 @@ public:
                 aInput->out<QJsonObject>(rea::Json("id", id, "abstract", m_projects.value(id)), openProject);
             }
         }), rea::Json("tag", openProject))
-        ->nextB(0, "title_updateStatus", QJsonObject())
+        ->nextB("title_updateStatus")
         ->next(openProject);
 
         //new project, import project
@@ -192,9 +192,9 @@ public:
             aInput->out<stgJson>(stgJson(m_projects, "project.json"), "deepsightwriteJson");
             aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
         }), rea::Json("tag", "newProject"))
-        ->nextB(0, "popMessage", QJsonObject())
-        ->nextB(0, "user_updateListView", QJsonObject())
-        ->nextB(0, "user_listViewSelected", rea::Json("tag", "manual"))
+        ->nextB("popMessage")
+        ->nextB("user_updateListView")
+        ->nextB("user_listViewSelected", rea::Json("tag", "manual"))
         ->next("deepsightwriteJson");
 
         //load user

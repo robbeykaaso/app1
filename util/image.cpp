@@ -136,13 +136,13 @@ public:
                         m_show_cache.clear();
                     }
                 }))
-                ->nextB(0, "updateQSGModel_imagebefore", QJsonObject());
+                ->nextB("updateQSGModel_imagebefore", QJsonObject());
 
         //map mat to show
         m_map_image = rea::pipeline::add<optSrc>([this](rea::stream<optSrc>* aInput){
                           aInput->out<QJsonObject>(matToShow("img_result", aInput->data().images[0]), "updateQSGModel_imageafter");
                       })
-                          ->nextB(0, "updateQSGModel_imageafter", QJsonObject());
+                          ->nextB("updateQSGModel_imageafter", QJsonObject());
 
         //add operators
         rea::pipeline::find("image_operation_listViewSelected")
@@ -231,7 +231,7 @@ public:
                 m_image_operations.insert(i, dt.value(i));
             aInput->out<QJsonObject>(prepareImageOperationListGUI("operators", m_image_operations), "image_operation_updateListView");
         }, rea::Json("name", "imageOperationsLoaded"))
-            ->nextB(0, "image_operation_updateListView", QJsonObject());
+            ->nextB("image_operation_updateListView", QJsonObject());
     }
 };
 

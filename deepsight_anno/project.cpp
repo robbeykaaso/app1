@@ -131,14 +131,14 @@ private:
                 aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
                 aInput->out<QJsonObject>(getFilter(), "updateProjectImageFilterGUI");
             }))
-            ->nextB(0, "updateTaskGUI", QJsonObject())
-            ->nextB(0, "project_task_updateListView", QJsonObject())
-            ->nextB(0, "project_image_updateListView", QJsonObject())
-            ->nextB(0, "project_label_updateListView", QJsonObject())
-            ->nextB(0, "project_task_listViewSelected", rea::Json("tag", "manual"))
-            ->nextB(0, "scatterProjectImageShow", QJsonObject())
-            ->nextB(0, "updateProjectImageFilterGUI", QJsonObject())
-            //->nextB(0, "project_image_listViewSelected", rea::Json("tag", "manual"))
+            ->nextB("updateTaskGUI")
+            ->nextB("project_task_updateListView")
+            ->nextB("project_image_updateListView")
+            ->nextB("project_label_updateListView")
+            ->nextB("project_task_listViewSelected", rea::Json("tag", "manual"))
+            ->nextB("scatterProjectImageShow")
+            ->nextB("updateProjectImageFilterGUI")
+            //->nextB("project_image_listViewSelected", rea::Json("tag", "manual"))
             ->next("project_label_listViewSelected", rea::Json("tag", "project_manual"));
     }
     void taskManagement(){
@@ -158,9 +158,9 @@ private:
                            aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected");
                        }
                    }), rea::Json("tag", "newTask"))
-            ->nextB(0, "popMessage", QJsonObject())
-            ->nextB(0, "project_task_updateListView", QJsonObject())
-            ->nextB(0, "project_task_listViewSelected", rea::Json("tag", "manual"))
+            ->nextB("popMessage")
+            ->nextB("project_task_updateListView")
+            ->nextB("project_task_listViewSelected", rea::Json("tag", "manual"))
             ->next("deepsightwriteJson");
 
         //select task
@@ -217,9 +217,9 @@ private:
                     aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected");
                 }
             }))
-            ->nextB(0, "project_task_updateListView", QJsonObject())
-            ->nextB(0, "project_task_listViewSelected", rea::Json("tag", "manual"))
-            ->nextB(0, "deepsightdeletePath", QJsonObject())
+            ->nextB("project_task_updateListView")
+            ->nextB("project_task_listViewSelected", rea::Json("tag", "manual"))
+            ->nextB("deepsightdeletePath")
             ->next("deepsightwriteJson");
 
         //open task
@@ -237,7 +237,7 @@ private:
                                                               "imageshow", getImageShow())), openTask);
                        }
                    }), rea::Json("tag", openTask))
-            ->nextB(0, "title_updateStatus", QJsonObject())
+            ->nextB("title_updateStatus")
             ->next(openTask);
     }
     void labelManagement(){
@@ -273,9 +273,9 @@ private:
                            aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
                        }
                    }), rea::Json("tag", "newLabelGroup"))
-            ->nextB(0, "popMessage", QJsonObject())
-            ->nextB(0, "project_label_updateListView", QJsonObject())
-            ->nextB(0, "project_label_listViewSelected", rea::Json("tag", "project_manual"))
+            ->nextB("popMessage")
+            ->nextB("project_label_updateListView")
+            ->nextB("project_label_listViewSelected", rea::Json("tag", "project_manual"))
             ->next("deepsightwriteJson");
 
         //new label
@@ -286,7 +286,7 @@ private:
                        aInput->out<QJsonArray>(rea::JArray(aInput->data().value("label")));
                        aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
                    }), newLabel_tag)
-            ->nextB(0, "project_label_listViewSelected", newLabel_tag, newLabel, newLabel_tag)
+            ->nextB(rea::pipeline::find("project_label_listViewSelected")->nextB(newLabel, newLabel_tag), newLabel_tag)
             ->next(newLabel)
             ->next(rea::pipeline::add<std::vector<QJsonArray>>([this](rea::stream<std::vector<QJsonArray>>* aInput){
                 auto dt = aInput->data();
@@ -309,8 +309,8 @@ private:
                 aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
                 aInput->out<QJsonObject>(rea::Json("key", key, "val", lbls), "updateProjectLabelGUI");
             }))
-            ->nextB(0, "popMessage", QJsonObject())
-            ->nextB(0, "updateProjectLabelGUI", QJsonObject())
+            ->nextB("popMessage")
+            ->nextB("updateProjectLabelGUI")
             ->next("deepsightwriteJson");
 
         //delete label group
@@ -342,8 +342,8 @@ private:
                     }
                 }
             }))
-            ->nextB(0, "project_label_updateListView", QJsonObject())
-            ->nextB(0, "project_label_listViewSelected", rea::Json("tag", "project_manual"))
+            ->nextB("project_label_updateListView")
+            ->nextB("project_label_listViewSelected", rea::Json("tag", "project_manual"))
             ->next("deepsightwriteJson");
 
         //delete label
@@ -353,7 +353,7 @@ private:
             aInput->out<QJsonArray>(rea::JArray(aInput->data()));
             aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
         }, rea::Json("name", deleteLabel_tag))
-            ->nextB(0, "project_label_listViewSelected", rea::Json("tag", deleteLabel_tag), deleteLabel, rea::Json("tag", deleteLabel_tag))
+            ->nextB(rea::pipeline::find("project_label_listViewSelected")->nextB(deleteLabel, rea::Json("tag", deleteLabel_tag)), rea::Json("tag", deleteLabel_tag))
             ->next(deleteLabel)
             ->next(rea::pipeline::add<std::vector<QJsonArray>>([this](rea::stream<std::vector<QJsonArray>>* aInput){
                 auto dt = aInput->data();
@@ -370,7 +370,7 @@ private:
                 aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
                 aInput->out<QJsonObject>(rea::Json("key", key, "val", lbls), "updateProjectLabelGUI");
             }))
-            ->nextB(0, "updateProjectLabelGUI", QJsonObject())
+            ->nextB("updateProjectLabelGUI")
             ->next("deepsightwriteJson");
 
         // modify label color
@@ -395,7 +395,7 @@ private:
                 aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
                 aInput->out<QJsonObject>(rea::Json("key", key, "val", lbls), "updateProjectLabelGUI");
             }))
-            ->nextB(0, "updateProjectLabelGUI", QJsonObject())
+            ->nextB("updateProjectLabelGUI")
             ->next("deepsightwriteJson");
 
         //modifyImageLabel
@@ -488,12 +488,15 @@ private:
                            }
                        }
                    }), rea::Json("tag", "manual"))
-            ->nextB(0, "updateQSGCtrl_projectimage_gridder0", QJsonObject())
-            ->nextB(0, "deepsightreadJson", selectProjectImage, rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
-                        m_image = aInput->data().getData();
-                        aInput->out<QJsonObject>(rea::Json(m_image, "image_label", getImageLabels(m_images.value(m_current_image).toObject())), "updateProjectImageGUI");
-                    }), selectProjectImage, "updateProjectImageGUI", QJsonObject())
-            ->nextB(0, "updateProjectImageGUI", QJsonObject())
+            ->nextB("updateQSGCtrl_projectimage_gridder0")
+            ->nextB(rea::pipeline::find("deepsightreadJson")
+                           ->nextB(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+                                       m_image = aInput->data().getData();
+                                       aInput->out<QJsonObject>(rea::Json(m_image, "image_label", getImageLabels(m_images.value(m_current_image).toObject())), "updateProjectImageGUI");
+                                      })->nextB("updateProjectImageGUI"),
+                                   selectProjectImage),
+                    selectProjectImage)
+            ->nextB("updateProjectImageGUI")
             ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 auto dt = aInput->data();
@@ -554,7 +557,7 @@ private:
                        for (auto i : pths)
                            aInput->out<stgCVMat>(stgCVMat(cv::Mat(), i.toString()));
                    }), rea::Json("tag", importImage))
-            ->nextB(0, "updateProgress", QJsonObject())
+            ->nextB("updateProgress")
             ->next(rea::local("readCVMat", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 m_cvmat_cache.push_back(aInput->data());
@@ -596,8 +599,8 @@ private:
                     m_cvmat_cache.clear();
                 }
             }))
-            ->nextB(0, "updateProgress", QJsonObject())
-            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->nextB("updateProgress")
+            ->nextB("deepsightwriteJson")
             ->next(rea::local("deepsightwriteCVMat", rea::Json("thread", 11)))
             ->next(rea::pipeline::add<stgCVMat>([](rea::stream<stgCVMat>* aInput){
                 aInput->out<QJsonObject>(QJsonObject());
@@ -610,8 +613,8 @@ private:
                     aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
                 }
             }))
-            ->nextB(0, "project_image_updateListView", QJsonObject())
-            ->nextB(0, rea::local("deepsightwriteJson", rea::Json("thread", 11)), QJsonObject())
+            ->nextB("project_image_updateListView")
+            ->nextB(rea::local("deepsightwriteJson", rea::Json("thread", 11)))
             ->next("deepsightwriteJson", rea::Json("tag", "updateProjectImages"));
 
         //filter images
@@ -648,9 +651,9 @@ private:
             aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
             aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), "deepsightwriteJson");
         }, rea::Json("name", "filterProjectImages"))
-        ->nextB(0, "project_image_updateListView", QJsonObject())
-        ->nextB(0, "project_image_listViewSelected", rea::Json("tag", "manual"))
-        ->nextB(0, "deepsightwriteJson", QJsonObject());
+        ->nextB("project_image_updateListView")
+        ->nextB("project_image_listViewSelected", rea::Json("tag", "manual"))
+        ->nextB("deepsightwriteJson");
 
         //modify image
         rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
@@ -665,7 +668,7 @@ private:
                     aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
                 }
             }))
-            ->nextB(0, "deepsightwriteJson", QJsonObject())
+            ->nextB("deepsightwriteJson")
             ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
                 auto dt = aInput->data().getData();
@@ -712,7 +715,7 @@ private:
             m_current_image = "";
             aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
         }, rea::Json("name", "scatterProjectImageShow"))
-            ->nextB(0, "projectimage_updateViewCount", QJsonObject())
+            ->nextB("projectimage_updateViewCount")
             ->next("project_image_listViewSelected", rea::Json("tag", "manual"));
 
         //modify image show
@@ -747,7 +750,7 @@ private:
                 }
             }
         }), rea::Json("tag", setImageShow0))
-            ->nextB(0, "deepsightwriteJson", QJsonObject());
+            ->nextB("deepsightwriteJson");
     }
 public:
     project(){
