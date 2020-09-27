@@ -44,7 +44,7 @@ TWindow{
                             height: parent.height * 0.85
                             //oneThreshold: true
                             onThresholdChanged: function(aMax, aMin){
-                                Pipeline2.run("thresholdChanged", [aMax, aMin])
+                                Pipeline2.run("thresholdChanged", {min: aMax, max: aMin})
                             }
                         }
                         Track{
@@ -111,7 +111,7 @@ TWindow{
 
                             onIndexChanged: function(aIndex){
                                 value = aIndex / 100
-                                //thresholdChanged(maxthreshold.x, minthreshold.x)
+                                Pipeline2.run("thresholdChanged", {iou: value})
                             }
                         }
                     }
@@ -121,7 +121,7 @@ TWindow{
                         height: parent.height
                         Row{
                             width: parent.width
-                            height: parent.height * 0.2
+                            height: 30
                             Combo{
                                 property bool notFirst: false
                                 height: parent.height
@@ -149,7 +149,7 @@ TWindow{
                             name: "result_confuse"
                             fontsize: 12
                             width: parent.width
-                            height: parent.height * 0.8
+                            height: parent.height - 30
                             rowcap.text: "hello"
                             colcap.text: "world"
                             content: [[1, 2], [3, 4], [5, 6]]

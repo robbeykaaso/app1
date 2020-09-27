@@ -403,6 +403,20 @@ TabView{
                                         }
                                     }
                                 }
+                                Label{
+                                    color: "green"
+                                    visible: parent.name == "taskimage_gridder0"
+                                    font.pixelSize: 30
+                                    padding: 5
+                                    font.bold: true
+                                    text: ""
+                                    Component.onCompleted: {
+                                        if (parent.name == "taskimage_gridder0")
+                                            Pipeline2.add(function(aInput){
+                                                text = aInput
+                                            }, {name: "updateImagePredictGUI", vtype: ""})
+                                    }
+                                }
                             }
                             width: parent.width - 60
                             height: parent.height
@@ -537,6 +551,13 @@ TabView{
                                         result.y = mainwindow.y
                                         result.show()
                                     }
+                                }
+
+                                Button{
+                                    text: qsTr("infer")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("task_image_listViewSelected", [], {tag: "inference"})
                                 }
 
                                 /*Button{
@@ -790,6 +811,7 @@ TabView{
                                         width: 60
                                         height: 30
                                         anchors.verticalCenter: parent.verticalCenter
+                                        onClicked: Pipeline2.run("task_job_listViewSelected", [], {tag: "startJob"})
                                     }
                                     Button{
                                         text: qsTr("stop")

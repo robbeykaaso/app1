@@ -40,6 +40,9 @@ private:
     QString getTaskName(const QJsonObject& aTask){
         return aTask.value("name").toString();
     }
+    QString getTaskType(const QJsonObject& aTask){
+        return aTask.value("type").toString();
+    }
     QString getImageTime(const QJsonObject& aImage){
         return aImage.value("time").toString();
     }
@@ -52,7 +55,7 @@ private:
         }
         return rea::Json("title", rea::JArray("name", "time"),
                          "entrycount", 30,
-                         "selects", aImages.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "selects", aImages.size() > 0 ? rea::JArray(0) : QJsonArray(),
                          "data", data);
     }
     QJsonObject prepareLabelListGUI(const QJsonObject& aLabels){
@@ -60,7 +63,7 @@ private:
         for (auto i : aLabels.keys())
             data.push_back(rea::Json("entry", rea::JArray(i)));
         return rea::Json("title", rea::JArray("group"),
-                         "selects", aLabels.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "selects", aLabels.size() > 0 ? rea::JArray(0) : QJsonArray(),
                          "data", data);
     }
     QJsonObject prepareTaskListGUI(const QJsonArray& aTasks){
@@ -68,7 +71,7 @@ private:
         for (auto i : aTasks)
             data.push_back(rea::Json("entry", rea::JArray(getTaskName(m_tasks.value(i.toString()).toObject()))));
         return rea::Json("title", rea::JArray("name"),
-                         "selects", aTasks.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "selects", aTasks.size() > 0 ? rea::JArray(0) : QJsonArray(),
                          "data", data);
     }
     void insertTask(QJsonObject& aTask){
@@ -234,7 +237,8 @@ private:
                                                               "labels", getLabels(),
                                                               "channel", getChannelCount(),
                                                               "project", m_project_id,
-                                                              "imageshow", getImageShow())), openTask);
+                                                              "imageshow", getImageShow(),
+                                                              "type", getTaskType(m_tasks.value(id).toObject()))), openTask);
                        }
                    }), rea::Json("tag", openTask))
             ->nextB("title_updateStatus")

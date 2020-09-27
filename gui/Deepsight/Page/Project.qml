@@ -70,7 +70,7 @@ TabView{
                     id: task_operation
                     property var buttons: [
                         {cap: qsTr("New"), func: function(){
-                             Pipeline2.run("_newObject", {title: qsTr("new task"), content: {name: "", type: ""}, tag: {tag: "newTask"}})
+                             Pipeline2.run("_newObject", {title: qsTr("new task"), content: {name: "", type: {model: ["classification", "segmentation", "detection"], index: 0}}, tag: {tag: "newTask"}})
                         }},
                         {cap: qsTr("Open"), func: function(){
                              Pipeline2.run("project_task_listViewSelected", [], {tag: "openTask"})

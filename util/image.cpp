@@ -69,7 +69,7 @@ private:
         for (auto i : aOperations.keys())
             data.push_back(rea::Json("entry", rea::JArray(aOperations.value(i).toObject().value("caption"))));
         return rea::Json("title", rea::JArray(aTitle),
-                         "selects", aOperations.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "selects", aOperations.size() > 0 ? rea::JArray(0) : QJsonArray(),
                          "data", data);
     }
 
@@ -78,7 +78,7 @@ private:
         for (auto i : m_current_operations)
             data.push_back(rea::Json("entry", rea::JArray(m_image_operations.value(i.toString()).toObject().value("caption"))));
         return rea::Json("title", rea::JArray("used"),
-                         "selects", m_current_operations.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "selects", m_current_operations.size() > 0 ? rea::JArray(0) : QJsonArray(),
                          "data", data);
     }
 

@@ -52,7 +52,7 @@ private:
             data.push_back(rea::Json("entry", rea::JArray(getProjectName(proj), getProjectOwner(proj) == rea::GetMachineFingerPrint())));
         }
         return rea::Json("title", rea::JArray("name", "owner"),
-                         "selects", aProjects.size() > 0 ? rea::JArray("0") : QJsonArray(),
+                         "selects", aProjects.size() > 0 ? rea::JArray(0) : QJsonArray(),
                          "data", data);
     }
     QJsonArray addProject(const QString& aID){

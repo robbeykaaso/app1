@@ -68,6 +68,7 @@ add_executable(${PROJECT_NAME}
     "deepsight_anno/project.cpp"
     "deepsight_anno/task.cpp"
     "deepsight_anno/task.h"
+    "deepsight_anno/custom.cpp"
     "qml.qrc"
     #"resource/logo.rc"
     )

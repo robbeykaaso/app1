@@ -6,6 +6,7 @@
 const auto protocal_test = "test";
 const auto protocal_connect = "connect";
 const auto protocal_training = "training";
+const auto protocal_inference = "inference";
 const auto protocal_task_state = "task_state";
 const auto protocal_upload = "upload";
 const auto protocal_progress_push = "task_progress_push";
@@ -43,6 +44,16 @@ const auto protocal = rea::Json(protocal_test,
                                                      "err_code", 0,
                                                      "msg", "..."
                                                      )),
+                                protocal_inference,
+                                rea::Json("req", rea::Json(
+                                                     "type", protocal_inference,
+                                                     "token", rea::GetMachineFingerPrint()
+                                                                                                                  ),
+                                          "res", rea::Json(
+                                                     "type", protocal_inference,
+                                                     "err_code", 0,
+                                                     "msg", "..."
+                                                                                                              )),
                                 protocal_task_state,
                                 rea::Json("req", rea::Json(
                                                      "type", protocal_task_state,
