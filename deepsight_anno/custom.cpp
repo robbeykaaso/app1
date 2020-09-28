@@ -14,16 +14,40 @@ private:
     void setROI(QJsonObject& aTask, const QJsonObject& aROI);
     QJsonObject getDefaultROI();
     bool modifyROI(const QJsonArray& aModification, QJsonObject& aROI, QString& aPath);
-    int getROICount(const QJsonObject& aROI, const QString& aTag){
-        auto shps = getShapes(aROI);
-        auto tg = "roi_" + aTag + "_";
-        int cnt = 0;
-        while (shps.contains(tg + QString::number(cnt)))
-            cnt++;
-        return cnt;
-    }
+    int getROICount(const QJsonObject& aROI, const QString& aTag);
+    QJsonObject parseParam(const QJsonObject& aROI);
     bool m_local = false;
 };
+
+int roiMode::getROICount(const QJsonObject& aROI, const QString& aTag){
+    auto shps = getShapes(aROI);
+    auto tg = "roi_" + aTag + "_";
+    int cnt = 0;
+    while (shps.contains(tg + QString::number(cnt)))
+        cnt++;
+    return cnt;
+}
+
+QJsonObject roiMode::parseParam(const QJsonObject& aROI){
+    auto img = getImageData();
+    auto w = img.value("width").toDouble(), h = img.value("height").toDouble();
+    auto shps = getShapes(aROI);
+    QHash<QString, QVector<QJsonArray>> rois;
+    for (auto i : shps.keys()){
+        auto pts = shps.value(i).toObject().value("points").toArray();
+        pts = pts[0].toArray();
+        std::vector<double> val = {pts[0].toDouble(), pts[1].toDouble(), pts[4].toDouble(), pts[5].toDouble()};
+        rea::tryFind(&rois, i.split("_")[1])->push_back(rea::JArray(val[0] / w, val[1] / h, (val[2] - val[0]) / w, (val[3] - val[1]) / h));
+    }
+    QJsonObject ret;
+    for (auto i : rois.keys()){
+        QJsonArray ret0;
+        for (auto j : rois.value(i))
+            ret0.push_back(j);
+        ret.insert(i, ret0);
+    }
+    return ret;
+}
 
 void roiMode::updateShowConfig(QJsonObject& aConfig) {
     aConfig.remove("text");
@@ -79,7 +103,7 @@ void roiMode::initialize(){
     rea::pipeline::find("startJob")
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
             auto prm = aInput->data().value("param").toObject();
-            prm.insert("roi", getROI(*m_task));
+            prm.insert("roi", parseParam(getROI(*m_task)));
             aInput->setData(rea::Json(aInput->data(), "param", prm));
         }, rea::Json("name", "collect_roi_param")));
 
