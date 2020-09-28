@@ -20,6 +20,7 @@ protected:
     QJsonObject& getImageData();
     QString getImageID();
     QString getTaskID();
+    QString getProjectID();
     QJsonObject getTaskLabels();
     QJsonObject getProjectLabels();
     QJsonObject getImageShow();

@@ -33,6 +33,10 @@ QString ITaskFriend::getTaskID(){
     return m_task->m_task_id;
 }
 
+QString ITaskFriend::getProjectID(){
+    return m_task->m_project_id;
+}
+
 QJsonObject ITaskFriend::getTaskLabels(){
     return m_task->getLabels();
 }
@@ -1090,16 +1094,16 @@ void task::prepareTrainParam(QJsonObject& aParam){
 void task::jobManagement(){
     //start Job
     auto insert_job = rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
-                          auto res = aInput->data();
-                          if (res.value("err_code").toInt()){
-                              aInput->out<QJsonObject>(rea::Json("title", "error", "text", res.value("msg")), "popMessage");
-                          }else{
-                              insertJob(res.value("job_id").toString());
-                              m_current_job = "";
-                              aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
-                              aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), "deepsightwriteJson");
-                              aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
-                          }
+          auto res = aInput->data();
+          if (res.value("err_code").toInt()){
+              aInput->out<QJsonObject>(rea::Json("title", "error", "text", res.value("msg")), "popMessage");
+          }else{
+              insertJob(res.value("job_id").toString());
+              m_current_job = "";
+              aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
+              aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), "deepsightwriteJson");
+              aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
+          }
     });
 
     rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){

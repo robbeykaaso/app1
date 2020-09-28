@@ -10,6 +10,7 @@ protected:
     std::function<void(void)> prepareQSGObjects(QJsonObject& aObjects) override;
     void updateShowConfig(QJsonObject& aConfig) override;
 private:
+    QJsonObject getImages();
     QJsonObject getROI(const QJsonObject& aTask);
     void setROI(QJsonObject& aTask, const QJsonObject& aROI);
     QJsonObject getDefaultROI();
@@ -18,6 +19,10 @@ private:
     QJsonObject parseParam(const QJsonObject& aROI);
     bool m_local = false;
 };
+
+QJsonObject roiMode::getImages(){
+    return m_task->value("images").toObject();
+}
 
 int roiMode::getROICount(const QJsonObject& aROI, const QString& aTag){
     auto shps = getShapes(aROI);
@@ -191,6 +196,27 @@ void roiMode::initialize(){
     }, rea::Json("name", "updateROILocalMode"))
         ->nextB("deepsightwriteJson")
         ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+
+    //auto roi
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        auto imgs = getImages();
+        QJsonArray lst;
+        for (auto i : imgs.keys())
+            lst.push_back(i);
+        aInput->setData(rea::Json("roi", getShapes(getROI(*m_task)), "images", lst, "root", "project/" + getProjectID() + "/image/"))->out();
+    }, rea::Json("name", "autoROI"))
+        ->next("calcAutoROI")
+        ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            auto roi = getROI(*m_task);
+            setShapes(roi, dt.value("roi").toObject());
+            setROI(*m_task, roi);
+            aInput->out<stgJson>(stgJson(*m_task, getTaskJsonPath()), "deepsightwriteJson");
+            updateCurrentImage();
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+        }))
+        ->nextB("deepsightwriteJson")
+        ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
 }
 
 roiMode::roiMode(task* aParent) : taskMode(aParent){
@@ -238,13 +264,7 @@ std::function<void(void)> roiMode::prepareQSGObjects(QJsonObject& aObjects){
 }
 
 QJsonObject roiMode::getROI(const QJsonObject& aTask){
-    auto roi = aTask.value("roi").toObject();
-    return roi;
-    /*auto img = getImageID();
-    if (roi.contains(img))
-        return roi.value(img).toObject();
-    else
-        return roi.value("whole").toObject();*/
+    return aTask.value("roi").toObject();
 }
 
 void roiMode::setROI(QJsonObject& aTask, const QJsonObject& aROI){

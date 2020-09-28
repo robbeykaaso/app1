@@ -1,11 +1,12 @@
 import QtQuick 2.12
+import QtQuick.Controls 2.5
 import "../../Basic"
 import Pipeline2 1.0
 
 Rectangle{
     visible: false
     width: 120
-    height: 240
+    height: 270
     color: "lightskyblue"
     anchors.left: parent.left
     anchors.top: parent.top
@@ -82,6 +83,13 @@ Rectangle{
             anchors.horizontalCenter: parent.horizontalCenter
             check.onCheckedChanged: Pipeline2.run("updateROILocalMode", check.checked)
         }
+        Button{
+            height: 25
+            text: qsTr("auto")
+            anchors.horizontalCenter: parent.horizontalCenter
+            onClicked: Pipeline2.run("autoROI", {});
+        }
+
         AutoSize{
 
         }
