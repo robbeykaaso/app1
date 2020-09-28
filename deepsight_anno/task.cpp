@@ -45,19 +45,32 @@ QJsonObject ITaskFriend::getImageShow(){
     return m_task->m_image_show;
 }
 
+bool ITaskFriend::isCurrentMode(const QString& aMode){
+    return m_task->isCurrentMode(aMode);
+}
+
+bool ITaskFriend::belongThisMode(const QString& aMode, const QString& aPath){
+    if (!m_paths.contains(aPath))
+        m_paths.insert(aPath, isCurrentMode(aMode));
+        return m_paths.value(aPath);
+}
+
 int ITaskFriend::getShowCount(){
     return m_task->m_show_count;
 }
 
 void taskMode::initialize(){
     rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-        if (getImageID() == "")
-            return;
+        //if (getImageID() == "")
+        //    return;
         QString cur = getImageJsonPath();
         QString pth = cur;
-        if (modifyImage(aInput->data(), getImageData(), pth))
-            aInput->out<stgJson>(stgJson(getImageData(), pth), "deepsightwriteJson");
-        else if (pth != cur){
+        if (modifyImage(aInput->data(), getImageData(), pth)){
+            belongThisMode("task", pth);
+            if (getImageID() != ""){
+                aInput->out<stgJson>(stgJson(getImageData(), pth), "deepsightwriteJson");
+            }
+        }else if (pth != cur && belongThisMode("task", pth)){
             aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
         }
     }, rea::Json("name", "task_tryModifyCurrentModel"));
@@ -375,6 +388,10 @@ void task::labelManagement(){
     }, rea::Json("name", "taskLabelChanged"));
 }
 
+bool task::isCurrentMode(const QString& aMode){
+    return (m_current_mode == aMode || (!m_custom_modes.contains(m_current_mode) && aMode == "task"));
+}
+
 void task::imageManagement(){
     //set Custom Mode
     rea::pipeline::find("updateQSGCtrl_taskimage_gridder0")
@@ -459,7 +476,7 @@ void task::imageManagement(){
         ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)));
     auto show_qsg_model = [select_image, this](QString aMode){
         select_image->next(rea::pipeline::add<stgCVMat>([this, aMode](rea::stream<stgCVMat>* aInput){
-            if (m_current_mode == aMode || (!m_custom_modes.contains(m_current_mode) && aMode == "task"))
+            if (isCurrentMode(aMode))
                 aInput->out();
         }))
         ->next(aMode + "_showQSGModel");
@@ -610,13 +627,30 @@ void task::imageManagement(){
     ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
     ->nextB("deepsightwriteJson");
 
+    //modify project image
+    rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            auto dt = aInput->data();
+            QJsonArray mdys;
+            for (int i = 0; i < dt.size(); ++i){
+                auto mdy = dt[i].toObject();
+                if (mdy.contains("cmd")){
+                    mdy.remove("cmd");
+                    mdys.push_back(mdy);
+                }
+            }
+            if (mdys.size() > 0)
+                for (int i = 0; i < m_show_count; ++i)
+                    rea::pipeline::run<QJsonArray>("updateQSGAttrs_taskimage_gridder" + QString::number(i), mdys);
+        }));
+
     //modify image
     auto modify_image = [this](QString aMode){
         rea::pipeline::find("QSGAttrUpdated_taskimage_gridder0")
-            ->next(rea::pipeline::add<QJsonArray>([this, aMode](rea::stream<QJsonArray>* aInput){
-                if (m_current_mode == aMode || (!m_custom_modes.contains(m_current_mode) && aMode == "task"))
-                    aInput->out();
-            }))
+            //->next(rea::pipeline::add<QJsonArray>([this, aMode](rea::stream<QJsonArray>* aInput){
+            //    if (isCurrentMode(aMode))
+            //        aInput->out();
+            //}))
             ->next(aMode + "_tryModifyCurrentModel")
             ->nextB("deepsightwriteJson")
             ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))

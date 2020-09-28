@@ -52,5 +52,6 @@
         <file>gui/Deepsight/Component/JobParamButton.qml</file>
         <file>gui/Deepsight/Component/JobLogPanel.qml</file>
         <file>gui/Deepsight/Component/ResultWindow.qml</file>
+        <file>gui/Deepsight/Component/ROIPanel.qml</file>
     </qresource>
 </RCC>

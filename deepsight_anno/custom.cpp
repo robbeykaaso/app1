@@ -25,28 +25,33 @@ void roiMode::initialize(){
 
     //interface save
     rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-        if (getTaskID() == "")
-            return;
+        //if (getTaskID() == "")
+        //    return;
         QString cur = getTaskJsonPath();
         QString pth = cur;
         auto roi = getROI(*m_task);
         if (modifyROI(aInput->data(), roi, pth)){
-            setROI(*m_task, roi);
-            aInput->out<QJsonObject>(rea::Json("visible", true, "count", getShapes(roi).size()), "updateROIGUI");
-            aInput->out<stgJson>(stgJson(*m_task, pth), "deepsightwriteJson");
-        }else if (pth != cur){
+            belongThisMode("roi", pth);
+            if (getTaskID() != ""){
+                setROI(*m_task, roi);
+                if (isCurrentMode("roi"))
+                    aInput->out<QJsonObject>(rea::Json("visible", true, "count", getShapes(roi).size()), "updateROIGUI");
+                aInput->out<stgJson>(stgJson(*m_task, pth), "deepsightwriteJson");
+            }
+        }else if (pth != cur && belongThisMode("roi", pth)){
             aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
         }
     }, rea::Json("name", "roi_tryModifyCurrentModel"))
         ->next("updateROIGUI");
 
-    //interface save
+    //interface remote save
     rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
         auto dt = aInput->data().getData();
         auto pth = QString(aInput->data());
         auto roi = getROI(dt);
         modifyROI(aInput->cacheData<QJsonArray>(0), roi, pth);
         setROI(dt, roi);
+        aInput->out<stgJson>(stgJson(dt, pth), "deepsightwriteJson");
     }, rea::Json("name", "roi_modifyRemoteModel"));
 
     //interface show
@@ -65,7 +70,7 @@ void roiMode::initialize(){
     rea::pipeline::find("startJob")
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
             auto prm = aInput->data().value("param").toObject();
-            setROI(prm, getROI(*m_task));
+            prm.insert("roi", getROI(*m_task));
             aInput->setData(rea::Json(aInput->data(), "param", prm));
         }, rea::Json("name", "collect_roi_param")));
 
@@ -140,7 +145,13 @@ std::function<void(void)> roiMode::prepareQSGObjects(QJsonObject& aObjects){
 }
 
 QJsonObject roiMode::getROI(const QJsonObject& aTask){
-    return aTask.value("roi").toObject();
+    auto roi = aTask.value("roi").toObject();
+    return roi;
+    /*auto img = getImageID();
+    if (roi.contains(img))
+        return roi.value(img).toObject();
+    else
+        return roi.value("whole").toObject();*/
 }
 
 void roiMode::setROI(QJsonObject& aTask, const QJsonObject& aROI){

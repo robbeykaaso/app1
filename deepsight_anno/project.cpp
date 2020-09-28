@@ -659,16 +659,32 @@ private:
         ->nextB("project_image_listViewSelected", rea::Json("tag", "manual"))
         ->nextB("deepsightwriteJson");
 
+        //modify task image
+        rea::pipeline::find("QSGAttrUpdated_taskimage_gridder0")
+            ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                auto dt = aInput->data();
+                QJsonArray mdys;
+                for (int i = 0; i < dt.size(); ++i){
+                    auto mdy = dt[i].toObject();
+                    if (mdy.contains("cmd")){
+                        mdy.remove("cmd");
+                        mdys.push_back(mdy);
+                    }
+                }
+                if (mdys.size() > 0)
+                    for (int i = 0; i < m_show_count; ++i)
+                        rea::pipeline::run<QJsonArray>("updateQSGAttrs_projectimage_gridder" + QString::number(i), mdys);
+            }));
+
         //modify image
         rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-                if (m_current_image == "")
-                    return;
                 QString cur = "project/" + m_project_id + "/image/" + m_current_image + ".json";
                 QString pth = cur;
-                if (modifyImage(aInput->data(), m_image, pth))
-                    aInput->out<stgJson>(stgJson(m_image, pth), "deepsightwriteJson");
-                else if (pth != cur){
+                if (modifyImage(aInput->data(), m_image, pth)){
+                    if (m_current_image != "")
+                        aInput->out<stgJson>(stgJson(m_image, pth), "deepsightwriteJson");
+                }else if (pth != cur){
                     aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
                 }
             }))

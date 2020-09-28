@@ -23,8 +23,12 @@ protected:
     QJsonObject getTaskLabels();
     QJsonObject getProjectLabels();
     QJsonObject getImageShow();
+    bool belongThisMode(const QString& aMode, const QString& aPath);
+    bool isCurrentMode(const QString& aMode);
     int getShowCount();
     task* m_task;
+private:
+    QHash<QString, bool> m_paths;
 };
 
 class taskMode : public shapeModel, public ITaskFriend{
@@ -70,6 +74,7 @@ private:
     QJsonObject m_image_show;
     const QJsonObject selectTaskImage = rea::Json("tag", "selectTaskImage");
     void imageManagement();
+    bool isCurrentMode(const QString& aMode);
 private:
     void guiManagement();
 private:
