@@ -26,6 +26,7 @@ protected:
     bool belongThisMode(const QString& aMode, const QString& aPath);
     bool isCurrentMode(const QString& aMode);
     int getShowCount();
+    void updateCurrentImage();
     task* m_task;
 private:
     QHash<QString, bool> m_paths;

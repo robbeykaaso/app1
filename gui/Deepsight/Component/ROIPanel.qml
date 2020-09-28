@@ -80,6 +80,7 @@ Rectangle{
             caption.text: qsTr("local") + ":"
             ratio: 0.4
             anchors.horizontalCenter: parent.horizontalCenter
+            check.onCheckedChanged: Pipeline2.run("updateROILocalMode", check.checked)
         }
         AutoSize{
 

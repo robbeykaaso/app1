@@ -59,6 +59,10 @@ int ITaskFriend::getShowCount(){
     return m_task->m_show_count;
 }
 
+void ITaskFriend::updateCurrentImage(){
+    m_task->m_current_image = "";
+}
+
 void taskMode::initialize(){
     rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
         //if (getImageID() == "")
@@ -627,7 +631,7 @@ void task::imageManagement(){
     ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
     ->nextB("deepsightwriteJson");
 
-    //modify project image
+    //modify project image//try update show
     rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
             auto dt = aInput->data();

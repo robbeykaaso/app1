@@ -14,6 +14,15 @@ private:
     void setROI(QJsonObject& aTask, const QJsonObject& aROI);
     QJsonObject getDefaultROI();
     bool modifyROI(const QJsonArray& aModification, QJsonObject& aROI, QString& aPath);
+    int getROICount(const QJsonObject& aROI, const QString& aTag){
+        auto shps = getShapes(aROI);
+        auto tg = "roi_" + aTag + "_";
+        int cnt = 0;
+        while (shps.contains(tg + QString::number(cnt)))
+            cnt++;
+        return cnt;
+    }
+    bool m_local = false;
 };
 
 void roiMode::updateShowConfig(QJsonObject& aConfig) {
@@ -35,7 +44,7 @@ void roiMode::initialize(){
             if (getTaskID() != ""){
                 setROI(*m_task, roi);
                 if (isCurrentMode("roi"))
-                    aInput->out<QJsonObject>(rea::Json("visible", true, "count", getShapes(roi).size()), "updateROIGUI");
+                    aInput->out<QJsonObject>(rea::Json("visible", true, "count", getROICount(roi, m_local ? getImageID() : "whole")), "updateROIGUI");
                 aInput->out<stgJson>(stgJson(*m_task, pth), "deepsightwriteJson");
             }
         }else if (pth != cur && belongThisMode("roi", pth)){
@@ -90,13 +99,15 @@ void roiMode::initialize(){
         auto roi = getROI(*m_task);
         auto shps = getShapes(roi);
         QJsonArray dels;
-        for (int i = shps.size() - 1; i > cnt - 1; --i)
-            dels.push_back("roi_" + QString::number(i));
+        auto tag = m_local ? getImageID() : "whole";
+        auto cur = getROICount(roi, tag);
+        for (int i = cur - 1; i > cnt - 1; --i)
+            dels.push_back("roi_" + tag + "_" + QString::number(i));
         if (dels.size() > 0)
             aInput->out<QJsonArray>(dels, "taskimage_gridder0_deleteShapes");
         auto id = getTaskJsonPath();
-        for (int i = shps.size(); i < cnt; ++i){
-            auto shp = "roi_" + QString::number(i);
+        for (int i = cur; i < cnt; ++i){
+            auto shp = "roi_" + tag + "_" + QString::number(i);
             auto val = getDefaultROI();
             auto ad = [shp, id, val](){
                 rea::pipeline::run("updateQSGAttr_taskimage_gridder0",
@@ -122,6 +133,40 @@ void roiMode::initialize(){
     }, rea::Json("name", "updateROICount"))
         ->nextB("taskimage_gridder0_deleteShapes")
         ->next("addCommand");
+
+    //update roi local mode
+    rea::pipeline::add<bool>([this](rea::stream<bool>* aInput){
+        m_local = aInput->data();
+        auto roi = getROI(*m_task);
+        auto shps = getShapes(roi);
+        auto roi_img = "roi_" + getImageID() + "_";
+        bool sv = false;
+        if (m_local){
+            if (!shps.contains(roi_img + "0")){
+                shps.insert(roi_img + "0", getDefaultROI());
+                sv = true;
+            }
+        }else{
+            int idx = 0;
+            do{
+                auto k = roi_img + QString::number(idx++);
+                if (shps.contains(k))
+                    shps.remove(k);
+                else
+                    break;
+                sv = true;
+            }while(1);
+        }
+        if (sv){
+            setShapes(roi, shps);
+            setROI(*m_task, roi);
+            aInput->out<stgJson>(stgJson(*m_task, getTaskJsonPath()), "deepsightwriteJson");
+        }
+        updateCurrentImage();
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+    }, rea::Json("name", "updateROILocalMode"))
+        ->nextB("deepsightwriteJson")
+        ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
 }
 
 roiMode::roiMode(task* aParent) : taskMode(aParent){
@@ -131,14 +176,38 @@ roiMode::roiMode(task* aParent) : taskMode(aParent){
 std::function<void(void)> roiMode::prepareQSGObjects(QJsonObject& aObjects){
     auto roi = getROI(*m_task);
     auto shps = getShapes(roi);
-    if (shps.empty()){
-        shps.insert("roi_0", getDefaultROI());
+
+    m_local = false;
+    auto tag = getImageID();
+    int idx = 0;
+    do{
+        auto shp_id = "roi_" + tag + "_" + QString::number(idx++);
+        if (!shps.contains(shp_id))
+            break;
+        aObjects.insert(shp_id, shps.value(shp_id));
+        m_local = true;
+    }while(1);
+
+    if (aObjects.size() == 1){
+        QString tag = "whole";
+        int idx = 0;
+        do{
+            auto shp_id = "roi_" + tag + "_" + QString::number(idx++);
+            if (!shps.contains(shp_id))
+                break;
+            aObjects.insert(shp_id, shps.value(shp_id));
+        }while(1);
+    }
+
+    if (aObjects.size() == 1){
+        auto dflt = getDefaultROI();
+        shps.insert("roi_whole_0", dflt);
+        aObjects.insert("roi_whole_0", dflt);
         setShapes(roi, shps);
         setROI(*m_task, roi);
     }
-    for (auto i : shps.keys())
-        aObjects.insert(i, shps.value(i));
-    auto roi_cfg = rea::Json("count", shps.size(), "visible", true);
+
+    auto roi_cfg = rea::Json("count", aObjects.size() - 1, "visible", true, "l", m_local);
     return [roi_cfg](){
         rea::pipeline::run<QJsonObject>("updateROIGUI", roi_cfg);
     };

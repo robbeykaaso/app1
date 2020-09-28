@@ -659,7 +659,7 @@ private:
         ->nextB("project_image_listViewSelected", rea::Json("tag", "manual"))
         ->nextB("deepsightwriteJson");
 
-        //modify task image
+        //modify task image//try update show
         rea::pipeline::find("QSGAttrUpdated_taskimage_gridder0")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                 auto dt = aInput->data();
