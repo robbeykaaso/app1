@@ -1,0 +1,702 @@
+2019-12-23 16:10:28,233 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-23 16:10:28,525 INFO  - Installing the service with id 'MinIO'
+2019-12-23 16:10:28,534 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   在 WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   在 WMI.WmiRoot.ClassHandler.Invoke(Object proxy, MethodInfo method, Object[] args)
+   在 winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   在 winsw.WrapperService.Main(String[] args)
+2019-12-23 16:13:03,532 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-23 16:13:03,817 INFO  - Installing the service with id 'MinIO'
+2019-12-23 16:13:03,827 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   在 WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   在 WMI.WmiRoot.ClassHandler.Invoke(Object proxy, MethodInfo method, Object[] args)
+   在 winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   在 winsw.WrapperService.Main(String[] args)
+2019-12-23 16:16:16,759 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-23 16:16:17,071 INFO  - Installing the service with id 'MinIO'
+2019-12-23 16:16:17,082 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   在 WMI.WmiRoot.BaseHandler.CheckError(ManagementBaseObject result)
+   在 WMI.WmiRoot.ClassHandler.Invoke(Object proxy, MethodInfo method, Object[] args)
+   在 winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   在 winsw.WrapperService.Main(String[] args)
+2019-12-23 16:18:24,833 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-23 16:18:25,122 INFO  - Installing the service with id 'MinIO'
+2019-12-23 16:18:25,133 DEBUG - Completed. Exit code is 0
+2019-12-23 16:20:51,019 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-23 16:20:51,316 INFO  - Uninstalling the service with id 'MinIO'
+2019-12-23 16:20:51,325 DEBUG - Completed. Exit code is 0
+2019-12-23 16:28:00,066 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-23 16:28:00,361 INFO  - Uninstalling the service with id 'MinIO'
+2019-12-23 16:28:00,366 WARN  - The service with id 'MinIO' does not exist. Nothing to uninstall
+2019-12-23 16:28:00,370 DEBUG - Completed. Exit code is 0
+2019-12-23 18:09:55,704 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-23 18:09:55,994 INFO  - Uninstalling the service with id 'MinIO'
+2019-12-23 18:09:55,999 WARN  - The service with id 'MinIO' is running. It may be impossible to uninstall it
+2019-12-23 18:09:56,007 DEBUG - Completed. Exit code is 0
+2019-12-26 11:32:09,681 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-26 11:32:09,883 INFO  - Uninstalling the service with id 'MinIO'
+2019-12-26 11:32:09,889 WARN  - The service with id 'MinIO' is running. It may be impossible to uninstall it
+2019-12-26 11:32:09,898 DEBUG - Completed. Exit code is 0
+2019-12-26 11:32:25,943 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-26 11:32:26,229 INFO  - Installing the service with id 'MinIO'
+2019-12-26 11:32:26,240 DEBUG - Completed. Exit code is 0
+2019-12-26 11:32:39,815 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 11:32:39,834 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 11:32:39,839 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 11:32:39,873 INFO  - Started process 7460
+2019-12-26 11:32:39,887 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 11:32:52,908 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-26 11:32:53,195 INFO  - Uninstalling the service with id 'MinIO'
+2019-12-26 11:32:53,201 WARN  - The service with id 'MinIO' is running. It may be impossible to uninstall it
+2019-12-26 11:32:53,209 DEBUG - Completed. Exit code is 0
+2019-12-26 11:33:16,350 INFO  - Stopping MinIO
+2019-12-26 11:33:16,354 DEBUG - ProcessKill 7460
+2019-12-26 11:33:16,415 INFO  - Found child process: 13504 Name: conhost.exe
+2019-12-26 11:33:16,456 INFO  - Stopping process 13504
+2019-12-26 11:33:16,465 INFO  - Send SIGINT 13504
+2019-12-26 11:33:16,469 WARN  - SIGINT to 13504 failed - Killing as fallback
+2019-12-26 11:33:16,474 INFO  - Stopping process 7460
+2019-12-26 11:33:16,482 INFO  - Send SIGINT 7460
+2019-12-26 11:33:16,486 WARN  - SIGINT to 7460 failed - Killing as fallback
+2019-12-26 11:33:16,492 INFO  - Finished MinIO
+2019-12-26 11:33:16,497 DEBUG - Completed. Exit code is 0
+2019-12-26 13:46:34,214 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-26 13:46:34,524 INFO  - Uninstalling the service with id 'MinIO'
+2019-12-26 13:46:34,536 DEBUG - Completed. Exit code is 0
+2019-12-26 13:46:43,232 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-26 13:46:43,515 INFO  - Installing the service with id 'MinIO'
+2019-12-26 13:46:43,526 DEBUG - Completed. Exit code is 0
+2019-12-26 13:46:51,578 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 13:46:51,595 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:46:51,601 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:46:51,638 INFO  - Started process 15712
+2019-12-26 13:46:51,662 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 13:47:08,636 INFO  - Stopping MinIO
+2019-12-26 13:47:08,640 DEBUG - ProcessKill 15712
+2019-12-26 13:47:08,700 INFO  - Found child process: 16368 Name: conhost.exe
+2019-12-26 13:47:08,743 INFO  - Stopping process 16368
+2019-12-26 13:47:08,753 INFO  - Send SIGINT 16368
+2019-12-26 13:47:08,757 WARN  - SIGINT to 16368 failed - Killing as fallback
+2019-12-26 13:47:08,762 INFO  - Stopping process 15712
+2019-12-26 13:47:08,771 INFO  - Send SIGINT 15712
+2019-12-26 13:47:08,775 WARN  - SIGINT to 15712 failed - Killing as fallback
+2019-12-26 13:47:08,779 INFO  - Finished MinIO
+2019-12-26 13:47:08,783 DEBUG - Completed. Exit code is 0
+2019-12-26 13:50:15,049 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 13:50:15,066 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:50:15,072 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:50:15,092 INFO  - Started process 6432
+2019-12-26 13:50:15,118 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 13:50:30,216 INFO  - Stopping MinIO
+2019-12-26 13:50:30,220 DEBUG - ProcessKill 6432
+2019-12-26 13:50:30,282 INFO  - Found child process: 18772 Name: conhost.exe
+2019-12-26 13:50:30,326 INFO  - Stopping process 18772
+2019-12-26 13:50:30,336 INFO  - Send SIGINT 18772
+2019-12-26 13:50:30,340 WARN  - SIGINT to 18772 failed - Killing as fallback
+2019-12-26 13:50:30,345 INFO  - Stopping process 6432
+2019-12-26 13:50:30,354 INFO  - Send SIGINT 6432
+2019-12-26 13:50:30,358 WARN  - SIGINT to 6432 failed - Killing as fallback
+2019-12-26 13:50:30,363 INFO  - Finished MinIO
+2019-12-26 13:50:30,367 DEBUG - Completed. Exit code is 0
+2019-12-26 13:51:23,220 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 13:51:23,238 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:51:23,243 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:51:23,280 INFO  - Started process 18120
+2019-12-26 13:51:23,308 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 13:51:38,766 INFO  - Stopping MinIO
+2019-12-26 13:51:38,771 DEBUG - ProcessKill 18120
+2019-12-26 13:51:38,835 INFO  - Found child process: 17016 Name: conhost.exe
+2019-12-26 13:51:38,878 INFO  - Stopping process 17016
+2019-12-26 13:51:38,888 INFO  - Send SIGINT 17016
+2019-12-26 13:51:38,893 WARN  - SIGINT to 17016 failed - Killing as fallback
+2019-12-26 13:51:38,897 INFO  - Stopping process 18120
+2019-12-26 13:51:38,906 INFO  - Send SIGINT 18120
+2019-12-26 13:51:38,910 WARN  - SIGINT to 18120 failed - Killing as fallback
+2019-12-26 13:51:38,915 INFO  - Finished MinIO
+2019-12-26 13:51:38,920 DEBUG - Completed. Exit code is 0
+2019-12-26 13:52:44,045 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 13:52:44,063 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:52:44,069 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:52:44,086 INFO  - Started process 5456
+2019-12-26 13:52:44,099 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 13:53:02,312 INFO  - Stopping MinIO
+2019-12-26 13:53:02,317 DEBUG - ProcessKill 5456
+2019-12-26 13:53:02,394 INFO  - Found child process: 3576 Name: conhost.exe
+2019-12-26 13:53:02,450 INFO  - Stopping process 3576
+2019-12-26 13:53:02,466 INFO  - Send SIGINT 3576
+2019-12-26 13:53:02,474 WARN  - SIGINT to 3576 failed - Killing as fallback
+2019-12-26 13:53:02,704 INFO  - Stopping process 5456
+2019-12-26 13:53:02,738 INFO  - Send SIGINT 5456
+2019-12-26 13:53:02,743 WARN  - SIGINT to 5456 failed - Killing as fallback
+2019-12-26 13:53:02,749 INFO  - Finished MinIO
+2019-12-26 13:53:02,755 DEBUG - Completed. Exit code is 0
+2019-12-26 13:54:47,007 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 13:54:47,024 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:54:47,029 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 13:54:47,067 INFO  - Started process 19816
+2019-12-26 13:54:47,086 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 13:55:01,994 INFO  - Stopping MinIO
+2019-12-26 13:55:01,998 DEBUG - ProcessKill 19816
+2019-12-26 13:55:02,060 INFO  - Found child process: 9352 Name: conhost.exe
+2019-12-26 13:55:02,107 INFO  - Stopping process 9352
+2019-12-26 13:55:02,126 INFO  - Send SIGINT 9352
+2019-12-26 13:55:02,131 WARN  - SIGINT to 9352 failed - Killing as fallback
+2019-12-26 13:55:02,137 INFO  - Stopping process 19816
+2019-12-26 13:55:02,147 INFO  - Send SIGINT 19816
+2019-12-26 13:55:02,151 WARN  - SIGINT to 19816 failed - Killing as fallback
+2019-12-26 13:55:02,156 INFO  - Finished MinIO
+2019-12-26 13:55:02,160 DEBUG - Completed. Exit code is 0
+2019-12-26 14:01:57,051 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:01:57,068 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:01:57,074 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:01:57,238 INFO  - Started process 19700
+2019-12-26 14:01:57,382 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:02:30,868 INFO  - Stopping MinIO
+2019-12-26 14:02:30,872 DEBUG - ProcessKill 19700
+2019-12-26 14:02:30,933 INFO  - Found child process: 18864 Name: conhost.exe
+2019-12-26 14:02:30,976 INFO  - Stopping process 18864
+2019-12-26 14:02:30,986 INFO  - Send SIGINT 18864
+2019-12-26 14:02:30,991 WARN  - SIGINT to 18864 failed - Killing as fallback
+2019-12-26 14:02:30,995 INFO  - Stopping process 19700
+2019-12-26 14:02:31,004 INFO  - Send SIGINT 19700
+2019-12-26 14:02:31,010 WARN  - SIGINT to 19700 failed - Killing as fallback
+2019-12-26 14:02:31,015 INFO  - Finished MinIO
+2019-12-26 14:02:31,020 DEBUG - Completed. Exit code is 0
+2019-12-26 14:03:07,010 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:03:07,028 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:03:07,034 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:03:07,073 INFO  - Started process 6984
+2019-12-26 14:03:07,094 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:03:25,071 INFO  - Stopping MinIO
+2019-12-26 14:03:25,076 DEBUG - ProcessKill 6984
+2019-12-26 14:03:25,140 INFO  - Found child process: 2324 Name: conhost.exe
+2019-12-26 14:03:25,183 INFO  - Stopping process 2324
+2019-12-26 14:03:25,193 INFO  - Send SIGINT 2324
+2019-12-26 14:03:25,198 WARN  - SIGINT to 2324 failed - Killing as fallback
+2019-12-26 14:03:25,202 INFO  - Stopping process 6984
+2019-12-26 14:03:25,212 INFO  - Send SIGINT 6984
+2019-12-26 14:03:25,216 WARN  - SIGINT to 6984 failed - Killing as fallback
+2019-12-26 14:03:25,220 INFO  - Finished MinIO
+2019-12-26 14:03:25,225 DEBUG - Completed. Exit code is 0
+2019-12-26 14:06:19,092 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:06:19,110 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:06:19,116 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:06:19,153 INFO  - Started process 19940
+2019-12-26 14:06:19,179 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:06:30,825 INFO  - Stopping MinIO
+2019-12-26 14:06:30,830 DEBUG - ProcessKill 19940
+2019-12-26 14:06:30,890 INFO  - Found child process: 19992 Name: conhost.exe
+2019-12-26 14:06:30,933 INFO  - Stopping process 19992
+2019-12-26 14:06:30,942 INFO  - Send SIGINT 19992
+2019-12-26 14:06:30,947 WARN  - SIGINT to 19992 failed - Killing as fallback
+2019-12-26 14:06:30,951 INFO  - Stopping process 19940
+2019-12-26 14:06:30,961 INFO  - Send SIGINT 19940
+2019-12-26 14:06:30,965 WARN  - SIGINT to 19940 failed - Killing as fallback
+2019-12-26 14:06:30,969 INFO  - Finished MinIO
+2019-12-26 14:06:30,974 DEBUG - Completed. Exit code is 0
+2019-12-26 14:08:37,198 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:08:37,216 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:08:37,222 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:08:37,259 INFO  - Started process 19964
+2019-12-26 14:08:37,289 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:08:56,187 INFO  - Stopping MinIO
+2019-12-26 14:08:56,192 DEBUG - ProcessKill 19964
+2019-12-26 14:08:56,255 INFO  - Found child process: 408 Name: conhost.exe
+2019-12-26 14:08:56,299 INFO  - Stopping process 408
+2019-12-26 14:08:56,309 INFO  - Send SIGINT 408
+2019-12-26 14:08:56,314 WARN  - SIGINT to 408 failed - Killing as fallback
+2019-12-26 14:08:56,318 INFO  - Stopping process 19964
+2019-12-26 14:08:56,327 INFO  - Send SIGINT 19964
+2019-12-26 14:08:56,331 WARN  - SIGINT to 19964 failed - Killing as fallback
+2019-12-26 14:08:56,336 INFO  - Finished MinIO
+2019-12-26 14:08:56,340 DEBUG - Completed. Exit code is 0
+2019-12-26 14:09:55,308 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:09:55,326 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:09:55,331 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:09:55,352 INFO  - Started process 7276
+2019-12-26 14:09:55,386 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:10:07,655 INFO  - Stopping MinIO
+2019-12-26 14:10:07,659 DEBUG - ProcessKill 7276
+2019-12-26 14:10:07,720 INFO  - Found child process: 19768 Name: conhost.exe
+2019-12-26 14:10:07,767 INFO  - Stopping process 19768
+2019-12-26 14:10:07,778 INFO  - Send SIGINT 19768
+2019-12-26 14:10:07,782 WARN  - SIGINT to 19768 failed - Killing as fallback
+2019-12-26 14:10:07,789 INFO  - Stopping process 7276
+2019-12-26 14:10:07,798 INFO  - Send SIGINT 7276
+2019-12-26 14:10:07,803 WARN  - SIGINT to 7276 failed - Killing as fallback
+2019-12-26 14:10:07,808 INFO  - Finished MinIO
+2019-12-26 14:10:07,813 DEBUG - Completed. Exit code is 0
+2019-12-26 14:13:40,236 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:13:40,255 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:13:40,261 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:13:40,297 INFO  - Started process 11520
+2019-12-26 14:13:40,325 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:13:53,129 INFO  - Stopping MinIO
+2019-12-26 14:13:53,133 DEBUG - ProcessKill 11520
+2019-12-26 14:13:53,197 INFO  - Found child process: 8800 Name: conhost.exe
+2019-12-26 14:13:53,241 INFO  - Stopping process 8800
+2019-12-26 14:13:53,250 INFO  - Send SIGINT 8800
+2019-12-26 14:13:53,255 WARN  - SIGINT to 8800 failed - Killing as fallback
+2019-12-26 14:13:53,260 INFO  - Stopping process 11520
+2019-12-26 14:13:53,269 INFO  - Send SIGINT 11520
+2019-12-26 14:13:53,273 WARN  - SIGINT to 11520 failed - Killing as fallback
+2019-12-26 14:13:53,278 INFO  - Finished MinIO
+2019-12-26 14:13:53,282 DEBUG - Completed. Exit code is 0
+2019-12-26 14:14:21,385 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:14:21,402 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:14:21,408 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:14:21,428 INFO  - Started process 18548
+2019-12-26 14:14:21,451 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:14:33,862 INFO  - Stopping MinIO
+2019-12-26 14:14:33,866 DEBUG - ProcessKill 18548
+2019-12-26 14:14:33,926 INFO  - Found child process: 19364 Name: conhost.exe
+2019-12-26 14:14:33,969 INFO  - Stopping process 19364
+2019-12-26 14:14:33,979 INFO  - Send SIGINT 19364
+2019-12-26 14:14:33,984 WARN  - SIGINT to 19364 failed - Killing as fallback
+2019-12-26 14:14:33,989 INFO  - Stopping process 18548
+2019-12-26 14:14:33,998 INFO  - Send SIGINT 18548
+2019-12-26 14:14:34,002 WARN  - SIGINT to 18548 failed - Killing as fallback
+2019-12-26 14:14:34,008 INFO  - Finished MinIO
+2019-12-26 14:14:34,012 DEBUG - Completed. Exit code is 0
+2019-12-26 14:16:38,632 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:16:38,650 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:16:38,655 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:16:38,692 INFO  - Started process 20004
+2019-12-26 14:16:38,724 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:16:46,865 INFO  - Stopping MinIO
+2019-12-26 14:16:46,869 DEBUG - ProcessKill 20004
+2019-12-26 14:16:46,932 INFO  - Found child process: 19904 Name: conhost.exe
+2019-12-26 14:16:46,975 INFO  - Stopping process 19904
+2019-12-26 14:16:46,985 INFO  - Send SIGINT 19904
+2019-12-26 14:16:46,990 WARN  - SIGINT to 19904 failed - Killing as fallback
+2019-12-26 14:16:46,994 INFO  - Stopping process 20004
+2019-12-26 14:16:47,003 INFO  - Send SIGINT 20004
+2019-12-26 14:16:47,008 WARN  - SIGINT to 20004 failed - Killing as fallback
+2019-12-26 14:16:47,012 INFO  - Finished MinIO
+2019-12-26 14:16:47,016 DEBUG - Completed. Exit code is 0
+2019-12-26 14:18:21,440 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:18:21,458 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:18:21,463 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:18:21,480 INFO  - Started process 18892
+2019-12-26 14:18:21,500 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:18:32,294 INFO  - Stopping MinIO
+2019-12-26 14:18:32,299 DEBUG - ProcessKill 18892
+2019-12-26 14:18:32,359 INFO  - Found child process: 19788 Name: conhost.exe
+2019-12-26 14:18:32,402 INFO  - Stopping process 19788
+2019-12-26 14:18:32,412 INFO  - Send SIGINT 19788
+2019-12-26 14:18:32,417 WARN  - SIGINT to 19788 failed - Killing as fallback
+2019-12-26 14:18:32,421 INFO  - Stopping process 18892
+2019-12-26 14:18:32,431 INFO  - Send SIGINT 18892
+2019-12-26 14:18:32,435 WARN  - SIGINT to 18892 failed - Killing as fallback
+2019-12-26 14:18:32,439 INFO  - Finished MinIO
+2019-12-26 14:18:32,444 DEBUG - Completed. Exit code is 0
+2019-12-26 14:20:33,107 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:20:33,125 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:20:33,131 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:20:33,162 INFO  - Started process 17676
+2019-12-26 14:20:33,191 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:20:41,632 INFO  - Stopping MinIO
+2019-12-26 14:20:41,637 DEBUG - ProcessKill 17676
+2019-12-26 14:20:41,699 INFO  - Found child process: 7408 Name: conhost.exe
+2019-12-26 14:20:41,743 INFO  - Stopping process 7408
+2019-12-26 14:20:41,752 INFO  - Send SIGINT 7408
+2019-12-26 14:20:41,757 WARN  - SIGINT to 7408 failed - Killing as fallback
+2019-12-26 14:20:41,761 INFO  - Stopping process 17676
+2019-12-26 14:20:41,771 INFO  - Send SIGINT 17676
+2019-12-26 14:20:41,775 WARN  - SIGINT to 17676 failed - Killing as fallback
+2019-12-26 14:20:41,779 INFO  - Finished MinIO
+2019-12-26 14:20:41,784 DEBUG - Completed. Exit code is 0
+2019-12-26 14:21:20,828 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:21:20,846 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:21:20,851 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:21:20,867 INFO  - Started process 2844
+2019-12-26 14:21:20,890 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:21:32,236 INFO  - Stopping MinIO
+2019-12-26 14:21:32,241 DEBUG - ProcessKill 2844
+2019-12-26 14:21:32,300 INFO  - Found child process: 9540 Name: conhost.exe
+2019-12-26 14:21:32,341 INFO  - Stopping process 9540
+2019-12-26 14:21:32,351 INFO  - Send SIGINT 9540
+2019-12-26 14:21:32,355 WARN  - SIGINT to 9540 failed - Killing as fallback
+2019-12-26 14:21:32,360 INFO  - Stopping process 2844
+2019-12-26 14:21:32,369 INFO  - Send SIGINT 2844
+2019-12-26 14:21:32,373 WARN  - SIGINT to 2844 failed - Killing as fallback
+2019-12-26 14:21:32,377 INFO  - Finished MinIO
+2019-12-26 14:21:32,381 DEBUG - Completed. Exit code is 0
+2019-12-26 14:22:11,333 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:22:11,351 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:22:11,357 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:22:11,484 INFO  - Started process 6180
+2019-12-26 14:22:11,509 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:22:23,136 INFO  - Stopping MinIO
+2019-12-26 14:22:23,140 DEBUG - ProcessKill 6180
+2019-12-26 14:22:23,204 INFO  - Found child process: 18428 Name: conhost.exe
+2019-12-26 14:22:23,248 INFO  - Stopping process 18428
+2019-12-26 14:22:23,257 INFO  - Send SIGINT 18428
+2019-12-26 14:22:23,262 WARN  - SIGINT to 18428 failed - Killing as fallback
+2019-12-26 14:22:23,266 INFO  - Stopping process 6180
+2019-12-26 14:22:23,276 INFO  - Send SIGINT 6180
+2019-12-26 14:22:23,280 WARN  - SIGINT to 6180 failed - Killing as fallback
+2019-12-26 14:22:23,284 INFO  - Finished MinIO
+2019-12-26 14:22:23,289 DEBUG - Completed. Exit code is 0
+2019-12-26 14:23:13,547 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:23:13,565 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:23:13,571 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:23:13,606 INFO  - Started process 17052
+2019-12-26 14:23:13,616 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:23:22,124 INFO  - Stopping MinIO
+2019-12-26 14:23:22,128 DEBUG - ProcessKill 17052
+2019-12-26 14:23:22,190 INFO  - Found child process: 8336 Name: conhost.exe
+2019-12-26 14:23:22,235 INFO  - Stopping process 8336
+2019-12-26 14:23:22,245 INFO  - Send SIGINT 8336
+2019-12-26 14:23:22,250 WARN  - SIGINT to 8336 failed - Killing as fallback
+2019-12-26 14:23:22,254 INFO  - Stopping process 17052
+2019-12-26 14:23:22,263 INFO  - Send SIGINT 17052
+2019-12-26 14:23:22,268 WARN  - SIGINT to 17052 failed - Killing as fallback
+2019-12-26 14:23:22,272 INFO  - Finished MinIO
+2019-12-26 14:23:22,276 DEBUG - Completed. Exit code is 0
+2019-12-26 14:23:49,351 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:23:49,369 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:23:49,374 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:23:49,401 INFO  - Started process 18252
+2019-12-26 14:23:49,411 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:23:59,028 INFO  - Stopping MinIO
+2019-12-26 14:23:59,032 DEBUG - ProcessKill 18252
+2019-12-26 14:23:59,094 INFO  - Found child process: 20944 Name: conhost.exe
+2019-12-26 14:23:59,139 INFO  - Stopping process 20944
+2019-12-26 14:23:59,149 INFO  - Send SIGINT 20944
+2019-12-26 14:23:59,154 WARN  - SIGINT to 20944 failed - Killing as fallback
+2019-12-26 14:23:59,158 INFO  - Stopping process 18252
+2019-12-26 14:23:59,167 INFO  - Send SIGINT 18252
+2019-12-26 14:23:59,171 WARN  - SIGINT to 18252 failed - Killing as fallback
+2019-12-26 14:23:59,176 INFO  - Finished MinIO
+2019-12-26 14:23:59,180 DEBUG - Completed. Exit code is 0
+2019-12-26 14:27:30,523 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:27:30,540 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:27:30,546 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:27:30,566 INFO  - Started process 13104
+2019-12-26 14:27:30,594 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:27:39,286 INFO  - Stopping MinIO
+2019-12-26 14:27:39,293 DEBUG - ProcessKill 13104
+2019-12-26 14:27:39,354 INFO  - Found child process: 17440 Name: conhost.exe
+2019-12-26 14:27:39,398 INFO  - Stopping process 17440
+2019-12-26 14:27:39,408 INFO  - Send SIGINT 17440
+2019-12-26 14:27:39,412 WARN  - SIGINT to 17440 failed - Killing as fallback
+2019-12-26 14:27:39,417 INFO  - Stopping process 13104
+2019-12-26 14:27:39,428 INFO  - Send SIGINT 13104
+2019-12-26 14:27:39,432 WARN  - SIGINT to 13104 failed - Killing as fallback
+2019-12-26 14:27:39,435 INFO  - Finished MinIO
+2019-12-26 14:27:39,440 DEBUG - Completed. Exit code is 0
+2019-12-26 14:27:52,328 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:27:52,345 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:27:52,351 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:27:52,371 INFO  - Started process 10696
+2019-12-26 14:27:52,396 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:28:00,123 INFO  - Stopping MinIO
+2019-12-26 14:28:00,127 DEBUG - ProcessKill 10696
+2019-12-26 14:28:00,189 INFO  - Found child process: 9008 Name: conhost.exe
+2019-12-26 14:28:00,225 INFO  - Found child process: 12464 Name: GoogleCrashHandler.exe
+2019-12-26 14:28:00,229 INFO  - Found child process: 12484 Name: GoogleCrashHandler64.exe
+2019-12-26 14:28:00,274 INFO  - Stopping process 12464
+2019-12-26 14:28:00,283 INFO  - Send SIGINT 12464
+2019-12-26 14:28:00,288 WARN  - SIGINT to 12464 failed - Killing as fallback
+2019-12-26 14:28:00,331 INFO  - Stopping process 12484
+2019-12-26 14:28:00,341 INFO  - Send SIGINT 12484
+2019-12-26 14:28:00,345 WARN  - SIGINT to 12484 failed - Killing as fallback
+2019-12-26 14:28:00,348 INFO  - Stopping process 9008
+2019-12-26 14:28:00,358 INFO  - Send SIGINT 9008
+2019-12-26 14:28:00,362 WARN  - SIGINT to 9008 failed - Killing as fallback
+2019-12-26 14:28:00,365 INFO  - Stopping process 10696
+2019-12-26 14:28:00,374 INFO  - Send SIGINT 10696
+2019-12-26 14:28:00,378 WARN  - SIGINT to 10696 failed - Killing as fallback
+2019-12-26 14:28:00,383 INFO  - Finished MinIO
+2019-12-26 14:28:00,387 DEBUG - Completed. Exit code is 0
+2019-12-26 14:48:00,561 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:48:00,578 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:48:00,584 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:48:00,687 INFO  - Started process 19224
+2019-12-26 14:48:00,815 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:48:09,335 INFO  - Stopping MinIO
+2019-12-26 14:48:09,340 DEBUG - ProcessKill 19224
+2019-12-26 14:48:09,399 INFO  - Found child process: 6632 Name: conhost.exe
+2019-12-26 14:48:09,441 INFO  - Stopping process 6632
+2019-12-26 14:48:09,450 INFO  - Send SIGINT 6632
+2019-12-26 14:48:09,455 WARN  - SIGINT to 6632 failed - Killing as fallback
+2019-12-26 14:48:09,460 INFO  - Stopping process 19224
+2019-12-26 14:48:09,468 INFO  - Send SIGINT 19224
+2019-12-26 14:48:09,472 WARN  - SIGINT to 19224 failed - Killing as fallback
+2019-12-26 14:48:09,477 INFO  - Finished MinIO
+2019-12-26 14:48:09,481 DEBUG - Completed. Exit code is 0
+2019-12-26 14:48:35,416 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:48:35,434 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:48:35,440 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:48:35,459 INFO  - Started process 1260
+2019-12-26 14:48:35,485 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:48:43,114 INFO  - Stopping MinIO
+2019-12-26 14:48:43,118 DEBUG - ProcessKill 1260
+2019-12-26 14:48:43,180 INFO  - Found child process: 9828 Name: conhost.exe
+2019-12-26 14:48:43,222 INFO  - Stopping process 9828
+2019-12-26 14:48:43,231 INFO  - Send SIGINT 9828
+2019-12-26 14:48:43,236 WARN  - SIGINT to 9828 failed - Killing as fallback
+2019-12-26 14:48:43,240 INFO  - Stopping process 1260
+2019-12-26 14:48:43,249 INFO  - Send SIGINT 1260
+2019-12-26 14:48:43,253 WARN  - SIGINT to 1260 failed - Killing as fallback
+2019-12-26 14:48:43,257 INFO  - Finished MinIO
+2019-12-26 14:48:43,262 DEBUG - Completed. Exit code is 0
+2019-12-26 14:49:43,493 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:49:43,511 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:49:43,517 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:49:43,547 INFO  - Started process 18972
+2019-12-26 14:49:43,570 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:49:51,671 INFO  - Stopping MinIO
+2019-12-26 14:49:51,675 DEBUG - ProcessKill 18972
+2019-12-26 14:49:51,737 INFO  - Found child process: 17920 Name: conhost.exe
+2019-12-26 14:49:51,781 INFO  - Stopping process 17920
+2019-12-26 14:49:51,790 INFO  - Send SIGINT 17920
+2019-12-26 14:49:51,795 WARN  - SIGINT to 17920 failed - Killing as fallback
+2019-12-26 14:49:51,800 INFO  - Stopping process 18972
+2019-12-26 14:49:51,808 INFO  - Send SIGINT 18972
+2019-12-26 14:49:51,812 WARN  - SIGINT to 18972 failed - Killing as fallback
+2019-12-26 14:49:51,817 INFO  - Finished MinIO
+2019-12-26 14:49:51,821 DEBUG - Completed. Exit code is 0
+2019-12-26 14:50:04,154 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:50:04,172 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:50:04,177 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:50:04,210 INFO  - Started process 9464
+2019-12-26 14:50:04,220 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:50:12,557 INFO  - Stopping MinIO
+2019-12-26 14:50:12,561 DEBUG - ProcessKill 9464
+2019-12-26 14:50:12,626 INFO  - Found child process: 5556 Name: conhost.exe
+2019-12-26 14:50:12,670 INFO  - Stopping process 5556
+2019-12-26 14:50:12,679 INFO  - Send SIGINT 5556
+2019-12-26 14:50:12,684 WARN  - SIGINT to 5556 failed - Killing as fallback
+2019-12-26 14:50:12,688 INFO  - Stopping process 9464
+2019-12-26 14:50:12,697 INFO  - Send SIGINT 9464
+2019-12-26 14:50:12,701 WARN  - SIGINT to 9464 failed - Killing as fallback
+2019-12-26 14:50:12,706 INFO  - Finished MinIO
+2019-12-26 14:50:12,710 DEBUG - Completed. Exit code is 0
+2019-12-26 14:50:33,523 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:50:33,541 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:50:33,546 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:50:33,563 INFO  - Started process 15712
+2019-12-26 14:50:33,587 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:50:41,168 INFO  - Stopping MinIO
+2019-12-26 14:50:41,172 DEBUG - ProcessKill 15712
+2019-12-26 14:50:41,233 INFO  - Found child process: 392 Name: conhost.exe
+2019-12-26 14:50:41,275 INFO  - Stopping process 392
+2019-12-26 14:50:41,285 INFO  - Send SIGINT 392
+2019-12-26 14:50:41,289 WARN  - SIGINT to 392 failed - Killing as fallback
+2019-12-26 14:50:41,294 INFO  - Stopping process 15712
+2019-12-26 14:50:41,303 INFO  - Send SIGINT 15712
+2019-12-26 14:50:41,307 WARN  - SIGINT to 15712 failed - Killing as fallback
+2019-12-26 14:50:41,310 INFO  - Finished MinIO
+2019-12-26 14:50:41,315 DEBUG - Completed. Exit code is 0
+2019-12-26 14:51:28,374 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:51:28,392 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:51:28,398 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:51:28,640 INFO  - Started process 1544
+2019-12-26 14:51:28,959 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:51:39,204 INFO  - Stopping MinIO
+2019-12-26 14:51:39,208 DEBUG - ProcessKill 1544
+2019-12-26 14:51:39,268 INFO  - Found child process: 13772 Name: conhost.exe
+2019-12-26 14:51:39,312 INFO  - Stopping process 13772
+2019-12-26 14:51:39,321 INFO  - Send SIGINT 13772
+2019-12-26 14:51:39,325 WARN  - SIGINT to 13772 failed - Killing as fallback
+2019-12-26 14:51:39,330 INFO  - Stopping process 1544
+2019-12-26 14:51:39,338 INFO  - Send SIGINT 1544
+2019-12-26 14:51:39,343 WARN  - SIGINT to 1544 failed - Killing as fallback
+2019-12-26 14:51:39,347 INFO  - Finished MinIO
+2019-12-26 14:51:39,352 DEBUG - Completed. Exit code is 0
+2019-12-26 14:52:02,758 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:52:02,776 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:52:02,781 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:52:02,821 INFO  - Started process 6724
+2019-12-26 14:52:02,831 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:52:12,620 INFO  - Stopping MinIO
+2019-12-26 14:52:12,624 DEBUG - ProcessKill 6724
+2019-12-26 14:52:12,685 INFO  - Found child process: 18324 Name: conhost.exe
+2019-12-26 14:52:12,728 INFO  - Stopping process 18324
+2019-12-26 14:52:12,738 INFO  - Send SIGINT 18324
+2019-12-26 14:52:12,743 WARN  - SIGINT to 18324 failed - Killing as fallback
+2019-12-26 14:52:12,748 INFO  - Stopping process 6724
+2019-12-26 14:52:12,757 INFO  - Send SIGINT 6724
+2019-12-26 14:52:12,761 WARN  - SIGINT to 6724 failed - Killing as fallback
+2019-12-26 14:52:12,765 INFO  - Finished MinIO
+2019-12-26 14:52:12,770 DEBUG - Completed. Exit code is 0
+2019-12-26 14:52:41,603 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:52:41,621 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:52:41,627 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:52:41,660 INFO  - Started process 16524
+2019-12-26 14:52:41,682 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:52:50,463 INFO  - Stopping MinIO
+2019-12-26 14:52:50,467 DEBUG - ProcessKill 16524
+2019-12-26 14:52:50,526 INFO  - Found child process: 17812 Name: conhost.exe
+2019-12-26 14:52:50,570 INFO  - Stopping process 17812
+2019-12-26 14:52:50,580 INFO  - Send SIGINT 17812
+2019-12-26 14:52:50,585 WARN  - SIGINT to 17812 failed - Killing as fallback
+2019-12-26 14:52:50,590 INFO  - Stopping process 16524
+2019-12-26 14:52:50,599 INFO  - Send SIGINT 16524
+2019-12-26 14:52:50,603 WARN  - SIGINT to 16524 failed - Killing as fallback
+2019-12-26 14:52:50,607 INFO  - Finished MinIO
+2019-12-26 14:52:50,612 DEBUG - Completed. Exit code is 0
+2019-12-26 14:54:21,572 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:54:21,590 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:54:21,596 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:54:21,637 INFO  - Started process 11444
+2019-12-26 14:54:21,691 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:54:31,536 INFO  - Stopping MinIO
+2019-12-26 14:54:31,540 DEBUG - ProcessKill 11444
+2019-12-26 14:54:31,601 INFO  - Found child process: 992 Name: conhost.exe
+2019-12-26 14:54:31,644 INFO  - Stopping process 992
+2019-12-26 14:54:31,653 INFO  - Send SIGINT 992
+2019-12-26 14:54:31,658 WARN  - SIGINT to 992 failed - Killing as fallback
+2019-12-26 14:54:31,663 INFO  - Stopping process 11444
+2019-12-26 14:54:31,671 INFO  - Send SIGINT 11444
+2019-12-26 14:54:31,676 WARN  - SIGINT to 11444 failed - Killing as fallback
+2019-12-26 14:54:31,681 INFO  - Finished MinIO
+2019-12-26 14:54:31,685 DEBUG - Completed. Exit code is 0
+2019-12-26 14:55:01,011 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:55:01,028 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:55:01,034 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:55:01,065 INFO  - Started process 10604
+2019-12-26 14:55:01,097 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:55:18,160 INFO  - Stopping MinIO
+2019-12-26 14:55:18,164 DEBUG - ProcessKill 10604
+2019-12-26 14:55:18,228 INFO  - Found child process: 13508 Name: conhost.exe
+2019-12-26 14:55:18,271 INFO  - Stopping process 13508
+2019-12-26 14:55:18,280 INFO  - Send SIGINT 13508
+2019-12-26 14:55:18,285 WARN  - SIGINT to 13508 failed - Killing as fallback
+2019-12-26 14:55:18,290 INFO  - Stopping process 10604
+2019-12-26 14:55:18,299 INFO  - Send SIGINT 10604
+2019-12-26 14:55:18,303 WARN  - SIGINT to 10604 failed - Killing as fallback
+2019-12-26 14:55:18,307 INFO  - Finished MinIO
+2019-12-26 14:55:18,311 DEBUG - Completed. Exit code is 0
+2019-12-26 14:58:26,565 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:58:26,583 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:58:26,589 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:58:26,609 INFO  - Started process 18172
+2019-12-26 14:58:26,636 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:58:34,935 INFO  - Stopping MinIO
+2019-12-26 14:58:34,940 DEBUG - ProcessKill 18172
+2019-12-26 14:58:35,000 INFO  - Found child process: 1288 Name: conhost.exe
+2019-12-26 14:58:35,042 INFO  - Stopping process 1288
+2019-12-26 14:58:35,051 INFO  - Send SIGINT 1288
+2019-12-26 14:58:35,056 WARN  - SIGINT to 1288 failed - Killing as fallback
+2019-12-26 14:58:35,060 INFO  - Stopping process 18172
+2019-12-26 14:58:35,069 INFO  - Send SIGINT 18172
+2019-12-26 14:58:35,073 WARN  - SIGINT to 18172 failed - Killing as fallback
+2019-12-26 14:58:35,077 INFO  - Finished MinIO
+2019-12-26 14:58:35,081 DEBUG - Completed. Exit code is 0
+2019-12-26 14:58:46,429 INFO  - Starting ServiceWrapper in the service mode
+2019-12-26 14:58:46,448 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:58:46,453 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-26 14:58:46,495 INFO  - Started process 18080
+2019-12-26 14:58:46,524 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-26 14:58:52,710 INFO  - Stopping MinIO
+2019-12-26 14:58:52,714 DEBUG - ProcessKill 18080
+2019-12-26 14:58:52,780 INFO  - Found child process: 18720 Name: conhost.exe
+2019-12-26 14:58:52,824 INFO  - Stopping process 18720
+2019-12-26 14:58:52,834 INFO  - Send SIGINT 18720
+2019-12-26 14:58:52,838 WARN  - SIGINT to 18720 failed - Killing as fallback
+2019-12-26 14:58:52,843 INFO  - Stopping process 18080
+2019-12-26 14:58:52,853 INFO  - Send SIGINT 18080
+2019-12-26 14:58:52,857 WARN  - SIGINT to 18080 failed - Killing as fallback
+2019-12-26 14:58:52,862 INFO  - Finished MinIO
+2019-12-26 14:58:52,866 DEBUG - Completed. Exit code is 0
+2019-12-27 15:51:25,354 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-27 15:51:25,661 DEBUG - Completed. Exit code is 0
+2019-12-27 16:28:44,735 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-27 16:28:45,035 INFO  - Installing the service with id 'MinIO'
+2019-12-27 16:28:45,047 DEBUG - Completed. Exit code is 0
+2019-12-27 16:28:49,094 INFO  - Starting ServiceWrapper in the service mode
+2019-12-27 16:28:49,112 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-27 16:28:49,117 INFO  - Starting minio.exe server C:\Temp\minio
+2019-12-27 16:28:49,176 INFO  - Started process 15676
+2019-12-27 16:28:49,187 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2019-12-27 16:28:57,267 INFO  - Stopping MinIO
+2019-12-27 16:28:57,271 DEBUG - ProcessKill 15676
+2019-12-27 16:28:57,329 INFO  - Found child process: 13332 Name: conhost.exe
+2019-12-27 16:28:57,370 INFO  - Stopping process 13332
+2019-12-27 16:28:57,379 INFO  - Send SIGINT 13332
+2019-12-27 16:28:57,383 WARN  - SIGINT to 13332 failed - Killing as fallback
+2019-12-27 16:28:57,388 INFO  - Stopping process 15676
+2019-12-27 16:28:57,397 INFO  - Send SIGINT 15676
+2019-12-27 16:28:57,401 WARN  - SIGINT to 15676 failed - Killing as fallback
+2019-12-27 16:28:57,405 INFO  - Finished MinIO
+2019-12-27 16:28:57,411 DEBUG - Completed. Exit code is 0
+2019-12-27 16:29:23,470 DEBUG - Starting ServiceWrapper in the CLI mode
+2019-12-27 16:29:23,769 INFO  - Uninstalling the service with id 'MinIO'
+2019-12-27 16:29:23,778 DEBUG - Completed. Exit code is 0
+2020-02-29 08:54:04,480 DEBUG - Starting ServiceWrapper in the CLI mode
+2020-02-29 08:54:04,747 INFO  - Uninstalling the service with id 'MinIO'
+2020-02-29 08:54:04,753 WARN  - The service with id 'MinIO' is running. It may be impossible to uninstall it
+2020-02-29 08:54:04,764 FATAL - Failed to uninstall the service with id 'MinIO'. WMI Error code is 'AccessDenied'
+2020-02-29 08:54:04,768 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   在 winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   在 winsw.WrapperService.Main(String[] args)
+2020-02-29 08:54:16,824 DEBUG - Starting ServiceWrapper in the CLI mode
+2020-02-29 08:54:16,973 INFO  - Uninstalling the service with id 'MinIO'
+2020-02-29 08:54:16,984 FATAL - Failed to uninstall the service with id 'MinIO'. WMI Error code is 'AccessDenied'
+2020-02-29 08:54:16,988 FATAL - WMI Operation failure: AccessDenied
+WMI.WmiException: AccessDenied
+   在 winsw.WrapperService.Run(String[] _args, ServiceDescriptor descriptor)
+   在 winsw.WrapperService.Main(String[] args)
+2020-02-29 08:57:22,104 DEBUG - Starting ServiceWrapper in the CLI mode
+2020-02-29 08:57:22,243 INFO  - Uninstalling the service with id 'MinIO'
+2020-02-29 08:57:22,254 DEBUG - Completed. Exit code is 0
+2020-02-29 08:57:36,158 DEBUG - Starting ServiceWrapper in the CLI mode
+2020-02-29 08:57:36,420 INFO  - Installing the service with id 'MinIO'
+2020-02-29 08:57:36,431 DEBUG - Completed. Exit code is 0
+2020-02-29 08:57:56,718 INFO  - Starting ServiceWrapper in the service mode
+2020-02-29 08:57:56,735 INFO  - Starting minio.exe server 
+2020-02-29 08:57:56,741 INFO  - Starting minio.exe server 
+2020-02-29 08:57:56,776 INFO  - Started process 10560
+2020-02-29 08:57:56,786 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2020-02-29 08:58:09,907 INFO  - Starting ServiceWrapper in the service mode
+2020-02-29 08:58:09,925 INFO  - Starting minio.exe server 
+2020-02-29 08:58:09,930 INFO  - Starting minio.exe server 
+2020-02-29 08:58:09,950 INFO  - Started process 17524
+2020-02-29 08:58:09,958 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2020-02-29 08:59:20,345 INFO  - Starting ServiceWrapper in the service mode
+2020-02-29 08:59:20,363 INFO  - Starting minio.exe server 
+2020-02-29 08:59:20,369 INFO  - Starting minio.exe server 
+2020-02-29 08:59:20,386 INFO  - Started process 16532
+2020-02-29 08:59:20,393 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2020-02-29 08:59:58,444 INFO  - Starting ServiceWrapper in the service mode
+2020-02-29 08:59:58,461 INFO  - Starting minio.exe server 
+2020-02-29 08:59:58,467 INFO  - Starting minio.exe server 
+2020-02-29 08:59:58,491 INFO  - Started process 17824
+2020-02-29 08:59:58,504 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2020-02-29 09:00:01,300 INFO  - Starting ServiceWrapper in the service mode
+2020-02-29 09:00:01,317 INFO  - Starting minio.exe server 
+2020-02-29 09:00:01,323 INFO  - Starting minio.exe server 
+2020-02-29 09:00:01,349 INFO  - Started process 7620
+2020-02-29 09:00:01,366 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2020-02-29 09:00:09,018 DEBUG - Starting ServiceWrapper in the CLI mode
+2020-02-29 09:00:09,291 INFO  - Uninstalling the service with id 'MinIO'
+2020-02-29 09:00:09,301 DEBUG - Completed. Exit code is 0
+2020-02-29 09:01:21,001 DEBUG - Starting ServiceWrapper in the CLI mode
+2020-02-29 09:01:21,280 INFO  - Installing the service with id 'MinIO'
+2020-02-29 09:01:21,291 DEBUG - Completed. Exit code is 0
+2020-02-29 09:01:41,747 INFO  - Starting ServiceWrapper in the service mode
+2020-02-29 09:01:41,764 INFO  - Starting minio.exe server 123
+2020-02-29 09:01:41,770 INFO  - Starting minio.exe server 123
+2020-02-29 09:01:41,793 INFO  - Started process 7692
+2020-02-29 09:01:41,804 DEBUG - Forwarding logs of the process System.Diagnostics.Process (minio) to winsw.SizeBasedRollingLogAppender
+2020-02-29 09:01:50,190 INFO  - Stopping MinIO
+2020-02-29 09:01:50,195 DEBUG - ProcessKill 7692
+2020-02-29 09:01:50,247 INFO  - Found child process: 16484 Name: conhost.exe
+2020-02-29 09:01:50,285 INFO  - Stopping process 16484
+2020-02-29 09:01:50,294 INFO  - Send SIGINT 16484
+2020-02-29 09:01:50,299 WARN  - SIGINT to 16484 failed - Killing as fallback
+2020-02-29 09:01:50,303 INFO  - Stopping process 7692
+2020-02-29 09:01:50,312 INFO  - Send SIGINT 7692
+2020-02-29 09:01:50,316 WARN  - SIGINT to 7692 failed - Killing as fallback
+2020-02-29 09:01:50,321 INFO  - Finished MinIO
+2020-02-29 09:01:50,326 DEBUG - Completed. Exit code is 0
+2020-02-29 09:02:06,690 DEBUG - Starting ServiceWrapper in the CLI mode
+2020-02-29 09:02:06,965 INFO  - Uninstalling the service with id 'MinIO'
+2020-02-29 09:02:06,974 DEBUG - Completed. Exit code is 0

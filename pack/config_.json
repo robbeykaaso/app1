@@ -1,0 +1,8 @@
+{ 
+    "source": "..",
+    "app": "../../buildApp/Release/MYAPP1.exe",
+    "depends": "G:/dependency_walker/depends.exe",
+    "filter": ["windows"],
+    "qmladdition": [],
+    "addition": ["../../buildApp/Release/plugin"]
+}
