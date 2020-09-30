@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>WinPack.exe</DisplayName>
+    <Description>A package tool for windows exe.</Description>
+    <Version>1.0.0-1</Version>
+    <ReleaseDate>2019-12-23</ReleaseDate>
+    <Default>true</Default>
+</Package>

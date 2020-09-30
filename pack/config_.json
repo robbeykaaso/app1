@@ -1,6 +1,6 @@
 { 
     "source": "..",
-    "app": "../../buildApp/Release/MYAPP1.exe",
+    "app": "../../buildApp/Release/DeepInspection.exe",
     "depends": "G:/dependency_walker/depends.exe",
     "filter": ["windows"],
     "qmladdition": [],

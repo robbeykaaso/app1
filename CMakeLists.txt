@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1)
 
-project(MYAPP1 LANGUAGES CXX)
+project(DeepInspection LANGUAGES CXX)
 
 add_definitions( -DRX_USE_EXCEPTIONS=OFF )
 
@@ -70,7 +70,7 @@ add_executable(${PROJECT_NAME}
     "deepsight_anno/task.h"
     "deepsight_anno/custom.cpp"
     "qml.qrc"
-    #"resource/logo.rc"
+    "resource/logo.rc"
     )
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 #message(${PROJECT_NAME})
