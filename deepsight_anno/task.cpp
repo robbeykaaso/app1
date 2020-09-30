@@ -683,13 +683,13 @@ void task::imageManagement(){
 
 void task::guiManagement(){
     //the qsgnode will be destroyed by qt after switch page
-    rea::pipeline::find("title_updateStatus")
+    rea::pipeline::find("title_updateNavigation")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
             if (aInput->data().size() == 3)
                 aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
             else
                 m_current_image = "";
-        }))
+        }), rea::Json("tag", "manual"))
         ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
 
     //switch scatter mode

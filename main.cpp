@@ -63,6 +63,6 @@ int main(int argc, char *argv[])
 
     //re::pipeManager::run("unitTest2");
 //    re2::testReactive2();
-
+    rea::pipeline::run<double>("loadUser", 0);
     return app.exec();
 }

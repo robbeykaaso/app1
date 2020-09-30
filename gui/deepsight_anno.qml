@@ -28,7 +28,7 @@ ApplicationWindow {
     }
     Column{
         anchors.fill: parent
-        Status{
+        /*Status{
             id: status
             name: "title"
             width: parent.width
@@ -43,15 +43,21 @@ ApplicationWindow {
                     var desp = []
                     for (var i = 0; i < status.statuslist.count - 1; ++i)  //parent is not status here
                         desp.push(status.statuslist.get(i).cap)
-                    Pipeline2.run("title_updateStatus", desp)
+                    Pipeline2.run("title_updateNavigation", desp)
                 }
                 Component.onCompleted: {
-                    Pipeline2.find("title_updateStatus").next(function(aInput){
+                    Pipeline2.find("title_updateNavigation").next(function(aInput){
                         visible = aInput.length > 1
                         return {out: {}}
                     }, {}, {vtype: []})
                 }
             }
+        }*/
+        Navigation{
+            name: "title"
+            width: parent.width
+            height: 60
+            color: "lightskyblue"
         }
 
         Component{
@@ -80,7 +86,7 @@ ApplicationWindow {
             height: parent.height - 60
             //initialItem: items[0]
             Component.onCompleted: {
-                Pipeline2.find("title_updateStatus")
+                Pipeline2.find("title_updateNavigation")
                 .next(function(aInput){
                     var idx = aInput.length - 1
                     if (lastpage !== idx){
@@ -88,8 +94,7 @@ ApplicationWindow {
                         replace(items[lastpage])
                     }
                     return {out: {}}
-                }, {}, {name: "switch_page", vtype: []})
-                Pipeline2.run("loadUser", 0)
+                }, {tag: "manual"}, {name: "switch_page", vtype: []})
             }
         }
     }

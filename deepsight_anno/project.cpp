@@ -232,7 +232,7 @@ private:
                        if (dt.size() > 0){
                            auto tsks = getTasks();
                            auto id = tsks[dt[0].toInt()].toString();
-                           aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract), getTaskName(m_tasks.value(id).toObject())}), "title_updateStatus");
+                           aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract), getTaskName(m_tasks.value(id).toObject())}), "title_updateNavigation");
                            aInput->out<IProjectInfo>(IProjectInfo(&m_images, rea::Json("id", id,
                                                               "labels", getLabels(),
                                                               "channel", getChannelCount(),
@@ -241,7 +241,7 @@ private:
                                                               "type", getTaskType(m_tasks.value(id).toObject()))), openTask);
                        }
                    }), rea::Json("tag", openTask))
-            ->nextB("title_updateStatus")
+            ->nextB("title_updateNavigation", rea::Json("tag", "manual"))
             ->next(openTask);
     }
     void labelManagement(){
@@ -714,13 +714,13 @@ private:
     const QString setImageShow0 = "setImageShow";
     void guiManagement(){
         //the qsgnode will be destroyed by qt after switch page
-        rea::pipeline::find("title_updateStatus")
+        rea::pipeline::find("title_updateNavigation")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                 if (aInput->data().size() == 2)
                     aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
                 else
                     m_current_image = "";
-            }))
+            }), rea::Json("tag", "manual"))
             ->next("project_image_listViewSelected", rea::Json("tag", "manual"));
 
         //switch scatter mode

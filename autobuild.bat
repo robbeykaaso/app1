@@ -57,5 +57,5 @@ D:\qt-installer\bin\binarycreator.exe -c %buildApp%\qtinstall\config\config.xml 
 xcopy ..\frm\install\* ..\frm-company\install /e /y
 xcopy ..\frm\include\* ..\frm-company\include /e /y
 xcopy ..\dll2\* ..\frm-company\plugin /e /y
-:: xcopy DeepInspectionV4.exe ..\frm-company /y
+xcopy DeepInspectionV4.exe ..\frm-company /y
 :: "C:/Program Files/7-Zip/7z.exe" a -tzip DeepInspectionBinary.zip Release/*

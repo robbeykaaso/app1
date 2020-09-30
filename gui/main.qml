@@ -500,7 +500,26 @@ ApplicationWindow {
                 onClicked:
                     Pipeline2.run("_updateStatus", ["hello", "world"])
             }
-
+            Menu{
+                title: qsTr("navigation")
+                MenuItem{
+                    text: qsTr("2")
+                    onClicked: Pipeline2.run("_updateNavigation", ["first layer", "second layer"], {tag: "manual"})
+                }
+                MenuItem{
+                    text: qsTr("3")
+                    onClicked: Pipeline2.run("_updateNavigation", ["first layer", "second layer", "third layer"], {tag: "manual"})
+                }
+                MenuItem{
+                    text: qsTr("4")
+                    onClicked: Pipeline2.run("_updateNavigation", ["first layer", "second layer", "third layer", "forth layer"], {tag: "manual"})
+                }
+                Component.onCompleted: {
+                    Pipeline2.find("_updateNavigation").next(function(aInput){
+                        console.log(aInput)
+                    }, {tag: "manual"}, {vtype: []})
+                }
+            }
             MenuItem{
                 text: qsTr("search")
                 onClicked:
@@ -608,7 +627,7 @@ ApplicationWindow {
             anchors.fill: parent
             Row{
                 width: parent.width
-                height: parent.height - 30
+                height: parent.height - 60
                 Column{
                     width: parent.width * 0.3
                     height: parent.height
@@ -662,6 +681,10 @@ ApplicationWindow {
                         height: parent.height * 0.3
                     }
                 }
+            }
+            Navigation{
+                width: parent.width
+                height: 30
             }
             Status{
                 width: parent.width

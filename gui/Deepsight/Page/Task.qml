@@ -327,12 +327,12 @@ TabView{
                     Row{
                         anchors.fill: parent
                         Component.onCompleted: {
-                            Pipeline2.find("title_updateStatus").next(function(aInput){
+                            Pipeline2.find("title_updateNavigation").next(function(aInput){
                                 for (var i = 0; i < taskimage.children.length; ++i)
                                     taskimage.children[i].children[0].beforeDestroy()
 
                                 return {out: {}}
-                            }, {}, {name: "removeWholeTaskQSGNodes", vtype: []})
+                            }, {tag: "manual"}, {name: "removeWholeTaskQSGNodes", vtype: []})
 
                             Pipeline2.add(function(aInput){
                                 for (var i = 0; i < taskimage.children.length; ++i)

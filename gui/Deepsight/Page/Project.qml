@@ -385,12 +385,12 @@ TabView{
                     height: parent.height - 100
 
                     Component.onCompleted: {
-                        Pipeline2.find("title_updateStatus").next(function(aInput){
+                        Pipeline2.find("title_updateNavigation").next(function(aInput){
                             for (var i = 0; i < projectimage.children.length; ++i)
                                 projectimage.children[i].children[0].beforeDestroy()
 
                             return {out: {}}
-                        }, {}, {name: "removeWholeProjectQSGNodes", vtype: []})
+                        }, {tag: "manual"}, {name: "removeWholeProjectQSGNodes", vtype: []})
 
                         Pipeline2.add(function(aInput){
                             for (var i = 0; i < projectimage.children.length; ++i)

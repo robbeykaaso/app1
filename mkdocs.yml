@@ -42,6 +42,7 @@ nav:
                 - progress: gui/component/progress.md
                 - log: gui/component/log.md
                 - status: gui/component/status.md
+                - navigation: gui/component/navigation.md
                 - matrix: gui/component/matrix.md
                 - list: gui/component/list.md
                 - treeNodeView: gui/component/treeNodeView.md
