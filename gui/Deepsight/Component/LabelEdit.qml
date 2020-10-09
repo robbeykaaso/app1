@@ -20,7 +20,7 @@ Rectangle{
     MouseArea{
         anchors.fill: parent
         onClicked: {
-            lblmenu.open()
+            showMenu()
         }
     }
     Menu{
@@ -47,6 +47,10 @@ Rectangle{
             }
         }
     }*/
+
+    function showMenu(){
+        lblmenu.open()
+    }
 
     function updateMenu(aLabels){
         var lbls = aLabels[group]

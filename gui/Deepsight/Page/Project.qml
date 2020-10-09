@@ -413,9 +413,21 @@ TabView{
                                     lbl += shps[i]["caption"] || ""
                                 }
                                 projectimage.children[0].children[1].label = lbl
+                                if (aInput["show_menu"])
+                                    projectimage.children[0].children[1].showMenu()
                             }else
                                 projectimage.children[0].children[1].visible = false
                         }, {name: "updateQSGSelects_projectimage_gridder0"})
+
+                        Pipeline2.find("QSGAttrUpdated_projectimage_gridder0").next(function(aInput){
+                            for (var i in aInput){
+                                if (aInput[i]["key"][0] === "objects" && aInput[i]["type"] === "del" &&
+                                        projectimage.selects && projectimage.selects[aInput[i]["tar"]]){
+                                    projectimage.children[0].children[1].visible = false
+                                    break
+                                }
+                            }
+                        }, {}, {vtype: []})
                     }
                     Gridder{
                         id: projectimage
