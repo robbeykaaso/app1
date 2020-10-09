@@ -38,6 +38,8 @@ if not exist %buildShp% (
 cmake -S %srcShp% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildShp% -DMS=%buildApp%\Release\plugin
 %msbuild% %buildShp%\ALL_BUILD.vcxproj /p:Configuration=Release
 
+call recordVersion %buildApp%\Release\.version
+
 xcopy %buildApp%\Release\plugin\Release\* %buildApp%\Release\plugin /e /y
 rd /s /q %buildApp%\Release\plugin\Release
 
