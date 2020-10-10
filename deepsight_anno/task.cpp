@@ -816,7 +816,7 @@ void task::serverManagement(){
                             aInput->out<clientMessage>(res, "callClient");
                         }
 
-                           })->nextB("callClient"),
+                        }, rea::Json("name", "pollingTrainingState"))->nextB("callClient"),
                         rea::Json("tag", protocal_task_state));
         }else
             aInput->out<QJsonObject>(QJsonObject(), "tryLinkServer");
