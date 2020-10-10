@@ -768,7 +768,7 @@ void task::serverManagement(){
                                 }
 
                                 aInput->setData(ret)->out();
-                           })->nextB("callClient"),
+                        }, rea::Json("name", "startServerTraining"))->nextB("callClient"),
                         rea::Json("tag", protocal_training))
                 ->nextB(rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
                             auto dt = aInput->data();
