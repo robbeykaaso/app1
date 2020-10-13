@@ -16,7 +16,7 @@ ApplicationWindow {
     width: 800
     height: 700
     //Universal.theme: Universal.Dark
-    title: qsTr("DeepsightInspection V4.0/REA V7.1.0")
+    title: qsTr("DeepsightInspection V4.0/REA V7.1.1")
 
     onXChanged: function(aInput){
         Pipeline2.run("mainWindowPositionChanged", {dx: aInput - orgx})

@@ -1,8 +1,8 @@
 { 
     "source": "..",
-    "app": "../../buildApp/Release/DeepInspection.exe",
+    "app": "../../buildApp/qtinstall/mypackages/content3/data/DeepInspection.exe",
     "depends": "G:/dependency_walker/depends.exe",
     "filter": ["windows"],
     "qmladdition": [],
-    "addition": ["../../buildApp/Release/plugin"]
+    "addition": ["../../buildApp/qtinstall/mypackages/content3/data/plugin"]
 }

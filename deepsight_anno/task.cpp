@@ -1339,13 +1339,14 @@ void task::jobManagement(){
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                auto dt = aInput->data();
                do{
+                   aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobProgress");
                    if (dt.size() == 0){
                        aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobGUI");
-                       aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobProgress");
                        aInput->out<QJsonObject>(rea::Json("log", QJsonArray()), "updateTaskJobLog");
                        break;
                    }
                    auto cur = (m_jobs.begin() + dt[0].toInt()).key();
+                   aInput->out<QJsonObject>(m_jobs.value(cur).toObject(), "updateTaskJobGUI");
                    if (m_current_job != cur){
                        m_current_job = cur;
                        m_current_request = QString::number(QDateTime::currentDateTime().toTime_t()) + "_" + m_current_job;
