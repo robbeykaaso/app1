@@ -45,6 +45,7 @@ FocusScope {
             color: "#707070"
             onAccepted: {
                 wrapper.accepted()
+                focus = false
                 Pipeline2.run(name + "_Searched", "", {tag: "manual"})
             }
         }

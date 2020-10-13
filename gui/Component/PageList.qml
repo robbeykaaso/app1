@@ -178,6 +178,38 @@ Column {
         view.currentIndex = select >= entrycount * pageindex && select < entrycount * (pageindex + 1) ? select % entrycount : - 1
     }
 
+    function selectNext(aNext){
+        if (entries.length > 0){
+            var range = [entrycount * pageindex, entrycount * (pageindex + 1)]
+            for (var i in selects){
+                if (select !== selects[i] && selects[i] >= range[0] && selects[i] < range[1])
+                    mdl.get(selects[i] % entrycount).clr = dfltcolor
+            }
+            selects = [select]
+            if (aNext){
+                var refresh = false
+                if (selects[0] % entrycount == entrycount - 1 && selects[0] < entries.length - 1){
+                    pageindex++
+                    refresh = true
+                }
+                selects[0] = Math.min(selects[0] + 1, entries.length - 1)
+            }else{
+                if (selects[0] % entrycount == 0 && selects[0] > 0){
+                    pageindex--
+                    refresh = true
+                }
+                selects[0] = Math.max(selects[0] - 1, 0)
+            }
+            if (refresh)
+                updatePage()
+            else{
+                select = selects[0]
+                view.currentIndex = select >= entrycount * pageindex && select < entrycount * (pageindex + 1) ? select % entrycount : - 1
+            }
+            Pipeline2.run(name + "_listViewSelected", [], {tag: "manual"})
+        }
+    }
+
     Component.onCompleted: {
         Pipeline2.add(function(aInput){
             return {data: selects, out: {}}

@@ -233,6 +233,16 @@ TabView{
     Tab{
         title: qsTr("Image")
         active: true
+
+        Keys.onPressed: function(e){
+            var lst = getTab(2).children[0].children[0].children[0].children[1]
+            if (e.key === 16777236){
+                lst.selectNext(true)
+            }else if (e.key === 16777234){
+                lst.selectNext(false)
+            }
+        }
+
         Row{
             anchors.fill: parent
             Rectangle{
