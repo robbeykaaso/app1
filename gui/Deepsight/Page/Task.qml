@@ -203,7 +203,7 @@ TabView{
                                 updateMenu({filter: {"all": "", "used": "", "stage": ""}})
                                 Pipeline2.find("taskimage_Searched")
                                 .next(function(aInput){
-                                    if (label !== "all" && label !== "used")
+                                    if (label === "stage")
                                         return {out: [{out: {type: label, value: aInput}, next: "filterTaskImages"}]}
                                 }, {tag: "manual"}, {vtype: ""})
                                 .next("filterTaskImages")

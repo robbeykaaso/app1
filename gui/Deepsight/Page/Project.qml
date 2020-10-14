@@ -268,12 +268,17 @@ TabView{
                                     search.hint = "input time"
                                 else if (aLabel === "name")
                                     search.hint = "input name"
+                                else if (aLabel === "label"){
+                                    Pipeline2.run("calcLabelStatistics", {})
+                                    search.hint = ""
+                                    search.text = ""
+                                }
                             }
                             Component.onCompleted: {
-                                updateMenu({filter: {"all": "", "time": "", "name": ""}})
+                                updateMenu({filter: {"all": "", "time": "", "name": "", "label": ""}})
                                 Pipeline2.find("projectimage_Searched")
                                 .next(function(aInput){
-                                    if (label !== "all")
+                                    if (label === "time" || label === "name")
                                         return {out: [{out: {type: label, value: aInput}, next: "filterProjectImages"}]}
                                 }, {tag: "manual"}, {vtype: ""})
                                 .next("filterProjectImages")

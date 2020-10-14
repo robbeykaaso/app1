@@ -119,51 +119,56 @@ Column {
         ScrollBar.vertical: ScrollBar {
         }
     }
+
+    function updateList(aInput){
+        if (aInput["title"])
+            title = aInput["title"]
+        var entries = aInput["data"]
+        if (aInput["selects"])
+            selects = aInput["selects"]
+
+        var fontclr = aInput["fontclr"] || "black"
+        if (aInput["index"]){
+            var idxes = aInput["index"]
+            for (var j in entries){
+                var mdy = {entry: {},
+                           clr: (selects.indexOf(idxes[j]) > 0) ? selcolor : dfltcolor,
+                           fontclr: fontclr}
+                var nw_ent = entries[j]["entry"]
+                if (nw_ent){
+                    for (var l in nw_ent)
+                        mdy["entry"][l] = nw_ent[l]
+                }else
+                    mdy["entry"] = mdl.get(idxes[j]).entry
+                mdl.set(idxes[j], mdy)
+            }
+
+        }else{
+            mdl.clear()
+            for (var i in entries){
+                var ent = entries[i]["entry"]
+                if (ent){
+                    var itm = {entry: {},
+                               clr: (selects.indexOf(parseInt(i)) > 0) ? selcolor : dfltcolor,
+                               fontclr: fontclr}
+                    for (var k in ent)
+                        itm["entry"][k] = ent[k]
+                    mdl.append(itm)
+                }
+            }
+        }
+
+        if (aInput["selects"])
+            view.currentIndex = selects.length > 0 ? selects[0] : - 1
+    }
+
     Component.onCompleted: {
         Pipeline2.add(function(aInput){
             return {data: selects, out: {}}
         }, {name: name + "_listViewSelected", type: "Partial", vtype: []})
 
         Pipeline2.add(function(aInput){
-            if (aInput["title"])
-                title = aInput["title"]
-            var entries = aInput["data"]
-            if (aInput["selects"])
-                selects = aInput["selects"]
-
-            var fontclr = aInput["fontclr"] || "black"
-            if (aInput["index"]){
-                var idxes = aInput["index"]
-                for (var j in entries){
-                    var mdy = {entry: {},
-                               clr: (selects.indexOf(idxes[j]) > 0) ? selcolor : dfltcolor,
-                               fontclr: fontclr}
-                    var nw_ent = entries[j]["entry"]
-                    if (nw_ent){
-                        for (var l in nw_ent)
-                            mdy["entry"][l] = nw_ent[l]
-                    }else
-                        mdy["entry"] = mdl.get(idxes[j]).entry
-                    mdl.set(idxes[j], mdy)
-                }
-
-            }else{
-                mdl.clear()
-                for (var i in entries){
-                    var ent = entries[i]["entry"]
-                    if (ent){
-                        var itm = {entry: {},
-                                   clr: (selects.indexOf(parseInt(i)) > 0) ? selcolor : dfltcolor,
-                                   fontclr: fontclr}
-                        for (var k in ent)
-                            itm["entry"][k] = ent[k]
-                        mdl.append(itm)
-                    }
-                }
-            }
-
-            if (aInput["selects"])
-                view.currentIndex = selects.length > 0 ? selects[0] : - 1
+            updateList(aInput)
             return {out: {}}
         }, {name: name + "_updateListView"})
     }

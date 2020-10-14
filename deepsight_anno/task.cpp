@@ -547,7 +547,7 @@ void task::imageManagement(){
             auto stg = dt.value("value").toString();
             for (auto i : imgs.keys()){
                 auto img = imgs.value(i).toObject();
-                if (img.value("stage") == stg)
+                if (img.value("stage") == stg || (!img.contains("stage") && stg == "none"))
                     lst.push_back(i);
             }
             setImageList(lst);
