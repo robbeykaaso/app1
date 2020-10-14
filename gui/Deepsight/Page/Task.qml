@@ -198,9 +198,14 @@ TabView{
                                     search.text = ""
                                 }else if (aLabel === "stage")
                                     search.hint = "input stage"
+                                else if (aLabel === "label"){
+                                    Pipeline2.run("calcTaskLabelStatistics", {})
+                                    search.hint = ""
+                                    search.text = ""
+                                }
                             }
                             Component.onCompleted: {
-                                updateMenu({filter: {"all": "", "used": "", "stage": ""}})
+                                updateMenu({filter: {"all": "", "used": "", "stage": "", "label": ""}})
                                 Pipeline2.find("taskimage_Searched")
                                 .next(function(aInput){
                                     if (label === "stage")

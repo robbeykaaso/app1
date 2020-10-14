@@ -10,6 +10,9 @@
 class project : public imageModel{
 protected:
    // ABSTRACT(Task)
+    QJsonObject getImageAbstracts() override{
+        return m_images;
+    }
 private:
     const QString openTask = "openTask";
     const QString importImage = "importImage";
@@ -245,98 +248,9 @@ private:
             ->next(openTask);
     }
 
-    struct labelStatisticRec{
-        int count = 0;
-        QSet<QString> images;
-    };
     void labelManagement(){
         //label statistics
-        using groupStatisticRec = QHash<QString, labelStatisticRec>;
-        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
-            auto valid_lbls = std::make_shared<QHash<QString, QSet<QString>>>();
-            auto grps = getLabels();
-            for (auto i : grps.keys()){
-                auto lbls = grps.value(i).toObject();
-                for (auto j : lbls.keys())
-                    rea::tryFind(valid_lbls.get(), i)->insert(j);
-            }
-
-            auto ret = std::make_shared<QHash<QString, groupStatisticRec>>();
-            for (auto i : m_images.keys()){
-                auto img = m_images.value(i).toObject();
-                auto lbls = getImageLabels(img);
-                if (lbls.size() > 0)
-                    for (auto j : lbls.keys()){
-                        auto lbl = lbls.value(j).toString();
-                        if (rea::tryFind(valid_lbls.get(), j)->contains(lbl)){
-                            auto rec = rea::tryFind(rea::tryFind(ret.get(), j), lbl);
-                            rec->count++;
-                            rec->images.insert(i);
-                        }
-                    }
-                else{
-                    auto rec = rea::tryFind(rea::tryFind(ret.get(), QString("")), QString("no image"));
-                    rec->count++;
-                    rec->images.insert(i);
-                }
-            }
-
-            aInput->cache<int>(0);
-            aInput->cache<std::shared_ptr<QHash<QString, QSet<QString>>>>(valid_lbls);
-            aInput->cache<std::shared_ptr<QHash<QString, groupStatisticRec>>>(ret);
-            aInput->out<QJsonObject>(rea::Json("title", "statistics", "sum", m_images.size()), "updateProgress");
-            for (auto i : m_images.keys())
-                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + i + ".json"));
-        }, rea::Json("name", "calcLabelStatistics"))
-            ->nextB("updateProgress")
-            ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
-            ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
-                auto cnt = aInput->cacheData<int>(0);
-                ++cnt;
-                aInput->out<QJsonObject>(QJsonObject(), "updateProgress");
-                if (cnt == m_images.size()){
-                    auto ret = aInput->cacheData<std::shared_ptr<QHash<QString, groupStatisticRec>>>(2);
-                    QJsonArray data;
-                    for (auto i : ret->keys()){
-                        auto recs = ret->value(i);
-                        for (auto j : recs.keys()){
-                            auto rec = recs.value(j);
-                            QJsonArray imgs;
-                            for (auto k : rec.images)
-                                imgs.push_back(k);
-                            data.push_back(rea::Json("entry", rea::JArray(i, j, rec.count, imgs)));
-                        }
-                    }
-
-                    aInput->out<QJsonObject>(rea::Json("title", rea::JArray("group", "label", "count"),
-                                                       "selects", data.size() > 0 ? rea::JArray(0) : QJsonArray(),
-                                                       "data", data,
-                                                       "tag", "filterProjectImages"), "showLabelStatistics");
-                }else{
-                    aInput->cache<int>(cnt, 0);
-                    auto valid_lbls = aInput->cacheData<std::shared_ptr<QHash<QString, QSet<QString>>>>(1);
-                    auto ret = aInput->cacheData<std::shared_ptr<QHash<QString, groupStatisticRec>>>(2);
-                    auto valid_lbls2 = rea::tryFind(valid_lbls.get(), QString("shape"));
-                    auto shps = aInput->data().getData().value("shapes").toObject();
-                    if (shps.size() > 0)
-                        for (auto i : shps){
-                            auto lbl = i.toObject().value("label").toString();
-                            if (valid_lbls2->contains(lbl)){
-                                auto rec = rea::tryFind(rea::tryFind(ret.get(), QString("shape")), lbl);
-                                rec->count++;
-                                rec->images.insert(*(m_images.keys().begin() + cnt - 1));
-                            }
-                        }
-                    else{
-                        auto rec = rea::tryFind(rea::tryFind(ret.get(), QString("")), QString("no shape"));
-                        rec->count++;
-                        rec->images.insert(*(m_images.keys().begin() + cnt - 1));
-                    }
-                }
-            }))
-            ->nextB("updateProgress")
-            ->next("showLabelStatistics")
-            ->next("filterProjectImages", rea::Json("tag", "filterProjectImages"));
+        serviceLabelStatistics("Project");
 
         //select label group
         rea::pipeline::find("project_label_listViewSelected")

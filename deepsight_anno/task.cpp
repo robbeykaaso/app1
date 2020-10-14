@@ -286,6 +286,9 @@ void task::taskManagement(){
 }
 
 void task::labelManagement(){
+    //label statistics
+    serviceLabelStatistics("Task");
+
     //update project labels
     rea::pipeline::find("projectLabelChanged")
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
@@ -551,6 +554,8 @@ void task::imageManagement(){
                     lst.push_back(i);
             }
             setImageList(lst);
+        }else if (dt.value("type") == "label"){
+            setImageList(dt.value("value").toArray());
         }else
             return;
         setFilter(dt);

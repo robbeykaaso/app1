@@ -269,7 +269,7 @@ TabView{
                                 else if (aLabel === "name")
                                     search.hint = "input name"
                                 else if (aLabel === "label"){
-                                    Pipeline2.run("calcLabelStatistics", {})
+                                    Pipeline2.run("calcProjectLabelStatistics", {})
                                     search.hint = ""
                                     search.text = ""
                                 }

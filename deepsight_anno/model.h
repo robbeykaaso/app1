@@ -51,10 +51,17 @@ protected:
     QJsonObject getFilter();
     void setFilter(const QJsonObject& aFilter);
     bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
+    void serviceLabelStatistics(const QString& aName);
+    virtual QJsonObject getImageAbstracts() = 0;
 protected:
     QString m_project_id = "";
     QJsonObject m_image;
-    QString m_current_image = "";   
+    QString m_current_image = "";
+private:
+    struct labelStatisticRec{
+        int count = 0;
+        QSet<QString> images;
+    };
 };
 
 class IProjectInfo : public QJsonObject{

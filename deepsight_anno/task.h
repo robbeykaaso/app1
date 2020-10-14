@@ -47,6 +47,10 @@ protected:
 class task : public imageModel{
 private:
     friend ITaskFriend;
+protected:
+    QJsonObject getImageAbstracts() override{
+        return *m_project_images;
+    }
 private:
     void setLabels(const QJsonObject& aLabels);
     QString getImageStage(const QJsonObject& aImage);
