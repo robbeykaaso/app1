@@ -28,6 +28,7 @@ protected:
     bool isCurrentMode(const QString& aMode);
     int getShowCount();
     void updateCurrentImage();
+    void serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage);
     task* m_task;
 private:
     QHash<QString, bool> m_paths;

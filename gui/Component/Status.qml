@@ -4,13 +4,17 @@ import Pipe2 1.0
 Status0{
     property string name
 
+    function updateStatus(aInput){
+        statuslist.clear()
+        for (var i in aInput)
+            statuslist.append({cap: aInput[i]})
+    }
+
     Pipe2{
         param: {"name": name + "_updateStatus",
                 "vtype": []}
         func: function(aInput){
-            statuslist.clear()
-            for (var i in aInput)
-                statuslist.append({cap: aInput[i]})
+            updateStatus(aInput)
             return {out: {}}
         }
     }

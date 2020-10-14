@@ -52,6 +52,7 @@ protected:
     void setFilter(const QJsonObject& aFilter);
     bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
     void serviceLabelStatistics(const QString& aName);
+    void serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage);
     virtual QJsonObject getImageAbstracts() = 0;
 protected:
     QString m_project_id = "";
@@ -62,6 +63,7 @@ private:
         int count = 0;
         QSet<QString> images;
     };
+    rea::pipe0* m_map_status_show = nullptr;
 };
 
 class IProjectInfo : public QJsonObject{

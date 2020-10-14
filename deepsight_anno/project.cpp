@@ -437,8 +437,6 @@ private:
         }, rea::Json("name", "projectLabelChanged"));
     }
 private:
-    std::vector<stgCVMat> m_cvmat_cache;
-    QHash<QString, int> m_show_cache;
     const QJsonObject selectProjectImage = rea::Json("tag", "selectProjectImage");
 
     QJsonObject getImageShow(){
@@ -489,8 +487,7 @@ private:
                                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), "deepsightreadJson", selectProjectImage);
                                    for (auto i = 0; i < m_show_count; ++i){
                                        auto img = "project/" + m_project_id + "/image/" + nm + "/" + nms[i].toString();
-                                       m_show_cache.insert(img, i);
-                                       aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img));
+                                       aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img), "", QJsonObject(), false)->cache<int>(i);
                                    }
                                }
                                //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateProjectImageGUI");
@@ -511,7 +508,6 @@ private:
             ->next(rea::local("deepsightreadCVMat", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 auto dt = aInput->data();
-                auto ch = m_show_cache.value(dt);
                 auto pth = QString(dt);
                 auto img = cvMat2QImage(dt.getData());
                 rea::imagePool::cacheImage(pth, img);
@@ -552,30 +548,33 @@ private:
                                                        //"location", "bottom"
                                                        ),
                                      "objects", objs);
-                rea::pipeline::run<QJsonObject>("updateQSGModel_projectimage_gridder" + QString::number(ch), cfg);
+                auto ch = QString::number(aInput->cacheData<int>(0));
+                rea::pipeline::run<QJsonObject>("updateQSGModel_projectimage_gridder" + ch, cfg);
+                serviceShowPosStatus("project", ch, img);
                 //aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder0");
             }));
 
         //import image
         rea::pipeline::find("_selectFile")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-                       m_cvmat_cache.clear();
                        auto pths = aInput->data();
                        auto remain = pths.size() % getChannelCount();
                        while (remain--)
                            pths.pop_back();
                        aInput->out<QJsonObject>(rea::Json("title", importImage, "sum", pths.size()), "updateProgress");
+                       aInput->cache<std::vector<stgCVMat>>(std::vector<stgCVMat>());
                        for (auto i : pths)
                            aInput->out<stgCVMat>(stgCVMat(cv::Mat(), i.toString()));
                    }), rea::Json("tag", importImage))
             ->nextB("updateProgress")
             ->next(rea::local("readCVMat", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
-                m_cvmat_cache.push_back(aInput->data());
-                int sz = int(m_cvmat_cache.size());
+                auto imgs_cache = aInput->cacheData<std::vector<stgCVMat>>(0);
+                imgs_cache.push_back(aInput->data());
+                int sz = int(imgs_cache.size());
                 if (sz == getChannelCount()){
-                    auto w = m_cvmat_cache[0].getData().cols, h = m_cvmat_cache[0].getData().rows;
-                    for (auto i : m_cvmat_cache){ //make sure the same width and height
+                    auto w = imgs_cache[0].getData().cols, h = imgs_cache[0].getData().rows;
+                    for (auto i : imgs_cache){ //make sure the same width and height
                         if (i.getData().cols != w || i.getData().rows != h){
                             aInput->out<QJsonObject>(rea::Json("step", sz), "updateProgress");
                             return;
@@ -586,7 +585,7 @@ private:
                     QJsonArray nms;
                     QJsonArray localpth;
                     QJsonArray channels;
-                    for (auto i : m_cvmat_cache){
+                    for (auto i : imgs_cache){
                         localpth.push_back(i);
                         channels.push_back(i.getData().channels());
                         auto nm = i.mid(i.lastIndexOf("/") + 1, i.length());
@@ -607,8 +606,9 @@ private:
                     imgs.push_back(id);
                     setImages(imgs);   //update project_id.json
 
-                    m_cvmat_cache.clear();
+                    imgs_cache.clear();
                 }
+                aInput->cache<std::vector<stgCVMat>>(imgs_cache, 0);
             }))
             ->nextB("updateProgress")
             ->nextB("deepsightwriteJson")

@@ -67,6 +67,10 @@ void ITaskFriend::updateCurrentImage(){
     m_task->m_current_image = "";
 }
 
+void ITaskFriend::serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage){
+    m_task->serviceShowPosStatus(aName, aChannel, aImage);
+}
+
 void taskMode::initialize(){
     rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
         //if (getImageID() == "")
@@ -154,7 +158,9 @@ std::function<void(void)> taskMode::showQSGModel(int aChannel, stgCVMat& aImage)
                                            "size", rea::JArray(80, 30)),
                          "objects", objs);
     updateShowConfig(cfg);
-    rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + QString::number(aChannel), cfg);
+    auto ch = QString::number(aChannel);
+    rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + ch, cfg);
+    serviceShowPosStatus("task", ch, img);
     return add_show;
 }
 

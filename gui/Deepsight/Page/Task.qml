@@ -338,7 +338,7 @@ TabView{
                 }
                 Item{
                     width: parent.width
-                    height: parent.height - 100
+                    height: parent.height - 130
                     Row{
                         anchors.fill: parent
                         Component.onCompleted: {
@@ -600,7 +600,17 @@ TabView{
 
                     }
                 }
+                Status{
+                    id: sts
+                    name: "taskimage"
+                    width: parent.width
+                    height: 30
+                }
             }
+        }
+        onVisibleChanged: {
+            if (visible)
+                children[0].children[1].children[2].updateStatus([])
         }
     }
     Tab{
