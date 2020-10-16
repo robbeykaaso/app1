@@ -485,6 +485,12 @@ TabView{
                                     }
                                 }
                                 Button{
+                                    text: qsTr("default")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "transform"}])
+                                }
+                                Button{
                                     text: qsTr("select")
                                     height: 30
                                     width: parent.width

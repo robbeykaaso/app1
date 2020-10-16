@@ -223,24 +223,20 @@ void imageModel::serviceLabelStatistics(const QString& aName){
 }
 
 void imageModel::serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage){
-    if (!m_map_status_show){
-        m_map_status_show =
-            rea::pipeline::add<QJsonObject>([aName, aImage](rea::stream<QJsonObject>* aInput){
-                auto dt = aInput->data();
-                QJsonArray ret;
-                auto x = dt.value("x").toInt(), y= dt.value("y").toInt();
-                ret.push_back("x: " + QString::number(x) + "; " +
-                              "y: " + QString::number(y));
-                if (x >= 0 && x < aImage.width() && y >= 0 && y < aImage.height()){
-                    auto clr = aImage.pixelColor(x, y);
-                    ret.push_back("r: " + QString::number(clr.red()) + "; " +
-                                  "g: " + QString::number(clr.green()) + "; " +
-                                  "b: " + QString::number(clr.blue()));
-                }
-                aInput->out<QJsonArray>(ret, aName + "image_updateStatus");
-            });
-    }
     rea::pipeline::find("updateQSGPos_" + aName + "image_gridder" + aChannel)
-        ->next(m_map_status_show)
+        ->next(rea::pipeline::add<QJsonObject>([aName, aImage](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            QJsonArray ret;
+            auto x = dt.value("x").toInt(), y= dt.value("y").toInt();
+            ret.push_back("x: " + QString::number(x) + "; " +
+                          "y: " + QString::number(y));
+            if (x >= 0 && x < aImage.width() && y >= 0 && y < aImage.height()){
+                auto clr = aImage.pixelColor(x, y);
+                ret.push_back("r: " + QString::number(clr.red()) + "; " +
+                              "g: " + QString::number(clr.green()) + "; " +
+                              "b: " + QString::number(clr.blue()));
+            }
+            aInput->out<QJsonArray>(ret, aName + "image_updateStatus");
+        }, rea::Json("name", "updateQSGPosMapShow_" + aChannel)))
         ->next(aName + "image_updateStatus");
 }

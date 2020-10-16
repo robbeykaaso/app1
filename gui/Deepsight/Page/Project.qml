@@ -490,6 +490,12 @@ TabView{
                         Column{
                             anchors.fill: parent
                             Button{
+                                text: qsTr("default")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "transform"}])
+                            }
+                            Button{
                                 text: qsTr("select")
                                 height: 30
                                 width: parent.width

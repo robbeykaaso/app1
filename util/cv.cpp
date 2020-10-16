@@ -5,17 +5,19 @@ QImage cvMat2QImage(const cv::Mat& mat)
     if (mat.type() == CV_8UC1)
     {
         QImage image(mat.cols, mat.rows, QImage::Format_Indexed8);
-        image.setColorCount(256);
-        for (int i = 0; i < 256; i++)
-        {
-            image.setColor(i, qRgb(i, i, i));
-        }
-        uchar *pSrc = mat.data;
-        for (int row = 0; row < mat.rows; row++)
-        {
-            uchar *pDest = image.scanLine(row);
-            memcpy(pDest, pSrc, mat.cols);
-            pSrc += mat.step;
+        if (!image.isNull()){
+            image.setColorCount(256);
+            for (int i = 0; i < 256; i++)
+            {
+                image.setColor(i, qRgb(i, i, i));
+            }
+            uchar *pSrc = mat.data;
+            for (int row = 0; row < mat.rows; row++)
+            {
+                uchar *pDest = image.scanLine(row);
+                memcpy(pDest, pSrc, mat.cols);
+                pSrc += mat.step;
+            }
         }
         // cv::Mat dst;
         // cv::cvtColor(mat, dst, cv::COLOR_GRAY2RGB);

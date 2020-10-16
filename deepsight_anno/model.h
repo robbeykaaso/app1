@@ -63,7 +63,6 @@ private:
         int count = 0;
         QSet<QString> images;
     };
-    rea::pipe0* m_map_status_show = nullptr;
 };
 
 class IProjectInfo : public QJsonObject{
