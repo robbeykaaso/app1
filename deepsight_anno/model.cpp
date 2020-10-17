@@ -12,6 +12,10 @@ QJsonObject imageModel::getLabels(){
     return value("labels").toObject();
 }
 
+QJsonObject imageModel::getShapeLabels(const QJsonObject& aLabels){
+    return aLabels.value("shape").toObject();
+}
+
 QJsonObject imageModel::getImageLabels(const QJsonObject& aImageAbstract){
     return aImageAbstract.value("image_label").toObject();
 }

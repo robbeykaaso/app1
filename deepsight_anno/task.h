@@ -13,6 +13,7 @@ public:
         m_task = aTask;
     }
 protected:
+    QJsonObject getShapeLabels(const QJsonObject& aLabels);
     bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
     QString getTaskJsonPath();
     QString getImageJsonPath();

@@ -5,11 +5,12 @@ import Pipeline2 1.0
 Rectangle{
     property string group: "shape"
     property string label
+    property var colormap: ({})
     property int fontsize: 16
     signal updatelabel(string aLabel)
     width: 80
     height: 30
-    color: "white"
+    color: colormap[label] ? (colormap[label]["color"] ? colormap[label]["color"] : "white") : "white"
     border.color: "black"
     Label{
         text: label

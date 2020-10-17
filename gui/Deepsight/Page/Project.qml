@@ -378,7 +378,7 @@ TabView{
                                         children[i].destroy()
                                     for (var j in aInput)
                                         if (j !== "shape"){
-                                            lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(aInput)
+                                            lbledt.createObject(imglbls, {group: j, label: labels[j], colormap: aInput[j]}).updateMenu(aInput)
                                         }
                                 })
                             }
@@ -444,44 +444,48 @@ TabView{
                             }
                         }, {}, {vtype: []})
                     }
-                    Gridder{
-                        id: projectimage
-                        property var selects
-                        name: "projectimage"
-                        size: 1
-                        com: Rectangle{
-                            property string name
-                            width: parent.width / parent.columns
-                            height: parent.height / parent.rows
-                            color: "transparent"
-                            border.color: "black"
-                            QSGBoard{
-                                name: parent.name
-                                anchors.fill: parent
-                                plugins: [{type: "transform"}]
-                                Component.onDestruction: {
-                                    beforeDestroy()
+                    Item{
+                        width: parent.width - 60
+                        height: parent.height
+                        BoardMenu{
+                            parentname: "projectimage_gridder0"
+                        }
+                        Gridder{
+                            id: projectimage
+                            property var selects
+                            anchors.fill: parent
+                            name: "projectimage"
+                            size: 1
+                            com: Rectangle{
+                                property string name
+                                width: parent.width / parent.columns
+                                height: parent.height / parent.rows
+                                color: "transparent"
+                                border.color: "black"
+                                QSGBoard{
+                                    name: parent.name
+                                    anchors.fill: parent
+                                    plugins: [{type: "transform2"}]
+                                    Component.onDestruction: {
+                                        beforeDestroy()
+                                    }
                                 }
-                            }
-                            LabelEdit{
-                                visible: false
-                                onUpdatelabel: function(aLabel){
-                                    if (projectimage.selects)
-                                        for (var j = 0; j < projectimage.children.length; ++j)
-                                            for (var i in projectimage.selects)
-                                                Pipeline2.run("updateQSGAttr_" + projectimage.children[j].name, {obj: i, key: ["caption"], val: aLabel, cmd: true})
-                                }
-                                Component.onCompleted: {
-                                    if (parent.name === "projectimage_gridder0"){
-                                        Pipeline2.find("projectLabelChanged").next(function(aInput){
-                                            updateMenu(aInput)
-                                        })
+                                LabelEdit{
+                                    visible: false
+                                    onUpdatelabel: function(aLabel){
+                                        if (projectimage.selects)
+                                            Pipeline2.run("updateProjectShapeLabel", {shapes: projectimage.selects, label: aLabel})
+                                    }
+                                    Component.onCompleted: {
+                                        if (parent.name === "projectimage_gridder0"){
+                                            Pipeline2.find("projectLabelChanged").next(function(aInput){
+                                                updateMenu(aInput)
+                                            })
+                                        }
                                     }
                                 }
                             }
                         }
-                        width: parent.width - 60
-                        height: parent.height
                     }
                     Rectangle{
                         width: 60
@@ -493,7 +497,7 @@ TabView{
                                 text: qsTr("default")
                                 height: 30
                                 width: parent.width
-                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "transform"}])
+                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "transform2"}])
                             }
                             Button{
                                 text: qsTr("select")

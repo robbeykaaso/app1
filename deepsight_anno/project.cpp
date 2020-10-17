@@ -22,7 +22,10 @@ private:
     QJsonObject m_images;
 private:
     int getChannelCount(){
-        return m_project_abstract.value("channel").toString("1").toInt();
+        if (m_project_abstract.value("channel").isString())
+            return m_project_abstract.value("channel").toString().toInt();
+        else
+            return m_project_abstract.value("channel").toInt();
     }
     QJsonArray getImages(){
         return value("images").toArray();
@@ -409,6 +412,29 @@ private:
             ->nextB("updateProjectLabelGUI")
             ->next("deepsightwriteJson");
 
+        //modifyShapeLabel
+        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            auto shps = dt.value("shapes").toObject();
+            auto lbl = dt.value("label").toString();
+            auto lbls = getShapeLabels(getLabels());
+            for (auto i : shps.keys()){
+                for (auto j = 0; j < m_show_count; ++j){
+                    rea::pipeline::run<QJsonArray>("updateQSGAttrs_projectimage_gridder" + QString::number(j),
+                                                   rea::JArray(
+                                                       rea::Json("obj", i,
+                                                                 "key", rea::JArray("caption"),
+                                                                 "val", lbl,
+                                                                 "cmd", true),
+                                                       rea::Json("obj", i,
+                                                                 "key", rea::JArray("color"),
+                                                                 "val", lbls.value(lbl).toObject().value("color"))
+                                                           )
+                                                   );
+                }
+            }
+        }, rea::Json("name", "updateProjectShapeLabel"));
+
         //modifyImageLabel
         const QString modifyImageLabel_nm = "modifyProjectImageLabel";
         auto modifyImageLabel_tag = rea::Json("tag", modifyImageLabel_nm);
@@ -519,11 +545,13 @@ private:
                                  "text", QJsonObject(),
                                  "transform", getImageShow()));
                 auto shps = getShapes(m_image);
+                auto lbls = getShapeLabels(getLabels());
                 for (auto i : shps.keys()){
                     auto shp = shps.value(i).toObject();
                     if (shp.value("type") == "ellipse"){
                         objs.insert(i, rea::Json("type", "ellipse",
                                                  "caption", shp.value("label"),
+                                                 "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
                                                  "center", shp.value("center"),
                                                  "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
                                                  "angle", shp.value("angle")));
@@ -535,6 +563,7 @@ private:
                             pts.push_back(i);
                         objs.insert(i, rea::Json("type", "poly",
                                                  "caption", shp.value("label"),
+                                                 "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
                                                  "points", pts));
                     }
                 }

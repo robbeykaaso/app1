@@ -97,6 +97,5 @@ Component.prototype.createOperations = function()
             //https://www.cnblogs.com/oloroso/p/6775318.html#%E6%93%8D%E4%BD%9C-operations
         component.addOperation("Execute", "@TargetDir@/minIO/gen.bat", storage_dir, "@TargetDir@/minIO/");
         component.addOperation("Execute", "@TargetDir@/minIO/storage_install.bat");
-        component.addOperation("Execute", "@TargetDir@/key.bat");
     }
 }

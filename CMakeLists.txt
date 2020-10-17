@@ -86,8 +86,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${REA_INCLUDE_DIRS})
 
-include_directories(${RxCpp_INCLUDE_DIRS})
-include_directories(${RapidJSON_INCLUDE_DIRS})
+#include_directories(${RxCpp_INCLUDE_DIRS})
+#include_directories(${RapidJSON_INCLUDE_DIRS})
 #include_directories(${PYTHON_INCLUDE_DIRS})
 #include_directories(${DeepInspectSDK_INCLUDE_DIRS})
 #message("xxx: ${REA_INCLUDE_DIRS}")

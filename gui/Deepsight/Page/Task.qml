@@ -309,7 +309,7 @@ TabView{
                                     var lbls = getActLabels(proj_lbls, tsk_lbls)
                                     for (var j in lbls)
                                         if (j !== "shape"){
-                                            lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(lbls)
+                                            lbledt.createObject(imglbls, {group: j, label: labels[j], colormap: proj_lbls[j]}).updateMenu(lbls)
                                         }
                                 })
                                 Pipeline2.find("projectLabelChanged").next(function(aInput){
@@ -319,7 +319,7 @@ TabView{
                                     var lbls = getActLabels(proj_lbls, tsk_lbls)
                                     for (var j in lbls)
                                         if (j !== "shape"){
-                                            lbledt.createObject(imglbls, {group: j, label: labels[j]}).updateMenu(lbls)
+                                            lbledt.createObject(imglbls, {group: j, label: labels[j], colormap: proj_lbls[j]}).updateMenu(lbls)
                                         }
                                 })
                             }
@@ -400,7 +400,7 @@ TabView{
                                 QSGBoard{
                                     name: parent.name
                                     anchors.fill: parent
-                                    plugins: [{type: "transform"}]
+                                    plugins: [{type: "transform2"}]
                                     Component.onDestruction: {
                                         beforeDestroy()
                                     }
@@ -411,9 +411,7 @@ TabView{
                                     visible: false
                                     onUpdatelabel: function(aLabel){
                                         if (taskimage.selects)
-                                            for (var j = 0; j < taskimage.children.length; ++j)
-                                                for (var i in taskimage.selects)
-                                                    Pipeline2.run("updateQSGAttr_" + taskimage.children[j].name, {obj: i, key: ["caption"], val: aLabel, cmd: true})
+                                            Pipeline2.run("updateTaskShapeLabel", {shapes: taskimage.selects, label: aLabel})
                                     }
                                     Component.onCompleted: {
                                         proj_lbls = {}
@@ -488,7 +486,7 @@ TabView{
                                     text: qsTr("default")
                                     height: 30
                                     width: parent.width
-                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "transform"}])
+                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "transform2"}])
                                 }
                                 Button{
                                     text: qsTr("select")

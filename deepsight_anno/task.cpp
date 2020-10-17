@@ -5,6 +5,10 @@
 #include "../socket/protocal.h"
 #include "../util/cv.h"
 
+QJsonObject ITaskFriend::getShapeLabels(const QJsonObject& aLabels){
+    return m_task->getShapeLabels(aLabels);
+}
+
 bool ITaskFriend::modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath){
     return m_task->modifyImage(aModification, aImage, aPath);
 }
@@ -109,6 +113,7 @@ void taskMode::initialize(){
 std::function<void(void)> taskMode::prepareQSGObjects(QJsonObject &aObjects){
     auto tsk_shp_lbls = getTaskLabels().value("shape").toObject(), prj_shp_lbls = getProjectLabels().value("shape").toObject();
 
+    auto lbls = getShapeLabels(getProjectLabels());
     auto shps = getShapes(getImageData());
     for (auto i : shps.keys()){
         auto shp = shps.value(i).toObject();
@@ -117,6 +122,7 @@ std::function<void(void)> taskMode::prepareQSGObjects(QJsonObject &aObjects){
             if (shp.value("type") == "ellipse"){
                 aObjects.insert(i, rea::Json("type", "ellipse",
                                              "caption", shp.value("label"),
+                                             "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
                                              "center", shp.value("center"),
                                              "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
                                              "angle", shp.value("angle")));
@@ -128,6 +134,7 @@ std::function<void(void)> taskMode::prepareQSGObjects(QJsonObject &aObjects){
                     pts.push_back(i);
                 aObjects.insert(i, rea::Json("type", "poly",
                                              "caption", shp.value("label"),
+                                             "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
                                              "points", pts));
             }
         }
@@ -292,6 +299,29 @@ void task::taskManagement(){
 }
 
 void task::labelManagement(){
+    //modifyShapeLabel
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        auto dt = aInput->data();
+        auto shps = dt.value("shapes").toObject();
+        auto lbl = dt.value("label").toString();
+        auto lbls = getShapeLabels(m_project_labels);
+        for (auto i : shps.keys()){
+            for (auto j = 0; j < m_show_count; ++j){
+                rea::pipeline::run<QJsonArray>("updateQSGAttrs_taskimage_gridder" + QString::number(j),
+                                               rea::JArray(
+                                                   rea::Json("obj", i,
+                                                             "key", rea::JArray("caption"),
+                                                             "val", lbl,
+                                                             "cmd", true),
+                                                   rea::Json("obj", i,
+                                                             "key", rea::JArray("color"),
+                                                             "val", lbls.value(lbl).toObject().value("color"))
+                                                                                                                  )
+                                                                                                      );
+            }
+        }
+    }, rea::Json("name", "updateTaskShapeLabel"));
+
     //label statistics
     serviceLabelStatistics("Task");
 
@@ -637,7 +667,7 @@ void task::imageManagement(){
         }
         setImages(imgs);
         aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
-        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", QJsonObject(), false);
         aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), "deepsightwriteJson");
     }))
     ->nextB("task_image_updateListView")
