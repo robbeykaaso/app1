@@ -12,6 +12,7 @@ const auto protocal_upload = "upload";
 const auto protocal_progress_push = "task_progress_push";
 const auto protocal_log_push = "task_log";
 const auto protocal_stop_job = "stop_job";
+const auto protocal_delete_job = "delete";
 const auto protocal = rea::Json(protocal_test,
                                 rea::Json("req", rea::Json(
                                                      "type", protocal_test,
@@ -80,11 +81,21 @@ const auto protocal = rea::Json(protocal_test,
                                 protocal_stop_job,
                                 rea::Json("req", rea::Json(
                                                      "type", protocal_stop_job,
-                                                     "token", protocal_stop_job,
+                                                     "token", rea::GetMachineFingerPrint(),
                                                      "soft_stop", true
                                                      ),
                                           "res", rea::Json(
                                                      "type", protocal_stop_job,
+                                                     "err_code", 0,
+                                                     "msg", "..."
+                                                     )),
+                                protocal_delete_job,
+                                rea::Json("req", rea::Json(
+                                                     "type", protocal_delete_job,
+                                                     "token", rea::GetMachineFingerPrint()
+                                                         ),
+                                          "res", rea::Json(
+                                                     "type", protocal_delete_job,
                                                      "err_code", 0,
                                                      "msg", "..."
                                                      ))

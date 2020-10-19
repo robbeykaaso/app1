@@ -244,3 +244,22 @@ void imageModel::serviceShowPosStatus(const QString aName, const QString& aChann
         }, rea::Json("name", "updateQSGPosMapShow_" + aChannel)))
         ->next(aName + "image_updateStatus");
 }
+
+void imageModel::serviceSelectFirstImageIndex(const QString aName){
+    rea::pipeline::add<QJsonObject>([this, aName](rea::stream<QJsonObject>* aInput){
+        auto dt = aInput->data();
+        auto chs = getChannelCount();
+        if (dt.value("next").toBool()){
+            m_current_image = "";
+            m_first_image_index = std::min(m_first_image_index + 1, chs - 1);
+        }else if (dt.value("previous").toBool()){
+            m_current_image = "";
+            m_first_image_index = std::max(m_first_image_index - 1, 0);
+        }else if (dt.contains("index")){
+            m_current_image = "";
+            m_first_image_index = std::min(std::max(0, dt.value("index").toInt()), chs - 1);
+        }
+        aInput->out<QJsonArray>(QJsonArray(), aName + "_image_listViewSelected");
+    }, rea::Json("name", "switch" + aName + "FirstImageIndex"))
+        ->next(aName + "_image_listViewSelected", rea::Json("tag", "manual"));
+}

@@ -53,6 +53,9 @@ protected:
     QJsonObject getImageAbstracts() override{
         return *m_project_images;
     }
+    int getChannelCount() override{
+        return m_channel_count;
+    }
 private:
     void setLabels(const QJsonObject& aLabels);
     QString getImageStage(const QJsonObject& aImage);

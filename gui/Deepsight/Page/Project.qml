@@ -240,6 +240,12 @@ TabView{
                 lst.selectNext(true)
             }else if (e.key === 16777234){
                 lst.selectNext(false)
+            }else if (e.key === 16777235){
+                Pipeline2.run("switchprojectFirstImageIndex", {previous: true})
+            }else if (e.key === 16777237){
+                Pipeline2.run("switchprojectFirstImageIndex", {next: true})
+            }else if (e.key === 65 && e.modifiers === 67108864){
+                lst.selectAll()
             }
         }
 
@@ -504,6 +510,12 @@ TabView{
                                 height: 30
                                 width: parent.width
                                 onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "select"}])
+                            }
+                            Button{
+                                text: qsTr("poly")
+                                height: 30
+                                width: parent.width
+                                onClicked: Pipeline2.run("updateQSGCtrl_projectimage_gridder0", [{type: "drawpoly"}])
                             }
                             Button{
                                 text: qsTr("free")

@@ -20,6 +20,10 @@ Menu{
         onClicked: Pipeline2.run("updateQSGCtrl_" + parentname, [{"type": "select"}])
     }
     MenuItem{
+        text: qsTr("poly")
+        onClicked: Pipeline2.run("updateQSGCtrl_" + parentname, [{"type": "drawpoly"}])
+    }
+    MenuItem{
         text: qsTr("rect")
         onClicked: Pipeline2.run("updateQSGCtrl_" + parentname, [{"type": "drawrect"}])
     }
@@ -50,14 +54,11 @@ Menu{
 
     Component.onCompleted: {
         cmenu = {}
-        Pipeline2.find("updateQSGMenu_projectimage_gridder0").next(function(aInput){
-            visible = Object.keys(aInput).length > 0
-            if (visible){
-                x = aInput["x"]
-                y = aInput["y"]
-
+        Pipeline2.find("updateQSGMenu_" + parentname).next(function(aInput){
+            visible = aInput["x"] !== undefined && aInput["y"] !== undefined
+            if (aInput["menu"]){
                 var mn = aInput["menu"]
-                for (var i = count - 7; i >= 0; --i)
+                for (var i = count - 8; i >= 0; --i)
                     removeItem(itemAt(i))
                 sep.visible = false
                 for (var j in mn){
@@ -72,6 +73,10 @@ Menu{
                     src += "}}"
                     insertItem(0, Qt.createQmlObject(src, root))
                 }
+            }
+            if (visible){
+                x = aInput["x"]
+                y = aInput["y"]
             }
         })
     }

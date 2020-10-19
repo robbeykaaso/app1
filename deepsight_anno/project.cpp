@@ -13,6 +13,12 @@ protected:
     QJsonObject getImageAbstracts() override{
         return m_images;
     }
+    int getChannelCount() override{
+        if (m_project_abstract.value("channel").isString())
+            return m_project_abstract.value("channel").toString().toInt();
+        else
+            return m_project_abstract.value("channel").toInt();
+    }
 private:
     const QString openTask = "openTask";
     const QString importImage = "importImage";
@@ -21,12 +27,6 @@ private:
     QJsonObject m_tasks;
     QJsonObject m_images;
 private:
-    int getChannelCount(){
-        if (m_project_abstract.value("channel").isString())
-            return m_project_abstract.value("channel").toString().toInt();
-        else
-            return m_project_abstract.value("channel").toInt();
-    }
     QJsonArray getImages(){
         return value("images").toArray();
     }
@@ -109,6 +109,7 @@ private:
             ->next(rea::buffer<stgJson>(3))
             ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
                 auto dt = aInput->data();
+                m_first_image_index = 0;
                 m_tasks = dt[0].getData();
                 m_images = dt[1].getData();
                 dt[2].getData().swap(*this);
@@ -490,6 +491,9 @@ private:
     }
 
     void imageManagement(){
+        //switch first image index
+        serviceSelectFirstImageIndex("project");
+
         //select image
         rea::pipeline::find("project_image_listViewSelected")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
@@ -512,7 +516,10 @@ private:
                                    auto nms = getImageName(m_images.value(m_current_image).toObject());
                                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), "deepsightreadJson", selectProjectImage);
                                    for (auto i = 0; i < m_show_count; ++i){
-                                       auto img = "project/" + m_project_id + "/image/" + nm + "/" + nms[i].toString();
+                                       auto img_nm = nms[i].toString();
+                                       if (i == 0)
+                                           img_nm = nms[m_first_image_index].toString();
+                                       auto img = "project/" + m_project_id + "/image/" + nm + "/" + img_nm;
                                        aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img), "", QJsonObject(), false)->cache<int>(i);
                                    }
                                }

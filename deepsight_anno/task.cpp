@@ -280,6 +280,7 @@ void task::taskManagement(){
             dt[0].getData().swap(*this);
             m_jobs = dt[1].getData();
             setLabels(value("labels").toObject());
+            m_first_image_index = 0;
             m_current_job = "";
             aInput->out<QJsonObject>(prepareLabelListGUI(getLabels()), "task_label_updateListView");
             aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
@@ -440,6 +441,9 @@ bool task::isCurrentMode(const QString& aMode){
 }
 
 void task::imageManagement(){
+    //switch first image index
+    serviceSelectFirstImageIndex("task");
+
     //set Custom Mode
     rea::pipeline::find("updateQSGCtrl_taskimage_gridder0")
     ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
@@ -487,7 +491,10 @@ void task::imageManagement(){
                            aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), "deepsightreadJson", selectTaskImage);
                            QHash<QString, int> show_cache;
                            for (auto i = 0; i < m_show_count; ++i){
-                               auto img = "project/" + m_project_id + "/image/" + nm + "/" + nms[i].toString();
+                               auto img_nm = nms[i].toString();
+                               if (i == 0)
+                                   img_nm = nms[m_first_image_index].toString();
+                               auto img = "project/" + m_project_id + "/image/" + nm + "/" + img_nm;
                                show_cache.insert(img, i);
                                aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img));
                            }
@@ -1168,6 +1175,24 @@ void task::prepareTrainParam(QJsonObject& aParam){
 
 
 void task::jobManagement(){
+    //download result
+    rea::pipeline::find("_selectFile")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                   auto pths = aInput->data();
+                   if (pths.size() > 0){
+                       auto pth = "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/" + m_current_job + ".zip";
+                       //std::cout << pth.toStdString() << std::endl;
+                       aInput->out<stgByteArray>(stgByteArray(QByteArray(), pth), "deepsightreadByteArray")->cache<QString>(pths[0].toString());
+                   }
+               }), rea::Json("tag", "downloadResultModel"))
+        ->next(rea::local("deepsightreadByteArray", rea::Json("thread", 10)))
+        ->next(rea::pipeline::add<stgByteArray>([this](rea::stream<stgByteArray>* aInput){
+            auto pth = aInput->cacheData<QString>(0);
+            auto dt = aInput->data().getData();
+            aInput->out<stgByteArray>(stgByteArray(dt, pth + "/" + m_current_job + ".zip"), "writeByteArray");
+        }))
+        ->next("writeByteArray");
+
     //start Job
     auto insert_job = rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
           auto res = aInput->data();
@@ -1563,8 +1588,8 @@ void task::jobManagement(){
                 std::sort(idxes.begin(), idxes.end(), std::greater<int>());
                 for (auto i : idxes){
                     auto job = (m_jobs.begin() + i).key();
-                    aInput->out<QJsonObject>(rea::Json(protocal.value(protocal_stop_job).toObject().value("req").toObject(),
-                                                       "stop_job_id", job), "callServer");
+                    aInput->out<QJsonObject>(rea::Json(protocal.value(protocal_delete_job).toObject().value("req").toObject(),
+                                                       "delete_job_id", job), "callServer");
                     aInput->out<QString>("project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + job, "deepsightdeletePath");
                     m_jobs.erase(m_jobs.begin() + i);
                 }

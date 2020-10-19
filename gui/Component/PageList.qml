@@ -132,28 +132,33 @@ Column {
         }
     }
 
-    Row{
+    FocusScope{
+        id: fs
         anchors.horizontalCenter: parent.horizontalCenter
         width: 90
         height: 30
-        Edit{
-            caption.text: qsTr("Page: ")
-            input.text: (pageindex + 1).toString()
-            background.color: "lightskyblue"
-            width: 60
-            ratio: 0.5
-            input.onAccepted: {
-                if (entries){
-                    pageindex = Math.min(Math.max(1, parseInt(input.text)), Math.ceil(entries.length / entrycount)) - 1
-                    updatePage()
+        Row{
+            anchors.fill: parent
+            Edit{
+                caption.text: qsTr("Page: ")
+                input.text: (pageindex + 1).toString()
+                background.color: "lightskyblue"
+                width: 60
+                ratio: 0.5
+                input.onAccepted: {
+                    if (entries){
+                        pageindex = Math.min(Math.max(1, parseInt(input.text)), Math.ceil(entries.length / entrycount)) - 1
+                        updatePage()
+                    }
+                    fs.focus = false
                 }
             }
-        }
-        Label{
-            text: entries ? "/" + Math.ceil(entries.length / entrycount) : ""
-            font.pixelSize: 12
-            color: "black"
-            anchors.verticalCenter: parent.verticalCenter
+            Label{
+                text: entries ? "/" + Math.ceil(entries.length / entrycount) : ""
+                font.pixelSize: 12
+                color: "black"
+                anchors.verticalCenter: parent.verticalCenter
+            }
         }
     }
 
@@ -208,6 +213,17 @@ Column {
             }
             Pipeline2.run(name + "_listViewSelected", [], {tag: "manual"})
         }
+    }
+
+    function selectAll(){
+        var st = 0, ed = entries.length
+        var range = [entrycount * pageindex, entrycount * (pageindex + 1)]
+        for (var k = st; k < ed; ++k)
+            if (selects.indexOf(k) < 0){
+                if (k >= range[0] && k < range[1])
+                    mdl.get(k % entrycount).clr = selcolor
+                selects.push(k)
+            }
     }
 
     Component.onCompleted: {

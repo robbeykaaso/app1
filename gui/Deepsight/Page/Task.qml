@@ -172,6 +172,12 @@ TabView{
                 lst.selectNext(true)
             }else if (e.key === 16777234){
                 lst.selectNext(false)
+            }else if (e.key === 16777235){
+                Pipeline2.run("switchtaskFirstImageIndex", {previous: true})
+            }else if (e.key === 16777237){
+                Pipeline2.run("switchtaskFirstImageIndex", {next: true})
+            }else if (e.key === 65 && e.modifiers === 67108864){
+                lst.selectAll()
             }
         }
 
@@ -495,6 +501,12 @@ TabView{
                                     onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "select"}])
                                 }
                                 Button{
+                                    text: qsTr("poly")
+                                    height: 30
+                                    width: parent.width
+                                    onClicked: Pipeline2.run("updateQSGCtrl_taskimage_gridder0", [{type: "drawpoly"}])
+                                }
+                                Button{
                                     text: qsTr("free")
                                     height: 30
                                     width: parent.width
@@ -602,6 +614,9 @@ TabView{
                     }
                     ROIPanel{
 
+                    }
+                    BoardMenu{
+                        parentname: "taskimage_gridder0"
                     }
                 }
                 Status{

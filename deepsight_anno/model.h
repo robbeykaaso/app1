@@ -54,11 +54,14 @@ protected:
     bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
     void serviceLabelStatistics(const QString& aName);
     void serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage);
+    void serviceSelectFirstImageIndex(const QString aName);
     virtual QJsonObject getImageAbstracts() = 0;
+    virtual int getChannelCount() = 0;
 protected:
     QString m_project_id = "";
     QJsonObject m_image;
     QString m_current_image = "";
+    int m_first_image_index = 0; //the first grid image channel
 private:
     struct labelStatisticRec{
         int count = 0;

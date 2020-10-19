@@ -12,6 +12,12 @@ TWindow{
     caption: qsTr("result")
     modality: Qt.NonModal
 
+    titlebuttons: [
+        {cap: ">", func: function(){
+            Pipeline2.run("_selectFile", {folder: true, tag: {tag: "downloadResultModel"}})
+        }}
+    ]
+
     content:
         Rectangle{
             anchors.fill: parent
