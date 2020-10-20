@@ -74,7 +74,7 @@ void roiMode::initialize(){
                 setROI(*m_task, roi);
                 if (isCurrentMode("roi"))
                     aInput->out<QJsonObject>(rea::Json("visible", true, "count", getROICount(roi, m_local ? getImageID() : "whole")), "updateROIGUI");
-                aInput->out<stgJson>(stgJson(*m_task, pth), "deepsightwriteJson");
+                aInput->out<stgJson>(stgJson(*m_task, pth), s3_bucket_name() + "writeJson");
             }
         }else if (pth != cur && belongThisMode("roi", pth)){
             aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
@@ -89,7 +89,7 @@ void roiMode::initialize(){
         auto roi = getROI(dt);
         modifyROI(aInput->cacheData<QJsonArray>(0), roi, pth);
         setROI(dt, roi);
-        aInput->out<stgJson>(stgJson(dt, pth), "deepsightwriteJson");
+        aInput->out<stgJson>(stgJson(dt, pth), s3_bucket_name() + "writeJson");
     }, rea::Json("name", "roi_modifyRemoteModel"));
 
     //interface show
@@ -100,7 +100,7 @@ void roiMode::initialize(){
         if (ch == getShowCount() - 1){
             if (add_show)
                 add_show();
-            rea::pipeline::run<stgJson>("deepsightreadJson", stgJson(QJsonObject(), getImageResultJsonPath()), rea::Json("tag", "updateImageResult"));
+            rea::pipeline::run<stgJson>(s3_bucket_name() + "readJson", stgJson(QJsonObject(), getImageResultJsonPath()), rea::Json("tag", "updateImageResult"));
         }
     }, rea::Json("name", "roi_showQSGModel"));
 
@@ -189,12 +189,12 @@ void roiMode::initialize(){
         if (sv){
             setShapes(roi, shps);
             setROI(*m_task, roi);
-            aInput->out<stgJson>(stgJson(*m_task, getTaskJsonPath()), "deepsightwriteJson");
+            aInput->out<stgJson>(stgJson(*m_task, getTaskJsonPath()), s3_bucket_name() + "writeJson");
         }
         updateCurrentImage();
         aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
     }, rea::Json("name", "updateROILocalMode"))
-        ->nextB("deepsightwriteJson")
+        ->nextB(s3_bucket_name() + "writeJson")
         ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
 
     //auto roi
@@ -211,11 +211,11 @@ void roiMode::initialize(){
             auto roi = getROI(*m_task);
             setShapes(roi, dt.value("roi").toObject());
             setROI(*m_task, roi);
-            aInput->out<stgJson>(stgJson(*m_task, getTaskJsonPath()), "deepsightwriteJson");
+            aInput->out<stgJson>(stgJson(*m_task, getTaskJsonPath()), s3_bucket_name() + "writeJson");
             updateCurrentImage();
             aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
         }))
-        ->nextB("deepsightwriteJson")
+        ->nextB(s3_bucket_name() + "writeJson")
         ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
 }
 

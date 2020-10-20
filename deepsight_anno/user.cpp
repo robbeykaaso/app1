@@ -123,15 +123,15 @@ public:
                    projs.erase(projs.begin() + i);
                }
                setProjects(projs);
-               aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), "deepsightwriteJson");
+               aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), s3_bucket_name + "writeJson");
 
                if (dels.size() > 0){
                    for (auto i : dels){
                        m_projects.remove(i);
-                       aInput->out<QString>("project/" + i + ".json", "deepsightdeletePath");
-                       aInput->out<QString>("project/" + i, "deepsightdeletePath");
+                       aInput->out<QString>("project/" + i + ".json", s3_bucket_name + "deletePath");
+                       aInput->out<QString>("project/" + i, s3_bucket_name + "deletePath");
                    }
-                   aInput->out<stgJson>(stgJson(m_projects, "project.json"), "deepsightwriteJson");
+                   aInput->out<stgJson>(stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
                }
 
                aInput->out<QJsonObject>(prepareProjectListGUI(getProjects()), "user_updateListView");
@@ -140,8 +140,8 @@ public:
         }))
         ->nextB("user_updateListView")
         ->nextB("user_listViewSelected", rea::Json("tag", "manual"))
-        ->nextB("deepsightdeletePath")
-        ->next("deepsightwriteJson");
+        ->nextB(s3_bucket_name + "deletePath")
+        ->next(s3_bucket_name + "writeJson");
 
         //open project
         rea::pipeline::find("user_listViewSelected")
@@ -188,21 +188,21 @@ public:
                     projs = addProject(insertProject(proj));
             }
             aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
-            aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), "deepsightwriteJson");
-            aInput->out<stgJson>(stgJson(m_projects, "project.json"), "deepsightwriteJson");
+            aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), s3_bucket_name + "writeJson");
+            aInput->out<stgJson>(stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
             aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
         }), rea::Json("tag", "newProject"))
         ->nextB("popMessage")
         ->nextB("user_updateListView")
         ->nextB("user_listViewSelected", rea::Json("tag", "manual"))
-        ->next("deepsightwriteJson");
+        ->next(s3_bucket_name + "writeJson");
 
         //load user
         rea::pipeline::add<double>([](rea::stream<double>* aInput){
             aInput->out<stgJson>(stgJson(QJsonObject(), "project.json"));
             aInput->out<stgJson>(stgJson(QJsonObject(), "user/" + rea::GetMachineFingerPrint() + ".json"));
         }, rea::Json("name", loaduser))
-        ->next(rea::local("deepsightreadJson"), rea::Json("tag", loaduser))
+        ->next(rea::local(s3_bucket_name + "readJson"), rea::Json("tag", loaduser))
         ->next(rea::buffer<stgJson>(2))
         ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
             auto dt = aInput->data();
@@ -217,6 +217,7 @@ public:
             auto dt = aInput->data();
             if (dt.getData().value("local_fs").toBool())
                 static fsStorage file_storage(s3_bucket_name);
+                //static fsStorage file_storage("Z:/deepsight");
             else
                 static customAWSStorage minio_storage(s3_bucket_name);
         })->previous(rea::local("readJson"))

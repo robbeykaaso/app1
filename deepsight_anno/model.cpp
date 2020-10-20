@@ -174,7 +174,7 @@ void imageModel::serviceLabelStatistics(const QString& aName){
             aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + i + ".json"));
     }, rea::Json("name", "calc" + aName + "LabelStatistics"))
         ->nextB("updateProgress")
-        ->next(rea::local("deepsightreadJson", rea::Json("thread", 10)))
+        ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
         ->next(rea::pipeline::add<stgJson>([this, aName](rea::stream<stgJson>* aInput){
             auto imgs = getImageAbstracts();
 

@@ -31,8 +31,8 @@ public:
     }*/
     virtual ~model(){}
 protected:
-    QString getProjectName(const QJsonObject& aProject);
     const QString s3_bucket_name = "deepsight";
+    QString getProjectName(const QJsonObject& aProject);
 };
 
 class shapeModel{

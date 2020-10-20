@@ -13,6 +13,7 @@ public:
         m_task = aTask;
     }
 protected:
+    QString s3_bucket_name();
     QJsonObject getShapeLabels(const QJsonObject& aLabels);
     bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
     QString getTaskJsonPath();
@@ -66,7 +67,7 @@ private:
     void setImageList(const QJsonArray& aList, bool aRemove = false);
     QJsonObject prepareLabelListGUI(const QJsonObject& aLabels);
     QJsonObject prepareImageListGUI(const QJsonObject& aImages);
-    QJsonObject prepareJobListGUI();
+    QJsonObject prepareJobListGUI(const QString& aSelectedJob = "");
 private:
     QString m_task_id = "";
     QString m_task_type = "";
