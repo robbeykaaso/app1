@@ -237,9 +237,15 @@ TabView{
         Keys.onPressed: function(e){
             var lst = getTab(2).children[0].children[0].children[0].children[1]
             if (e.key === 16777236){
-                lst.selectNext(true)
+                if (e.modifiers === 67108864)
+                    lst.selectNextPage(true)
+                else
+                    lst.selectNext(true)
             }else if (e.key === 16777234){
-                lst.selectNext(false)
+                if (e.modifiers === 67108864)
+                    lst.selectNextPage(false)
+                else
+                    lst.selectNext(false)
             }else if (e.key === 16777235){
                 Pipeline2.run("switchprojectFirstImageIndex", {previous: true})
             }else if (e.key === 16777237){

@@ -444,8 +444,9 @@ TabView{
                                     Component.onCompleted: {
                                         if (parent.name == "taskimage_gridder0")
                                             Pipeline2.add(function(aInput){
-                                                text = aInput
-                                            }, {name: "updateImagePredictGUI", vtype: ""})
+                                                text = aInput["predict"] || ""
+                                                color = aInput["color"] || "green"
+                                            }, {name: "updateImagePredictGUI"})
                                     }
                                 }
                             }
@@ -619,17 +620,27 @@ TabView{
                         parentname: "taskimage_gridder0"
                     }
                 }
-                Status{
-                    id: sts
-                    name: "taskimage"
+                Row{
                     width: parent.width
                     height: 30
+                    Status{
+                        id: sts
+                        width: parent.width - 90
+                        height: parent.height
+                        name: "taskimage"
+                    }
+                    Button{
+                        width: 90
+                        text: "result_color"
+                        height: parent.height
+                        onClicked: Pipeline2.run("_selectColor", {tag: {tag: "modifyResultColor"}})
+                    }
                 }
             }
         }
         onVisibleChanged: {
             if (visible)
-                children[0].children[1].children[2].updateStatus([])
+                children[0].children[1].children[2].children[0].updateStatus([])
         }
     }
     Tab{

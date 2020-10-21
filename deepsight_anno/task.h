@@ -26,6 +26,8 @@ protected:
     QJsonObject getTaskLabels();
     QJsonObject getProjectLabels();
     QJsonObject getImageShow();
+    QString getResultColor();
+    QJsonObject getResultShow();
     bool belongThisMode(const QString& aMode, const QString& aPath);
     bool isCurrentMode(const QString& aMode);
     int getShowCount();
@@ -107,6 +109,9 @@ private:
     QJsonObject getHistogramData(const QJsonObject& aStatistics);
     QJsonArray getPredictShapes(const QJsonObject& aImageResult);
     QJsonArray updateResultObjects(const QJsonObject& aImageResult, int aIndex);
+    QJsonObject getResultShow();
+    QString getResultColor(const QJsonObject& aResultShow);
+    void setResultShow(const QJsonObject& aResultShow);
 
     void jobManagement();
 private:
@@ -114,7 +119,7 @@ private:
     int getIOUIndex(double aIOU);
     int getThresholdIndex(double aThreshold);
     int calcThresholdIndex();
-    QString getImagePredict(const QString& aImageID, const QJsonObject& aImageResult);
+    QJsonObject getImagePredict(const QString& aImageID, const QJsonObject& aImageResult);
     void prepareTrainParam(QJsonObject& aParam);
     QJsonObject m_statistics;
     double m_min_threshold = 0, m_max_threshold = 0.7;

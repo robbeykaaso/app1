@@ -183,6 +183,12 @@ Column {
         view.currentIndex = select >= entrycount * pageindex && select < entrycount * (pageindex + 1) ? select % entrycount : - 1
     }
 
+    function selectNextPage(aNext){
+        if (aNext){
+            //selects = [select]
+        }
+    }
+
     function selectNext(aNext){
         if (entries.length > 0){
             var range = [entrycount * pageindex, entrycount * (pageindex + 1)]
@@ -191,8 +197,8 @@ Column {
                     mdl.get(selects[i] % entrycount).clr = dfltcolor
             }
             selects = [select]
+            var refresh = false
             if (aNext){
-                var refresh = false
                 if (selects[0] % entrycount == entrycount - 1 && selects[0] < entries.length - 1){
                     pageindex++
                     refresh = true

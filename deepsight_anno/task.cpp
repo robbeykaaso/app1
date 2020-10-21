@@ -57,6 +57,14 @@ QJsonObject ITaskFriend::getImageShow(){
     return m_task->m_image_show;
 }
 
+QString ITaskFriend::getResultColor(){
+    return m_task->getResultColor(getResultShow());
+}
+
+QJsonObject ITaskFriend::getResultShow(){
+    return m_task->getResultShow();
+}
+
 bool ITaskFriend::isCurrentMode(const QString& aMode){
     return m_task->isCurrentMode(aMode);
 }
@@ -155,7 +163,7 @@ std::function<void(void)> taskMode::showQSGModel(int aChannel, stgCVMat& aImage)
                                                         "type", "image",
                                                         "range", rea::JArray(0, 0, img.width(), img.height()),
                                                         "path", pth,
-                                                        "color", "green",
+                                                        "color", getResultColor(),
                                                         "text", QJsonObject(),
                                                         "transform", getImageShow()));
     std::function<void(void)> add_show = nullptr;
@@ -996,6 +1004,18 @@ QJsonArray task::getPredictShapes(const QJsonObject& aImageResult){
     return aImageResult.value("predict_shapes").toArray();
 }
 
+QJsonObject task::getResultShow(){
+    return value("resultShow").toObject();
+}
+
+QString task::getResultColor(const QJsonObject& aResultShow){
+    return aResultShow.value("color").toString("green");
+}
+
+void task::setResultShow(const QJsonObject& aResultShow){
+    insert("resultShow", aResultShow);
+}
+
 QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex){
     QJsonArray ret;
     auto shps = getPredictShapes(m_image_result);
@@ -1026,7 +1046,7 @@ QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex
                                             "tar", nm,
                                             "val", rea::Json("type", "poly",
                                                              "caption", shp.value("label"),
-                                                             "color", "green",
+                                                             "color", getResultColor(getResultShow()),
                                                              "text", rea::Json("visible", true,
                                                                                "size", rea::JArray(80, 30),
                                                                                "location", "bottom"),
@@ -1038,7 +1058,7 @@ QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex
                 img.fill(QColor("transparent"));
                 auto arr = shp.value("points").toArray(), scs = shp.value("scores").toArray();
                 int bnd[4];
-                auto clr = QColor("green");
+                auto clr = QColor(getResultColor(getResultShow()));
                 for (int i = 0; i < scs.size(); ++i){
                     auto x = arr[i * 2].toInt(), y = arr[i * 2 + 1].toInt();
                     if (scs[i].toDouble() > m_min_threshold)
@@ -1056,7 +1076,7 @@ QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex
                                         "tar", nm,
                                         "val", rea::Json("type", "scoremap",
                                                          "caption", shp.value("label"),
-                                                         "color", "green",
+                                                         "color", getResultColor(getResultShow()),
                                                          "range", rea::JArray(bnd[0] * rx, bnd[1] * ry, bnd[2] * rx, bnd[3] * ry),
                                                          "text", rea::Json("visible", true,
                                                                            "size", rea::JArray(80, 30),
@@ -1146,7 +1166,7 @@ void task::updateStatisticsModel(const QJsonObject& aStatistics){
     }
 }
 
-QString task::getImagePredict(const QString& aImageID, const QJsonObject& aImageResult){
+QJsonObject task::getImagePredict(const QString& aImageID, const QJsonObject& aImageResult){
     QString ret = "";
     if (aImageResult.value("stage") != "test"){
         if (m_statistics.value("image_table_type").toString().contains("binary")){
@@ -1171,7 +1191,7 @@ QString task::getImagePredict(const QString& aImageID, const QJsonObject& aImage
             ret = m_images_statistics.value(aImageID).value("image_value").toArray()[idx].toString();
         }
     }
-    return ret;
+    return rea::Json("predict", ret, "color", getResultColor(getResultShow()));
 }
 
 void task::prepareTrainParam(QJsonObject& aParam){
@@ -1192,6 +1212,18 @@ void task::prepareTrainParam(QJsonObject& aParam){
 
 
 void task::jobManagement(){
+    //modify result color
+    rea::pipeline::find("_selectColor")
+        ->next(rea::pipeline::add<QString>([this](rea::stream<QString>* aInput){
+            auto ret = getResultShow();
+            ret.insert("color", aInput->data());
+            setResultShow(ret);
+            aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+            aInput->out<stgJson>(stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name + "readJson");
+        }), rea::Json("tag", "modifyResultColor"))
+        ->nextB(s3_bucket_name + "writeJson")
+        ->next(s3_bucket_name + "readJson", rea::Json("tag", "updateImageResult"));
+
     //download result
     rea::pipeline::find("_selectFile")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
@@ -1272,7 +1304,7 @@ void task::jobManagement(){
            for (int i = 0; i < m_show_count; ++i)
                rea::pipeline::run<QJsonArray>("updateQSGAttrs_taskimage_gridder" + QString::number(i), updateResultObjects(aInput->data().getData(), i));
            auto img_predict = getImagePredict(m_current_image, m_image_result);
-           aInput->out<QString>(img_predict, "updateImagePredictGUI");
+           aInput->out<QJsonObject>(img_predict, "updateImagePredictGUI");
         }), rea::Json("tag", "updateImageResult"))
         ->nextB("updateImagePredictGUI")
         ->previous(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
