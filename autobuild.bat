@@ -16,11 +16,10 @@ cmake -S %srcRea% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildRea% -DMS=ON
 set srcApp="..\app"
 set buildApp="..\buildApp"
 
-if not exist %buildApp% (
-    mkdir %buildApp%
-) else (
-    echo %buildApp% exist
+if exist %buildApp% (
+    rd /s /q %buildApp%
 )
+mkdir %buildApp%
 
 cmake -S %srcApp% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildApp%
 %msbuild% %buildApp%\ALL_BUILD.vcxproj /p:Configuration=Release
@@ -35,6 +34,29 @@ mkdir %buildShp%
 
 cmake -S %srcShp% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildShp% -DMS=%buildApp%\Release\plugin
 %msbuild% %buildShp%\ALL_BUILD.vcxproj /p:Configuration=Release
+
+set srcImg="..\dll2"
+set buildImg="..\buildImg"
+
+if exist %buildImg% (
+    rd /s /q %buildImg%
+)
+mkdir %buildImg%
+
+cmake -S %srcImg% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildImg% -DMS=%buildApp%\Release\plugin
+%msbuild% %buildImg%\ALL_BUILD.vcxproj /p:Configuration=Release 
+
+set srcKey="..\key"
+set buildKey="..\buildKey"
+
+if exist %buildKey% (
+    rd /s /q %buildKey%
+)
+mkdir %buildKey%
+
+cmake -S %srcKey% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildKey% -DMS=%buildApp%
+%msbuild% %buildKey%\ALL_BUILD.vcxproj /p:Configuration=Release
+copy "..\key\key.bat" %buildApp%\Release\key.bat
 
 call recordVersion %buildApp%\Release\.version
 
@@ -59,5 +81,5 @@ D:\qt-installer\bin\binarycreator.exe -c %buildApp%\qtinstall\config\config.xml 
 xcopy ..\frm\install\* ..\frm-company\install /e /y
 xcopy ..\frm\include\* ..\frm-company\include /e /y
 xcopy ..\dll2\* ..\frm-company\plugin /e /y
-xcopy DeepInspectionV4.exe ..\frm-company /y
+:: xcopy DeepInspectionV4.exe ..\frm-company /y
 :: "C:/Program Files/7-Zip/7z.exe" a -tzip DeepInspectionBinary.zip Release/*

@@ -789,13 +789,13 @@ TabView{
                                         anchors.verticalCenter: parent.verticalCenter
                                         onClicked: Pipeline2.run("task_job_listViewSelected", [], {tag: "stopJob"})
                                     }
-                                    Button{
+                                    /*Button{
                                         text: qsTr("continue")
                                         width: 60
                                         height: 30
                                         anchors.verticalCenter: parent.verticalCenter
                                         onClicked: Pipeline2.run("task_job_listViewSelected", [], {tag: "continueJob"})
-                                    }
+                                    }*/
                                     Button{
                                         text: qsTr("delete")
                                         width: 60

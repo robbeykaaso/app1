@@ -587,13 +587,13 @@ void task::imageManagement(){
             if (mdy){
                 setImages(imgs);
                 aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
-                aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
-                aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+                auto ret = prepareImageListGUI(getImages());
+                ret.remove("selects");
+                aInput->out<QJsonObject>(ret, "task_image_updateListView");
             }
         }))
         ->nextB(s3_bucket_name + "writeJson")
-        ->nextB("task_image_updateListView")
-        ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+        ->nextB("task_image_updateListView");
 
     //filter images
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
@@ -726,13 +726,13 @@ void task::imageManagement(){
         }
         if (mdy){
             setImages(imgs);
-            aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
-            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+            auto ret = prepareImageListGUI(imgs);
+            ret.remove("selects");
+            aInput->out<QJsonObject>(ret, "task_image_updateListView");
             aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
         }
     }))
     ->nextB("task_image_updateListView")
-    ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
     ->nextB(s3_bucket_name + "writeJson");
 
     //modify project image//try update show
@@ -1034,7 +1034,7 @@ QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex
                                                              "points", rea::JArray(QJsonArray(), rea::JArray(pts[0], pts[1], pts[2], pts[1], pts[2], pts[3], pts[0], pts[3], pts[0], pts[1])))));
                 }
             }else if (shp.value("type") == "score_map"){
-                QImage img(basis[0].toInt(), basis[1].toInt(), QImage::Format_ARGB32);
+                QImage img(basis[1].toInt(), basis[0].toInt(), QImage::Format_ARGB32);
                 img.fill(QColor("transparent"));
                 auto arr = shp.value("points").toArray(), scs = shp.value("scores").toArray();
                 int bnd[4];
@@ -1054,7 +1054,7 @@ QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex
                 ret.push_back(rea::Json("key", rea::JArray("objects"),
                                         "type", "add",
                                         "tar", nm,
-                                        "val", rea::Json("type", "image",
+                                        "val", rea::Json("type", "scoremap",
                                                          "caption", shp.value("label"),
                                                          "color", "green",
                                                          "range", rea::JArray(bnd[0] * rx, bnd[1] * ry, bnd[2] * rx, bnd[3] * ry),
@@ -1163,7 +1163,7 @@ QString task::getImagePredict(const QString& aImageID, const QJsonObject& aImage
         }else
             ret = aImageResult.value("predict_label").toString();
         if (ret != "")
-            ret = "pred: " + ret;
+            ret = "pred: " + ret + "\n" + "gt: " + aImageResult.value("label").toString();
     }
     else{
         if (m_images_statistics.contains(aImageID)){
@@ -1237,7 +1237,10 @@ void task::jobManagement(){
         if (dt.value("infer").toBool()){
             auto jobs = dt.value("jobs").toArray();
             for (auto i : jobs){
-                prm = rea::Json(prm, "type", "inference", "statistics", !dt.contains("images"), "model_id", (m_jobs.begin() + i.toInt()).key());
+                prm = rea::Json(prm, "type", "inference",
+                                "statistics", !dt.contains("images"),
+                                "model_id", (m_jobs.begin() + i.toInt()).key(),
+                                "model_path", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job);
                 aInput->out<QJsonObject>(prm, "callServer");
             }
         }else{
@@ -1341,7 +1344,8 @@ void task::jobManagement(){
                          m12 = rea::tryFind(&m_image_level_statistics, lbl1)->value(QString("inter"))[idx].toInt();
                     aInput->out<QJsonObject>(rea::Json("rowcap", "predict",
                                                        "colcap", "actual",
-                                                       "content", rea::JArray(rea::JArray("", lbls[0].toString(), lbls[1].toString(), "inter", "total"),
+                                                       "content", rea::JArray(QJsonArray(),
+                                                                              rea::JArray("", lbls[0].toString(), lbls[1].toString(), "inter", "total"),
                                                                               rea::JArray(lbls[0].toString(), m00, m01, m02, m00 + m01 + m02),
                                                                               rea::JArray(lbls[1].toString(), m10, m11, m12, m10 + m11 + m12))), "result_confuse_updateMatrix");
                     return;
@@ -1517,7 +1521,8 @@ void task::jobManagement(){
                        aInput->out<QJsonObject>(rea::Json(protocal.value(protocal_upload).toObject().value("req").toObject(),
                                                           "job_id", m_current_job,
                                                           "s3_bucket_name", s3_bucket_name,
-                                                          "data_root", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job),
+                                                          "data_root", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job,
+                                                          "model_path",  "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job),
                                                 "callServer");
                    }
                    else
