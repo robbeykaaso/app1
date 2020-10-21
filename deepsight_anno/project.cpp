@@ -244,6 +244,8 @@ private:
                                                               "labels", getLabels(),
                                                               "channel", getChannelCount(),
                                                               "project", m_project_id,
+                                                              "project_name", getProjectName(m_project_abstract),
+                                                              "task_name", getTaskName(m_tasks.value(id).toObject()),
                                                               "imageshow", getImageShow(),
                                                               "type", getTaskType(m_tasks.value(id).toObject()))), openTask);
                        }

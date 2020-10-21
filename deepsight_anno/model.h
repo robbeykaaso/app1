@@ -31,7 +31,7 @@ public:
     }*/
     virtual ~model(){}
 protected:
-    const QString s3_bucket_name = "y:/deepsight";
+    const QString s3_bucket_name = "deepsight";
     QString getProjectName(const QJsonObject& aProject);
 };
 

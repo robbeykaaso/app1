@@ -73,6 +73,8 @@ private:
 private:
     QString m_task_id = "";
     QString m_task_type = "";
+    QString m_task_name = "";
+    QString m_project_name = "";
     QJsonObject m_project_labels;
     QJsonObject* m_project_images;
     QString getJobsJsonPath();
@@ -101,8 +103,8 @@ private:
     QString m_current_request = "";
     QHash<QString, QJsonArray> m_log_cache;
 
-    void insertJob(const QString& aID);
-    QJsonObject prepareTrainingData(const QJsonArray& aImages);
+    void insertJob(const QString& aID, const QString& aModelID);
+    QJsonObject prepareTrainingData(const QJsonArray& aImages, QSet<QString>& aStageSet);
     QString getJobState(const QJsonObject& aJob);
     void setJobState(QJsonObject& aJob, const QString& aState);
     QJsonArray getLossList(const QJsonObject& aStatistics);

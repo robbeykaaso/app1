@@ -184,9 +184,8 @@ Column {
     }
 
     function selectNextPage(aNext){
-        if (aNext){
-            //selects = [select]
-        }
+        pageindex = Math.min(Math.max(1, parseInt(aNext? pageindex + 1 + 1 : pageindex + 1 - 1)), Math.ceil(entries.length / entrycount)) - 1
+        updatePage()
     }
 
     function selectNext(aNext){
