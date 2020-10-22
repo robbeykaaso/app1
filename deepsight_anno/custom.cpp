@@ -95,7 +95,7 @@ void roiMode::initialize(){
     //interface show
     rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
         auto dt = aInput->data();
-        auto ch = aInput->cacheData<QHash<QString, int>>(0).value(dt);
+        auto ch = aInput->cacheData<int>(0);
         auto add_show = showQSGModel(ch, dt);
         if (ch == getShowCount() - 1){
             if (add_show)

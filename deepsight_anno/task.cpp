@@ -57,10 +57,6 @@ QJsonObject ITaskFriend::getImageShow(){
     return m_task->m_image_show;
 }
 
-QString ITaskFriend::getResultColor(){
-    return m_task->getResultColor(getResultShow());
-}
-
 QJsonObject ITaskFriend::getResultShow(){
     return m_task->getResultShow();
 }
@@ -85,6 +81,10 @@ void ITaskFriend::updateCurrentImage(){
 
 void ITaskFriend::serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage){
     m_task->serviceShowPosStatus(aName, aChannel, aImage);
+}
+
+bool ITaskFriend::getShowLabel(){
+    return m_task->m_show_label;
 }
 
 void taskMode::initialize(){
@@ -112,7 +112,7 @@ void taskMode::initialize(){
 
     rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
             auto dt = aInput->data();
-            auto ch = aInput->cacheData<QHash<QString, int>>(0).value(dt);
+            auto ch = aInput->cacheData<int>(0);
             auto add_show = showQSGModel(ch, dt);
             if (ch == getShowCount() - 1){
                 if (add_show)
@@ -123,6 +123,8 @@ void taskMode::initialize(){
 }
 
 std::function<void(void)> taskMode::prepareQSGObjects(QJsonObject &aObjects){
+    if (!getShowLabel())
+        return nullptr;
     auto tsk_shp_lbls = getTaskLabels().value("shape").toObject(), prj_shp_lbls = getProjectLabels().value("shape").toObject();
 
     auto lbls = getShapeLabels(getProjectLabels());
@@ -163,7 +165,6 @@ std::function<void(void)> taskMode::showQSGModel(int aChannel, stgCVMat& aImage)
                                                         "type", "image",
                                                         "range", rea::JArray(0, 0, img.width(), img.height()),
                                                         "path", pth,
-                                                        "color", getResultColor(),
                                                         "text", QJsonObject(),
                                                         "transform", getImageShow()));
     std::function<void(void)> add_show = nullptr;
@@ -315,7 +316,7 @@ void task::taskManagement(){
             if (m_jobs.size() > 0 && m_jobs.begin().value().toObject().value("state") != "upload_finish")
                 aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
             aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
-            aInput->out<QJsonObject>(rea::Json("count", 1), "scatterTaskImageShow");
+            aInput->out<QJsonObject>(rea::Json("count", 1), "scattertaskImageShow");
             aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
             for (auto i : m_jobs.keys()){
                 auto job = m_jobs.value(i).toObject();
@@ -327,7 +328,7 @@ void task::taskManagement(){
         ->nextB("task_label_updateListView")
         ->nextB("task_label_listViewSelected", rea::Json("tag", "task_manual"))
         ->nextB("task_image_updateListView")
-        ->nextB("scatterTaskImageShow")
+        ->nextB("scattertaskImageShow")
         ->nextB("task_job_updateListView")
         ->nextB("task_job_listViewSelected", rea::Json("tag", "manual"))
         ->nextB("updateTaskImageFilterGUI")
@@ -369,6 +370,29 @@ void task::labelManagement(){
             }
         }
     }, rea::Json("name", "updateTaskShapeLabel"));
+
+    //stage statistics
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        auto imgs = getImages();
+        QHash<QString, int> ret;
+        for (auto i : imgs){
+            auto stg = i.toObject().value("stage").toString("none");
+            if (!ret.contains(stg))
+                ret.insert(stg, 1);
+            else
+                ret.insert(stg, ret.value(stg) + 1);
+        }
+
+        QJsonArray data;
+        for (auto i : ret.keys())
+            data.push_back(rea::Json("entry", rea::JArray(i, ret.value(i))));
+        aInput->setData(rea::Json("title", rea::JArray("stage", "count"),
+                                  "selects", rea::JArray(0),
+                                  "data", data,
+                                  "tag", "filterTaskImages"))->out();
+    }, rea::Json("name", "calcTaskStageStatistics"))
+        ->next("showStageStatistics")
+        ->next("filterTaskImages", rea::Json("tag", "filterTaskImages"));
 
     //label statistics
     serviceLabelStatistics("Task");
@@ -536,16 +560,13 @@ void task::imageManagement(){
                            m_current_image = nm;
                            auto nms = getImageName(m_project_images->value(m_current_image).toObject());
                            aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), s3_bucket_name + "readJson", selectTaskImage);
-                           QHash<QString, int> show_cache;
                            for (auto i = 0; i < m_show_count; ++i){
                                auto img_nm = nms[i].toString();
                                if (i == 0)
                                    img_nm = nms[m_first_image_index].toString();
                                auto img = "project/" + m_project_id + "/image/" + nm + "/" + img_nm;
-                               show_cache.insert(img, i);
-                               aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img));
+                               aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img), "", QJsonObject(), false)->cache<int>(i);
                            }
-                           aInput->cache<QHash<QString, int>>(show_cache);
                        }
                        //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateTaskImageGUI");
                    }else{
@@ -637,10 +658,13 @@ void task::imageManagement(){
                 lst.push_back(i);
             setImageList(lst);
         }else if (dt.value("type") == "stage"){
-            auto stg = dt.value("value").toString();
+            auto stg = dt.value("value").toArray();
+            QSet<QString> stgs;
+            for (auto i : stg)
+                stgs.insert(i.toString());
             for (auto i : imgs.keys()){
                 auto img = imgs.value(i).toObject();
-                if (img.value("stage") == stg || (!img.contains("stage") && stg == "none"))
+                if (stgs.contains(img.value("stage").toString("none")))
                     lst.push_back(i);
             }
             setImageList(lst);
@@ -832,7 +856,7 @@ void task::guiManagement(){
         aInput->out<QJsonObject>(rea::Json("size", m_show_count), "taskimage_updateViewCount");
         m_current_image = "";
         aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-    }, rea::Json("name", "scatterTaskImageShow"))
+    }, rea::Json("name", "scattertaskImageShow"))
         ->nextB("taskimage_updateViewCount")
         ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
 
@@ -907,7 +931,10 @@ void task::serverManagement(){
                             auto id = rea::generateUUID();
                             ret.insert("type", "inference");
                             auto job_id = QString::number(tm0.toTime_t()) + "_" + id;
-                            ret.insert("job_id", job_id);
+                            if (dt.contains("job_id"))
+                                ret.insert("job_id", dt.value("job_id"));
+                            else
+                                ret.insert("job_id", job_id);
                             if (!dt.value("statistics").toBool())
                                 ret.insert("model_id", dt.value("model_id"));
                             aInput->setData(ret)->out();
@@ -969,11 +996,11 @@ void task::serverManagement(){
         ->next("tryLinkServer");
 }
 
-void task::insertJob(const QString& aID, const QString& aModelID){
+void task::insertJob(const QString& aID){
     auto tm0 = QDateTime::currentDateTime();
     auto tm = tm0.toString(Qt::DateFormat::ISODate);
     auto tms = tm.split("T");
-    m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", "running", "model_id", aModelID));
+    m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", "running"));
 }
 
 QJsonObject task::prepareTrainingData(const QJsonArray& aImages, QSet<QString>& aStageSet){
@@ -1045,75 +1072,76 @@ void task::setResultShow(const QJsonObject& aResultShow){
 
 QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex){
     QJsonArray ret;
+    auto result_show = getResultShow();
     auto shps = getPredictShapes(m_image_result);
     for (int i = 0; i < shps.size(); ++i)
         ret.push_back(rea::Json("key", rea::JArray("objects"),
                                 "type", "del",
                                 "tar", "result_" + QString::number(i) + "_" + QString::number(aIndex)));
+    if (m_show_result){
+        if (!m_custom_modes.contains(m_current_mode)){
+            shps = getPredictShapes(aImageResult);
+            auto basis = aImageResult.value("predict_polygon_objs_basis").toArray();
+            double rx = 1, ry = 1;
+            if (basis.size() == 2){
+                rx = aImageResult.value("width").toInt() * 1.0 / basis[1].toInt();
+                ry = aImageResult.value("height").toInt() * 1.0 / basis[0].toInt();
+            }else
+                basis = rea::JArray(aImageResult.value("width"), aImageResult.value("height"));
 
-    if (!m_custom_modes.contains(m_current_mode)){
-        shps = getPredictShapes(aImageResult);
-        auto basis = aImageResult.value("predict_polygon_objs_basis").toArray();
-        double rx = 1, ry = 1;
-        if (basis.size() == 2){
-            rx = aImageResult.value("width").toInt() * 1.0 / basis[1].toInt();
-            ry = aImageResult.value("height").toInt() * 1.0 / basis[0].toInt();
-        }else
-            basis = rea::JArray(aImageResult.value("width"), aImageResult.value("height"));
-
-        for (int i = 0; i < shps.size(); ++i){
-            auto shp = shps[i].toObject();
-            auto nm = "result_" + QString::number(i) + "_" + QString::number(aIndex);
-            if (shp.value("type") == "rectangle"){
-                if (shp.value("score").toDouble() > m_min_threshold){
-                    auto arr = shp.value("points").toArray();
-                    std::vector<double> pts{arr[0].toDouble() * rx, arr[1].toDouble() * ry, arr[2].toDouble() * rx, arr[3].toDouble() * ry};
+            for (int i = 0; i < shps.size(); ++i){
+                auto shp = shps[i].toObject();
+                auto nm = "result_" + QString::number(i) + "_" + QString::number(aIndex);
+                if (shp.value("type") == "rectangle"){
+                    if (shp.value("score").toDouble() > m_min_threshold){
+                        auto arr = shp.value("points").toArray();
+                        std::vector<double> pts{arr[0].toDouble() * rx, arr[1].toDouble() * ry, arr[2].toDouble() * rx, arr[3].toDouble() * ry};
+                        ret.push_back(rea::Json("key", rea::JArray("objects"),
+                                                "type", "add",
+                                                "tar", nm,
+                                                "val", rea::Json("type", "poly",
+                                                                 "caption", shp.value("label"),
+                                                                 "color", getResultColor(result_show),
+                                                                 "text", rea::Json("visible", true,
+                                                                                   "size", rea::JArray(80, 30),
+                                                                                   "location", "bottom"),
+                                                                 "tag", "result",
+                                                                 "points", rea::JArray(QJsonArray(), rea::JArray(pts[0], pts[1], pts[2], pts[1], pts[2], pts[3], pts[0], pts[3], pts[0], pts[1])))));
+                    }
+                }else if (shp.value("type") == "score_map"){
+                    QImage img(basis[1].toInt(), basis[0].toInt(), QImage::Format_ARGB32);
+                    img.fill(QColor("transparent"));
+                    auto arr = shp.value("points").toArray(), scs = shp.value("scores").toArray();
+                    int bnd[4];
+                    auto clr = QColor(getResultColor(result_show));
+                    for (int i = 0; i < scs.size(); ++i){
+                        auto x = arr[i * 2].toInt(), y = arr[i * 2 + 1].toInt();
+                        if (scs[i].toDouble() > m_min_threshold)
+                            img.setPixelColor(x, y, QColor(clr.red(), clr.green(), clr.blue(), 125));
+                        if (i == 0){
+                            bnd[0] = x; bnd[1] = y; bnd[2] = x; bnd[3] = y;
+                        }else{
+                            bnd[0] = std::min(x, bnd[0]); bnd[1] = std::min(y, bnd[1]); bnd[2] = std::max(x, bnd[2]); bnd[3] = std::max(y, bnd[3]);
+                        }
+                    }
+                    img = img.copy(bnd[0], bnd[1], bnd[2] - bnd[0], bnd[3] - bnd[1]).scaled((bnd[2] - bnd[0]) * rx, (bnd[3] - bnd[1]) * ry);
+                    rea::imagePool::cacheImage(nm, img);
                     ret.push_back(rea::Json("key", rea::JArray("objects"),
                                             "type", "add",
                                             "tar", nm,
-                                            "val", rea::Json("type", "poly",
+                                            "val", rea::Json("type", "scoremap",
                                                              "caption", shp.value("label"),
-                                                             "color", getResultColor(getResultShow()),
+                                                             "color", getResultColor(result_show),
+                                                             "range", rea::JArray(bnd[0] * rx, bnd[1] * ry, bnd[2] * rx, bnd[3] * ry),
                                                              "text", rea::Json("visible", true,
                                                                                "size", rea::JArray(80, 30),
                                                                                "location", "bottom"),
                                                              "tag", "result",
-                                                             "points", rea::JArray(QJsonArray(), rea::JArray(pts[0], pts[1], pts[2], pts[1], pts[2], pts[3], pts[0], pts[3], pts[0], pts[1])))));
+                                                             "path", nm)));
                 }
-            }else if (shp.value("type") == "score_map"){
-                QImage img(basis[1].toInt(), basis[0].toInt(), QImage::Format_ARGB32);
-                img.fill(QColor("transparent"));
-                auto arr = shp.value("points").toArray(), scs = shp.value("scores").toArray();
-                int bnd[4];
-                auto clr = QColor(getResultColor(getResultShow()));
-                for (int i = 0; i < scs.size(); ++i){
-                    auto x = arr[i * 2].toInt(), y = arr[i * 2 + 1].toInt();
-                    if (scs[i].toDouble() > m_min_threshold)
-                        img.setPixelColor(x, y, QColor(clr.red(), clr.green(), clr.blue(), 125));
-                    if (i == 0){
-                        bnd[0] = x; bnd[1] = y; bnd[2] = x; bnd[3] = y;
-                    }else{
-                        bnd[0] = std::min(x, bnd[0]); bnd[1] = std::min(y, bnd[1]); bnd[2] = std::max(x, bnd[2]); bnd[3] = std::max(y, bnd[3]);
-                    }
-                }
-                img = img.copy(bnd[0], bnd[1], bnd[2] - bnd[0], bnd[3] - bnd[1]).scaled((bnd[2] - bnd[0]) * rx, (bnd[3] - bnd[1]) * ry);
-                rea::imagePool::cacheImage(nm, img);
-                ret.push_back(rea::Json("key", rea::JArray("objects"),
-                                        "type", "add",
-                                        "tar", nm,
-                                        "val", rea::Json("type", "scoremap",
-                                                         "caption", shp.value("label"),
-                                                         "color", getResultColor(getResultShow()),
-                                                         "range", rea::JArray(bnd[0] * rx, bnd[1] * ry, bnd[2] * rx, bnd[3] * ry),
-                                                         "text", rea::Json("visible", true,
-                                                                           "size", rea::JArray(80, 30),
-                                                                           "location", "bottom"),
-                                                         "tag", "result",
-                                                         "path", nm)));
             }
         }
     }
-
     m_image_result = aImageResult;
     return ret;
 }
@@ -1195,30 +1223,42 @@ void task::updateStatisticsModel(const QJsonObject& aStatistics){
 
 QJsonObject task::getImagePredict(const QString& aImageID, const QJsonObject& aImageResult){
     QString ret = "";
-    if (aImageResult.value("stage") != "test"){
-        if (m_statistics.value("image_table_type").toString().contains("binary")){
-            auto lbls = m_statistics.value("image_label_list").toArray();
-            if (aImageResult.contains("predict_score")){
-                auto score = aImageResult.value("predict_score").toDouble();
-                if (score < m_max_threshold)
-                    ret = lbls[0].toString();
-                else if (score > m_min_threshold)
-                    ret = lbls[1].toString();
-                else
-                    ret = "inter";
-            };
-        }else
-            ret = aImageResult.value("predict_label").toString();
-        if (ret != "")
-            ret = "pred: " + ret + "\n" + "gt: " + aImageResult.value("label").toString();
+    auto result_show = getResultShow();
+    if (m_show_result){
+       // if (aImageResult.value("stage") != "test"){
+            if (m_statistics.value("image_table_type").toString().contains("binary")){
+                auto lbls = m_statistics.value("image_label_list").toArray();
+                if (aImageResult.contains("predict_score")){
+                    auto score = aImageResult.value("predict_score").toDouble();
+                    if (score < m_max_threshold)
+                        ret = lbls[0].toString();
+                    else if (score > m_min_threshold)
+                        ret = lbls[1].toString();
+                    else
+                        ret = "inter";
+                };
+            }else
+                ret = aImageResult.value("predict_label").toString();
+            if (ret != ""){
+                ret = "pred: " + ret + "\n" + "gt: " + aImageResult.value("label").toString() + "\n";
+
+                auto pred_lbls = aImageResult.value("predict_label_list").toArray();
+                auto pred_scrs = aImageResult.value("predict_score_list").toArray();
+                for (int i = 0; i < pred_lbls.size(); ++i){
+                    if (i != 0)
+                        ret += "; ";
+                    ret += pred_lbls[i].toString() + ": " + QString::number(pred_scrs[i].toDouble());
+                }
+            }
+       /* }
+        else{
+            if (m_images_statistics.contains(aImageID)){
+                auto idx = calcThresholdIndex();
+                ret = m_images_statistics.value(aImageID).value("image_value").toArray()[idx].toString();
+            }
+        }*/
     }
-    else{
-        if (m_images_statistics.contains(aImageID)){
-            auto idx = calcThresholdIndex();
-            ret = m_images_statistics.value(aImageID).value("image_value").toArray()[idx].toString();
-        }
-    }
-    return rea::Json("predict", ret, "color", getResultColor(getResultShow()));
+    return rea::Json("predict", ret, "color", getResultColor(result_show));
 }
 
 void task::prepareTrainParam(QJsonObject& aParam){
@@ -1251,6 +1291,21 @@ void task::jobManagement(){
         ->nextB(s3_bucket_name + "writeJson")
         ->next(s3_bucket_name + "readJson", rea::Json("tag", "updateImageResult"));
 
+    //modify result show
+    rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+        m_show_result = !m_show_result;
+        aInput->out<stgJson>(stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name + "readJson");
+    }, rea::Json("name", "modifyResultShow"))
+        ->next(s3_bucket_name + "readJson", rea::Json("tag", "updateImageResult"));
+
+    //modify image show
+    rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+        m_show_label = !m_show_label;
+        m_current_image = "";
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+    }, rea::Json("name", "modifyLabelShow"))
+        ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"));
+
     //download result
     rea::pipeline::find("_selectFile")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
@@ -1276,7 +1331,7 @@ void task::jobManagement(){
               aInput->out<QJsonObject>(rea::Json("title", "error", "text", res.value("msg")), "popMessage");
           }else{
               auto job = res.value("job_id").toString();
-              insertJob(job, res.value("model_id").toString(job));
+              insertJob(job);
               m_current_job = "";
               aInput->out<QJsonObject>(prepareJobListGUI(job), "task_job_updateListView");
               aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
@@ -1300,9 +1355,11 @@ void task::jobManagement(){
             auto jobs = dt.value("jobs").toArray();
             for (auto i : jobs){
                 prm = rea::Json(prm, "type", "inference",
-                                "statistics", !dt.contains("images"),
+                                "statistics", dt.value("statistics"),
                                 "model_id", (m_jobs.begin() + i.toInt()).key(),
                                 "model_path", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job);
+                if (!dt.value("statistics").toBool())
+                    prm.insert("job_id", prm.value("model_id"));
                 aInput->out<QJsonObject>(prm, "callServer");
             }
         }else{
@@ -1594,19 +1651,13 @@ void task::jobManagement(){
                        aInput->out<QJsonObject>(rea::Json(protocal.value(protocal_upload).toObject().value("req").toObject(),
                                                           "job_id", m_current_job,
                                                           "s3_bucket_name", s3_bucket_name,
-                                                          "data_root", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + job.value("model_id").toString(),
-                                                          "model_path",  "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + job.value("model_id").toString()),
+                                                          "data_root", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job,
+                                                          "model_path",  "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job),
                                                 "callServer");
                    }
                    else
                        m_jobs.insert(m_current_job, job);
                    if (st == "upload_finish"){
-                       if (m_current_job != job.value("model_id").toString()){
-                           m_jobs.remove(m_current_job);
-                           m_current_job = "";
-                           aInput->out<QJsonObject>(prepareJobListGUI(job.value("model_id").toString()), "task_job_updateListView");
-                           aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
-                       }
                        m_current_image = "";
                        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
                    }
@@ -1617,8 +1668,6 @@ void task::jobManagement(){
         }, rea::Json("thread", 5)), rea::Json("tag", protocal_task_state))
         ->nextB("callServer")
         ->nextB(s3_bucket_name + "writeJson")
-        ->nextB("task_job_updateListView")
-        ->nextB("task_job_listViewSelected", rea::Json("tag", "manual"))
         ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
         ->next("requestJobState");
 
@@ -1666,10 +1715,15 @@ void task::jobManagement(){
     }), infer_tag)
         ->next("task_job_listViewSelected", infer_tag)
         ->next(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
-           if (aInput->data().size() > 0){
-               aInput->out<QJsonObject>(rea::Json("jobs", aInput->data(), "infer", true, "images", aInput->cacheData<QJsonArray>(0)), "startJob");
-           }
+           auto imgs = aInput->cacheData<QJsonArray>(0);
+           if (imgs.size() == 0){
+               aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "no selected images!"), "popMessage");
+           }else if (aInput->data().size() == 0)
+               aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "no selected jobs!"), "popMessage");
+           else
+               aInput->out<QJsonObject>(rea::Json("jobs", aInput->data(), "infer", true, "images", imgs, "statistics", false), "startJob");
         }), infer_tag)
+        ->nextB("popMessage")
         ->next("startJob");
 
     //continue job
@@ -1677,9 +1731,22 @@ void task::jobManagement(){
         ->nextB(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
             aInput->out<QJsonObject>(rea::Json("jobs", aInput->data()), "startJob");
         })->nextB("startJob"), rea::Json("tag", "continueJob"))
-        ->nextB(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
-            aInput->out<QJsonObject>(rea::Json("jobs", aInput->data(), "infer", true), "startJob");
-        })->nextB("startJob"), rea::Json("tag", "startJob"));
+        ->nextB(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            auto imgs = getImages();
+            if (imgs.size() == 0){
+                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "no used images!"), "popMessage");
+                return;
+            }else if (aInput->data().size() == 0){
+                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "no selected jobs!"), "popMessage");
+                return;
+            }
+            QJsonArray lst;
+            for (auto i : imgs.keys())
+                lst.push_back(i);
+            aInput->out<QJsonObject>(rea::Json("jobs", aInput->data(), "infer", true, "images", lst, "statistics", true), "startJob");
+        })
+        ->nextB("popMessage")
+        ->nextB("startJob"), rea::Json("tag", "startJob"));
 
     //delete Job
     rea::pipeline::find("task_job_listViewSelected")

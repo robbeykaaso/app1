@@ -236,16 +236,14 @@ TabView{
 
         Keys.onPressed: function(e){
             var lst = getTab(2).children[0].children[0].children[0].children[1]
-            if (e.key === 16777236){
-                if (e.modifiers === 67108864)
-                    lst.selectNextPage(true)
-                else
-                    lst.selectNext(true)
+            if (e.key === 16777238)
+                lst.selectNextPage(false)
+            else if (e.key === 16777239)
+                lst.selectNextPage(true)
+            else if (e.key === 16777236){
+                lst.selectNext(true)
             }else if (e.key === 16777234){
-                if (e.modifiers === 67108864)
-                    lst.selectNextPage(false)
-                else
-                    lst.selectNext(false)
+                lst.selectNext(false)
             }else if (e.key === 16777235){
                 Pipeline2.run("switchprojectFirstImageIndex", {previous: true})
             }else if (e.key === 16777237){
@@ -583,11 +581,10 @@ TabView{
                                 width: parent.width
                                 onClicked: Pipeline2.run("doCommand", 1, {tag: "manual"})
                             }
-                            Button{
-                                text: qsTr("scatter")
+                            ScatterButton{
+                                name: "project"
                                 height: 30
                                 width: parent.width
-                                onClicked: Pipeline2.run("scatterProjectImageShow", {})
                             }
                             Button{
                                 text: qsTr("fit")

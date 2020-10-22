@@ -32,8 +32,8 @@ TWindow{
             var ret = []
             var sels = lst.selects
             for (var i in sels)
-                ret = ret.concat(entries[sels[i]]["entry"][3])
-            return {data: {type: "label", value: ret}, out: {}}
+                ret.push(entries[sels[i]]["entry"][0])
+            return {data: {type: "stage", value: ret}, out: {}}
         }, {name: "_stageStatisticsShowed", type: "Partial"})
 
         Pipeline2.add(function(aInput){

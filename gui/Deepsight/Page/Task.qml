@@ -168,7 +168,11 @@ TabView{
 
         Keys.onPressed: function(e){
             var lst = getTab(1).children[0].children[0].children[0].children[1]
-            if (e.key === 16777236){
+            if (e.key === 16777238)
+                lst.selectNextPage(false)
+            else if (e.key === 16777239)
+                lst.selectNextPage(true)
+            else if (e.key === 16777236){
                 lst.selectNext(true)
             }else if (e.key === 16777234){
                 lst.selectNext(false)
@@ -202,8 +206,12 @@ TabView{
                                     Pipeline2.run("filterTaskImages", {type: label})
                                     search.hint = ""
                                     search.text = ""
-                                }else if (aLabel === "stage")
-                                    search.hint = "input stage"
+                                }else if (aLabel === "stage"){
+                                    //search.hint = "input stage"
+                                    Pipeline2.run("calcTaskStageStatistics", {})
+                                    search.hint = ""
+                                    search.text = ""
+                                }
                                 else if (aLabel === "label"){
                                     Pipeline2.run("calcTaskLabelStatistics", {})
                                     search.hint = ""
@@ -212,12 +220,12 @@ TabView{
                             }
                             Component.onCompleted: {
                                 updateMenu({filter: {"all": "", "used": "", "stage": "", "label": ""}})
-                                Pipeline2.find("taskimage_Searched")
+                                /*Pipeline2.find("taskimage_Searched")
                                 .next(function(aInput){
                                     if (label === "stage")
                                         return {out: [{out: {type: label, value: aInput}, next: "filterTaskImages"}]}
                                 }, {tag: "manual"}, {vtype: ""})
-                                .next("filterTaskImages")
+                                .next("filterTaskImages")*/
                             }
                         }
                         Search {
@@ -567,11 +575,10 @@ TabView{
                                     width: parent.width
                                     onClicked: Pipeline2.run("doCommand", 1, {tag: "manual"})
                                 }
-                                Button{
-                                    text: qsTr("scatter")
+                                ScatterButton{
+                                    name: "task"
                                     height: 30
                                     width: parent.width
-                                    onClicked: Pipeline2.run("scatterTaskImageShow", {})
                                 }
                                 Button{
                                     text: qsTr("fit")
@@ -625,15 +632,13 @@ TabView{
                     height: 30
                     Status{
                         id: sts
-                        width: parent.width - 90
+                        width: parent.width - 60
                         height: parent.height
                         name: "taskimage"
                     }
-                    Button{
-                        width: 90
-                        text: "result_color"
+                    ViewButton{
+                        width: 60
                         height: parent.height
-                        onClicked: Pipeline2.run("_selectColor", {tag: {tag: "modifyResultColor"}})
                     }
                 }
             }

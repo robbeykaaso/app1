@@ -26,13 +26,13 @@ protected:
     QJsonObject getTaskLabels();
     QJsonObject getProjectLabels();
     QJsonObject getImageShow();
-    QString getResultColor();
     QJsonObject getResultShow();
     bool belongThisMode(const QString& aMode, const QString& aPath);
     bool isCurrentMode(const QString& aMode);
     int getShowCount();
     void updateCurrentImage();
     void serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage);
+    bool getShowLabel();
     task* m_task;
 private:
     QHash<QString, bool> m_paths;
@@ -88,6 +88,8 @@ private:
     int m_channel_count;
     int m_show_count = 1;
     QJsonObject m_image_show;
+    bool m_show_result = true;
+    bool m_show_label = true;
     const QJsonObject selectTaskImage = rea::Json("tag", "selectTaskImage");
     void imageManagement();
     bool isCurrentMode(const QString& aMode);
@@ -103,7 +105,7 @@ private:
     QString m_current_request = "";
     QHash<QString, QJsonArray> m_log_cache;
 
-    void insertJob(const QString& aID, const QString& aModelID);
+    void insertJob(const QString& aID);
     QJsonObject prepareTrainingData(const QJsonArray& aImages, QSet<QString>& aStageSet);
     QString getJobState(const QJsonObject& aJob);
     void setJobState(QJsonObject& aJob, const QString& aState);

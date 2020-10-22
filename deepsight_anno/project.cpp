@@ -137,17 +137,19 @@ private:
                 aInput->out<QJsonObject>(prepareLabelListGUI(lbls), "project_label_updateListView");
                 aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected");
                 //aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
-                aInput->out<QJsonObject>(rea::Json("count", 1), "scatterProjectImageShow");
+                aInput->out<QJsonObject>(rea::Json("count", 1), "scatterprojectImageShow");
                 aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
                 aInput->out<QJsonObject>(getFilter(), "updateProjectImageFilterGUI");
+                aInput->out<double>(0, "updateProjectChannelCountGUI");
             }))
             ->nextB("updateTaskGUI")
             ->nextB("project_task_updateListView")
             ->nextB("project_image_updateListView")
             ->nextB("project_label_updateListView")
             ->nextB("project_task_listViewSelected", rea::Json("tag", "manual"))
-            ->nextB("scatterProjectImageShow")
+            ->nextB("scatterprojectImageShow")
             ->nextB("updateProjectImageFilterGUI")
+            ->nextB("updateProjectChannelCountGUI")
             //->nextB("project_image_listViewSelected", rea::Json("tag", "manual"))
             ->next("project_label_listViewSelected", rea::Json("tag", "project_manual"));
     }
@@ -760,6 +762,11 @@ private:
     int m_show_count = 1;
     const QString setImageShow0 = "setImageShow";
     void guiManagement(){
+        //update channel count
+        rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+            aInput->setData(getChannelCount())->out();
+        }, rea::Json("name", "updateProjectChannelCountGUI"));
+
         //the qsgnode will be destroyed by qt after switch page
         rea::pipeline::find("title_updateNavigation")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
@@ -781,7 +788,7 @@ private:
             aInput->out<QJsonObject>(rea::Json("size", m_show_count), "projectimage_updateViewCount");
             m_current_image = "";
             aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
-        }, rea::Json("name", "scatterProjectImageShow"))
+        }, rea::Json("name", "scatterprojectImageShow"))
             ->nextB("projectimage_updateViewCount")
             ->next("project_image_listViewSelected", rea::Json("tag", "manual"));
 

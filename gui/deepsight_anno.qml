@@ -119,4 +119,7 @@ ApplicationWindow {
     LabelFilterWindow{
 
     }
+    StageFilterWindow{
+
+    }
 }
