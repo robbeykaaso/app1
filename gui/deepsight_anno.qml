@@ -98,7 +98,7 @@ ApplicationWindow {
             }
         }
     }
-    NewObject{
+    PWindow{
 
     }
     MakeSure{

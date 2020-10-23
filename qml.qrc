@@ -2,58 +2,26 @@
     <qresource prefix="/">
         <file>main.cpp</file>
         <file>qtquickcontrols2.conf</file>
+        <file>resource/logo.png</file>
+        <file>resource/icon-search.png</file>
         <file>gui/main.qml</file>
         <file>gui/TreeNodeView/TreeNode.qml</file>
         <file>gui/TreeNodeView/TreeNodeDelete.qml</file>
         <file>gui/TreeNodeView/TreeNodeTag.qml</file>
         <file>gui/TreeNodeView/TreeNodeView.qml</file>
-        <file>gui/Basic/Check.ui.qml</file>
-        <file>gui/Basic/Combo.ui.qml</file>
-        <file>gui/Basic/Edit.ui.qml</file>
-        <file>gui/Basic/MsgDialog.qml</file>
-        <file>gui/Basic/TWindow.qml</file>
-        <file>gui/Component/Log.qml</file>
-        <file>gui/Component/Log0.ui.qml</file>
-        <file>gui/Basic/AutoSize.qml</file>
-        <file>gui/Basic/Radio.ui.qml</file>
-        <file>gui/Component/Camera.qml</file>
-        <file>gui/Component/IO.qml</file>
-        <file>gui/Component/Progress.qml</file>
-        <file>gui/Component/List.qml</file>
-        <file>gui/Basic/Swipe.ui.qml</file>
-        <file>gui/Basic/Gridder.qml</file>
-        <file>gui/Basic/DynamicQML.qml</file>
-        <file>resource/icon-search.png</file>
-        <file>gui/Basic/Search.qml</file>
-        <file>gui/Basic/Flip.qml</file>
-        <file>gui/Basic/File.qml</file>
-        <file>gui/Basic/Track.qml</file>
-        <file>gui/Component/Status0.ui.qml</file>
-        <file>gui/Component/Status.qml</file>
-        <file>gui/Component/Matrix.qml</file>
-        <file>gui/Basic/Nest.qml</file>
-        <file>gui/Basic/LineChart.qml</file>
-        <file>gui/Basic/ColorSelect.qml</file>
-        <file>gui/Basic/THistogram.qml</file>
-        <file>gui/Basic/Histogram.qml</file>
         <file>gui/deepsight_anno.qml</file>
         <file>gui/Deepsight/Page/Project.qml</file>
         <file>gui/Deepsight/Page/Task.qml</file>
         <file>gui/Deepsight/Page/User.qml</file>
-        <file>gui/Deepsight/Component/NewObject.qml</file>
         <file>gui/Deepsight/Component/MakeSure.qml</file>
         <file>gui/Deepsight/Component/LabelButton.qml</file>
-        <file>gui/Component/PageList.qml</file>
         <file>gui/Deepsight/Component/LabelEdit.qml</file>
         <file>gui/Deepsight/Component/TransformImage.qml</file>
-        <file>resource/logo.png</file>
-        <file>gui/Basic/Spin.qml</file>
         <file>gui/Deepsight/Component/StageButton.qml</file>
         <file>gui/Deepsight/Component/JobParamButton.qml</file>
         <file>gui/Deepsight/Component/JobLogPanel.qml</file>
         <file>gui/Deepsight/Component/ResultWindow.qml</file>
         <file>gui/Deepsight/Component/ROIPanel.qml</file>
-        <file>gui/Basic/Navigation.qml</file>
         <file>gui/Deepsight/Component/LabelFilterWindow.qml</file>
         <file>gui/Deepsight/Component/BoardMenu.qml</file>
         <file>gui/Deepsight/Component/StageFilterWindow.qml</file>

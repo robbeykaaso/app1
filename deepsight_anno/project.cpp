@@ -478,22 +478,6 @@ private:
         insert("imageShow", aImageShow);
     }
 
-    QString getResizeMode(const QJsonObject& aImageShow){
-        return aImageShow.value("resizeMode").toString("linear");
-    }
-
-    void setResizeMode(QJsonObject& aImageShow, const QString& aResizeMode){
-        aImageShow.insert("resizeMode", aResizeMode);
-    }
-
-    QString getColorFormat(const QJsonObject& aImageShow){
-        return aImageShow.value("colorFormat").toString("None");
-    }
-
-    void setColorFormat(QJsonObject& aImageShow, const QString& aColorFormat){
-        aImageShow.insert("colorFormat", aColorFormat);
-    }
-
     void imageManagement(){
         //switch first image index
         serviceSelectFirstImageIndex("project");
@@ -793,16 +777,26 @@ private:
             ->next("project_image_listViewSelected", rea::Json("tag", "manual"));
 
         //modify image show
-        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        rea::pipeline::find(setImageShow0)
+        ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto show_cfg = aInput->data();
             auto show = getImageShow();
-            auto md = getResizeMode(show);
-            auto fmt = getColorFormat(show);
-            QVector<QString> mds{"linear", "nearest", "cubic", "area", "lanczos4"}, fmts{"None", "BayerRG2RGB", "BayerRG2Gray", "RGB2Gray"};
+            QJsonObject show_content;
+            for (auto i : show_cfg.keys()){
+                auto cnds = show_cfg.value(i).toArray();
+                auto val = show.value(i).toString();
+                int sel = 0;
+                for (int j = 0; j < cnds.size(); ++j)
+                    if (val == cnds[j].toString()){
+                        sel = j;
+                        break;
+                    }
+                show_content.insert(i, rea::Json("model", cnds, "index", sel));
+            }
             aInput->out<QJsonObject>(rea::Json("title", "image show",
-                                               "content", rea::Json("resizeMode", rea::Json("model", rea::JArray("linear", "nearest", "cubic", "area", "lanczos4"), "index", mds.indexOf(md)),
-                                                                    "colorFormat", rea::Json("model", rea::JArray("None", "BayerRG2RGB", "BayerRG2Gray", "RGB2Gray"), "index", fmts.indexOf(fmt))),
+                                               "content", show_content,
                                                "tag", rea::Json("tag", setImageShow0)), "_newObject");
-        }, rea::Json("name", setImageShow0))
+        }))
         ->next("_newObject")
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
             auto dt = aInput->data();

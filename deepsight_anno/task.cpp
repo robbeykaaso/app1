@@ -719,11 +719,16 @@ void task::imageManagement(){
         pth = pth.mid(0, pth.indexOf("."));
         auto img = aInput->data().getData();
         auto shps = img.value("shapes").toObject();
+        auto shp_lbls = getLabels().value("shape").toObject();
+        auto proj_lbls = m_project_labels.value("shape").toObject();
         QJsonArray lbls;
         for (auto i : shps){
             auto shp = i.toObject();
-            if (shp.contains("label"))
-                lbls.push_back(shp.value("label"));
+            if (shp.contains("label")){
+                auto lbl = shp.value("label").toString();
+                if (shp_lbls.contains(lbl) && proj_lbls.contains(lbl))
+                    lbls.push_back(shp.value("label"));
+            }
         }
         auto img_cfg = m_project_images->value(pth).toObject();
 
@@ -991,7 +996,7 @@ void task::serverManagement(){
                    else
                        aInput->out<QJsonObject>(rea::Json("ip", dt.value("ip"),
                                                           "port", dt.value("port"),
-                                                          "id", "hello"));
+                                                          "id", "hello"), "tryLinkServer");
         }), rea::Json("tag", "setServer"))
         ->next("tryLinkServer");
 }
@@ -1263,6 +1268,7 @@ QJsonObject task::getImagePredict(const QString& aImageID, const QJsonObject& aI
 
 void task::prepareTrainParam(QJsonObject& aParam){
     aParam.insert("num_of_image_in_group", m_channel_count);
+    auto proj_lbls = m_project_labels.value("shape").toObject();
 
     auto lbls = getLabels();
     QJsonArray image_label_groups, shape_labels;
@@ -1270,11 +1276,13 @@ void task::prepareTrainParam(QJsonObject& aParam){
         if (i == "shape"){
             auto shp_lbls = lbls.value(i).toObject();
             for (auto j : shp_lbls.keys())
-                shape_labels.push_back(j);
+                if (proj_lbls.contains(j))
+                    shape_labels.push_back(j);
         }else
             image_label_groups.push_back(i);
     aParam.insert("image_label_groups", image_label_groups);
     aParam.insert("shape_labels", shape_labels);
+    aParam.insert("setting", m_image_show);
 }
 
 
@@ -1732,18 +1740,14 @@ void task::jobManagement(){
             aInput->out<QJsonObject>(rea::Json("jobs", aInput->data()), "startJob");
         })->nextB("startJob"), rea::Json("tag", "continueJob"))
         ->nextB(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-            auto imgs = getImages();
-            if (imgs.size() == 0){
+            if (getImages().size() == 0){
                 aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "no used images!"), "popMessage");
                 return;
             }else if (aInput->data().size() == 0){
                 aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "no selected jobs!"), "popMessage");
                 return;
             }
-            QJsonArray lst;
-            for (auto i : imgs.keys())
-                lst.push_back(i);
-            aInput->out<QJsonObject>(rea::Json("jobs", aInput->data(), "infer", true, "images", lst, "statistics", true), "startJob");
+            aInput->out<QJsonObject>(rea::Json("jobs", aInput->data(), "infer", true, "statistics", true), "startJob");
         })
         ->nextB("popMessage")
         ->nextB("startJob"), rea::Json("tag", "startJob"));
