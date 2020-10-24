@@ -3,6 +3,5 @@
         <file>main.cpp</file>
         <file>qtquickcontrols2.conf</file>
         <file>resource/logo.png</file>
-        <file>gui/main.qml</file>
     </qresource>
 </RCC>

@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
     if (prm.value("-d") == "TRUE")
         rea::pipeline::run<int>("unitTest", 0);
     if (prm.value("-m") == "GUI")
-        engine.load(QUrl(QStringLiteral("qrc:/gui/main.qml")));
+        rea::pipeline::run<QQmlApplicationEngine*>("loadGUIMain", &engine);
     else
         rea::pipeline::run<QQmlApplicationEngine*>("loadMain", &engine);
     if (engine.rootObjects().isEmpty())
