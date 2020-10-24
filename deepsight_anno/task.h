@@ -2,7 +2,7 @@
 #define REAL_APPLICATION2_Task_H_
 
 #include "model.h"
-#include "../socket/client.h"
+#include "client.h"
 #include "storage/storage.h"
 
 class task;
@@ -96,7 +96,7 @@ private:
 private:
     void guiManagement();
 private:
-    normalClient m_client;
+    rea::normalClient m_client;
     void serverManagement();
 private:
     QJsonObject m_jobs;

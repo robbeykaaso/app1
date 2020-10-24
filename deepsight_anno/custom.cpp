@@ -74,22 +74,22 @@ void roiMode::initialize(){
                 setROI(*m_task, roi);
                 if (isCurrentMode("roi"))
                     aInput->out<QJsonObject>(rea::Json("visible", true, "count", getROICount(roi, m_local ? getImageID() : "whole")), "updateROIGUI");
-                aInput->out<stgJson>(stgJson(*m_task, pth), s3_bucket_name() + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(*m_task, pth), s3_bucket_name() + "writeJson");
             }
         }else if (pth != cur && belongThisMode("roi", pth)){
-            aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
+            aInput->cache<QJsonArray>(aInput->data())->out<rea::stgJson>(rea::stgJson(QJsonObject(), pth));
         }
     }, rea::Json("name", "roi_tryModifyCurrentModel"))
         ->next("updateROIGUI");
 
     //interface remote save
-    rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+    rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
         auto dt = aInput->data().getData();
         auto pth = QString(aInput->data());
         auto roi = getROI(dt);
         modifyROI(aInput->cacheData<QJsonArray>(0), roi, pth);
         setROI(dt, roi);
-        aInput->out<stgJson>(stgJson(dt, pth), s3_bucket_name() + "writeJson");
+        aInput->out<rea::stgJson>(rea::stgJson(dt, pth), s3_bucket_name() + "writeJson");
     }, rea::Json("name", "roi_modifyRemoteModel"));
 
     //interface show
@@ -100,7 +100,7 @@ void roiMode::initialize(){
         if (ch == getShowCount() - 1){
             if (add_show)
                 add_show();
-            rea::pipeline::run<stgJson>(s3_bucket_name() + "readJson", stgJson(QJsonObject(), getImageResultJsonPath()), rea::Json("tag", "updateImageResult"));
+            rea::pipeline::run<rea::stgJson>(s3_bucket_name() + "readJson", rea::stgJson(QJsonObject(), getImageResultJsonPath()), rea::Json("tag", "updateImageResult"));
         }
     }, rea::Json("name", "roi_showQSGModel"));
 
@@ -189,7 +189,7 @@ void roiMode::initialize(){
         if (sv){
             setShapes(roi, shps);
             setROI(*m_task, roi);
-            aInput->out<stgJson>(stgJson(*m_task, getTaskJsonPath()), s3_bucket_name() + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(*m_task, getTaskJsonPath()), s3_bucket_name() + "writeJson");
         }
         updateCurrentImage();
         aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
@@ -211,7 +211,7 @@ void roiMode::initialize(){
             auto roi = getROI(*m_task);
             setShapes(roi, dt.value("roi").toObject());
             setROI(*m_task, roi);
-            aInput->out<stgJson>(stgJson(*m_task, getTaskJsonPath()), s3_bucket_name() + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(*m_task, getTaskJsonPath()), s3_bucket_name() + "writeJson");
             updateCurrentImage();
             aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
         }))
@@ -343,11 +343,11 @@ public:
             ->next(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
                        auto pths = aInput->data();
                        if (pths.size() > 0){
-                           aInput->out<stgJson>(stgJson(QJsonObject(), pths[0].toString()), "readJson");
+                           aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), pths[0].toString()), "readJson");
                        }
                    }), rea::Json("tag", "setJobParameter"))
             ->next(rea::local("readJson", rea::Json("thread", 10)))
-            ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+            ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
                 m_current_param = aInput->data().getData();
             }));
         rea::pipeline::find("editJobParam")

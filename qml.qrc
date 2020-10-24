@@ -3,29 +3,6 @@
         <file>main.cpp</file>
         <file>qtquickcontrols2.conf</file>
         <file>resource/logo.png</file>
-        <file>resource/icon-search.png</file>
         <file>gui/main.qml</file>
-        <file>gui/TreeNodeView/TreeNode.qml</file>
-        <file>gui/TreeNodeView/TreeNodeDelete.qml</file>
-        <file>gui/TreeNodeView/TreeNodeTag.qml</file>
-        <file>gui/TreeNodeView/TreeNodeView.qml</file>
-        <file>gui/deepsight_anno.qml</file>
-        <file>gui/Deepsight/Page/Project.qml</file>
-        <file>gui/Deepsight/Page/Task.qml</file>
-        <file>gui/Deepsight/Page/User.qml</file>
-        <file>gui/Deepsight/Component/MakeSure.qml</file>
-        <file>gui/Deepsight/Component/LabelButton.qml</file>
-        <file>gui/Deepsight/Component/LabelEdit.qml</file>
-        <file>gui/Deepsight/Component/TransformImage.qml</file>
-        <file>gui/Deepsight/Component/StageButton.qml</file>
-        <file>gui/Deepsight/Component/JobParamButton.qml</file>
-        <file>gui/Deepsight/Component/JobLogPanel.qml</file>
-        <file>gui/Deepsight/Component/ResultWindow.qml</file>
-        <file>gui/Deepsight/Component/ROIPanel.qml</file>
-        <file>gui/Deepsight/Component/LabelFilterWindow.qml</file>
-        <file>gui/Deepsight/Component/BoardMenu.qml</file>
-        <file>gui/Deepsight/Component/StageFilterWindow.qml</file>
-        <file>gui/Deepsight/Component/ViewButton.qml</file>
-        <file>gui/Deepsight/Component/ScatterButton.qml</file>
     </qresource>
 </RCC>

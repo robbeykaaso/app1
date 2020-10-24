@@ -1,8 +1,8 @@
 #include "task.h"
 #include "imagePool.h"
 #include "command.h"
-#include "../socket/server.h"
-#include "../socket/protocal.h"
+#include "server.h"
+#include "protocal.h"
 #include "../util/cv.h"
 
 QString ITaskFriend::s3_bucket_name(){
@@ -96,18 +96,18 @@ void taskMode::initialize(){
         if (modifyImage(aInput->data(), getImageData(), pth)){
             belongThisMode("task", pth);
             if (getImageID() != ""){
-                aInput->out<stgJson>(stgJson(getImageData(), pth), s3_bucket_name() + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(getImageData(), pth), s3_bucket_name() + "writeJson");
             }
         }else if (pth != cur && belongThisMode("task", pth)){
-            aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
+            aInput->cache<QJsonArray>(aInput->data())->out<rea::stgJson>(rea::stgJson(QJsonObject(), pth));
         }
     }, rea::Json("name", "task_tryModifyCurrentModel"));
 
-    rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+    rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
         auto dt = aInput->data().getData();
         auto pth = QString(aInput->data());
         modifyImage(aInput->cacheData<QJsonArray>(0), dt, pth);
-        aInput->out<stgJson>(stgJson(dt, pth), s3_bucket_name() + "writeJson");
+        aInput->out<rea::stgJson>(rea::stgJson(dt, pth), s3_bucket_name() + "writeJson");
     }, rea::Json("name", "task_modifyRemoteModel"));
 
     rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
@@ -117,7 +117,7 @@ void taskMode::initialize(){
             if (ch == getShowCount() - 1){
                 if (add_show)
                     add_show();
-                rea::pipeline::run<stgJson>(s3_bucket_name() + "readJson", stgJson(QJsonObject(), getImageResultJsonPath()), rea::Json("tag", "updateImageResult"));
+                rea::pipeline::run<rea::stgJson>(s3_bucket_name() + "readJson", rea::stgJson(QJsonObject(), getImageResultJsonPath()), rea::Json("tag", "updateImageResult"));
             }
     }, rea::Json("name", "task_showQSGModel"));
 }
@@ -297,13 +297,13 @@ void task::taskManagement(){
             m_image_show = dt.value("imageshow").toObject();
             m_project_name = dt.value("project_name").toString();
             m_task_name = dt.value("task_name").toString();
-            aInput->out<stgJson>(stgJson(QJsonObject(), getTaskJsonPath()));
-            aInput->out<stgJson>(stgJson(QJsonObject(), getJobsJsonPath()));
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getTaskJsonPath()));
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getJobsJsonPath()));
         }
     }, rea::Json("name", "openTask"))
         ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
-        ->next(rea::buffer<stgJson>(2))
-        ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
+        ->next(rea::buffer<rea::stgJson>(2))
+        ->next(rea::pipeline::add<std::vector<rea::stgJson>>([this](rea::stream<std::vector<rea::stgJson>>* aInput){
             auto dt = aInput->data();
             dt[0].getData().swap(*this);
             m_jobs = dt[1].getData();
@@ -321,7 +321,7 @@ void task::taskManagement(){
             for (auto i : m_jobs.keys()){
                 auto job = m_jobs.value(i).toObject();
                 if (job.value("state") == "upload_finish"){
-                    aInput->out<stgByteArray>(stgByteArray(QByteArray(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + i + "/log.txt"));
+                    aInput->out<rea::stgByteArray>(rea::stgByteArray(QByteArray(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + i + "/log.txt"));
                 }
             }
         }))
@@ -333,7 +333,7 @@ void task::taskManagement(){
         ->nextB("task_job_listViewSelected", rea::Json("tag", "manual"))
         ->nextB("updateTaskImageFilterGUI")
         ->next(rea::local(s3_bucket_name + "readByteArray", rea::Json("thread", 10)))
-        ->next(rea::pipeline::add<stgByteArray>([this](rea::stream<stgByteArray>* aInput){
+        ->next(rea::pipeline::add<rea::stgByteArray>([this](rea::stream<rea::stgByteArray>* aInput){
             auto dt = QString(aInput->data().getData()).split("\n");
             auto job = aInput->data().mid(0, aInput->data().indexOf("/log.txt"));
             job = job.mid(job.lastIndexOf("/") + 1, job.length());
@@ -468,7 +468,7 @@ void task::labelManagement(){
             if (updatelist)
                 aInput->out<QJsonObject>(rea::Json(prepareLabelListGUI(grps), "selects", rea::JArray(sel)), "task_label_updateListView");
             setLabels(grps);
-            aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
             aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
             m_current_image = "";
             aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
@@ -498,7 +498,7 @@ void task::labelManagement(){
                        setImageLabels(abs, lbls);
                        m_project_images->insert(img, abs);
                    }
-                   aInput->out<stgJson>(stgJson(*m_project_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
+                   aInput->out<rea::stgJson>(rea::stgJson(*m_project_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
                }), modifyImageLabel_tag)
         ->next(s3_bucket_name + "writeJson");
 
@@ -528,7 +528,7 @@ void task::imageManagement(){
 
     //update project images
     rea::pipeline::find(s3_bucket_name + "writeJson")
-    ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+    ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
         if (m_task_id == "")
             return;
         //m_project_images = aInput->data().getData();
@@ -559,7 +559,7 @@ void task::imageManagement(){
                            aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_taskimage_gridder0");
                            m_current_image = nm;
                            auto nms = getImageName(m_project_images->value(m_current_image).toObject());
-                           aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), s3_bucket_name + "readJson", selectTaskImage);
+                           aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), s3_bucket_name + "readJson", selectTaskImage);
                            for (auto i = 0; i < m_show_count; ++i){
                                auto img_nm = nms[i].toString();
                                if (i == 0)
@@ -576,7 +576,7 @@ void task::imageManagement(){
            }), rea::Json("tag", "manual"))
         ->nextB("updateQSGCtrl_taskimage_gridder0")
         ->nextB(rea::pipeline::find(s3_bucket_name + "readJson")
-                       ->nextB(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+                       ->nextB(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
                                        m_image = aInput->data().getData();
                                        auto img_lbls = getImageLabels(m_project_images->value(m_current_image).toObject());
                                        auto tsk_lbls = getLabels();
@@ -637,7 +637,7 @@ void task::imageManagement(){
             }
             if (mdy){
                 setImages(imgs);
-                aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
                 auto ret = prepareImageListGUI(getImages());
                 ret.remove("selects");
                 aInput->out<QJsonObject>(ret, "task_image_updateListView");
@@ -675,7 +675,7 @@ void task::imageManagement(){
         setFilter(dt);
         aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
         aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-        aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+        aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
     }, rea::Json("name", "filterTaskImages"))
         ->nextB("task_image_updateListView")
         ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
@@ -710,10 +710,10 @@ void task::imageManagement(){
         aInput->cache<QJsonObject>(QJsonObject());
         aInput->cache<QJsonObject>(dt);
         for (auto i : imgs.keys())
-            aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + i + ".json"));
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + i + ".json"));
     }), setImageStage_tag)
     ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
-    ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+    ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
         auto dt = aInput->data();
         auto pth = dt.mid(dt.lastIndexOf("/") + 1, dt.length());
         pth = pth.mid(0, pth.indexOf("."));
@@ -751,7 +751,7 @@ void task::imageManagement(){
         setImages(imgs);
         aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
         aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", QJsonObject(), false);
-        aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+        aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
     }))
     ->nextB("task_image_updateListView")
     ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
@@ -788,7 +788,7 @@ void task::imageManagement(){
             auto ret = prepareImageListGUI(imgs);
             ret.remove("selects");
             aInput->out<QJsonObject>(ret, "task_image_updateListView");
-            aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
         }
     }))
     ->nextB("task_image_updateListView")
@@ -890,30 +890,30 @@ void task::guiManagement(){
 
 void task::serverManagement(){
     //initialize socket
-    rea::pipeline::find("tryLinkServer")->previous(rea::pipeline::add<stgJson>([](rea::stream<stgJson>* aInput){
+    rea::pipeline::find("tryLinkServer")->previous(rea::pipeline::add<rea::stgJson>([](rea::stream<rea::stgJson>* aInput){
         auto dt = aInput->data();
         if (dt.getData().value("test_server").toBool()){
-            static normalServer server;
+            static rea::normalServer server(rea::Json("protocal", protocal));
             static QHash<QString, int> job_states;
             aInput->out<QJsonObject>(rea::Json("ip", "127.0.0.1",
                                                "port", "8081",
                                                "id", "hello"), "tryLinkServer");
 
             rea::pipeline::find("receiveFromClient")  //server end
-                ->nextB(rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
                                auto dt = aInput->data();
                                auto ret = protocal.value(protocal_connect).toObject().value("res").toObject();
                                aInput->setData(ret)->out();
                            })->nextB("callClient"),
                         rea::Json("tag", protocal_connect))
-                ->nextB(rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
                                auto dt = aInput->data();
                                auto ret = protocal.value(protocal_stop_job).toObject().value("res").toObject();
                                job_states.insert(dt.value("stop_job_id").toString(), - 1);
                                aInput->setData(ret)->out();
                            })->nextB("callClient"),
                         rea::Json("tag", protocal_stop_job))
-                ->nextB(rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
                                auto dt = aInput->data();
                                auto ret = protocal.value(protocal_training).toObject().value("res").toObject();
 
@@ -929,7 +929,7 @@ void task::serverManagement(){
                                 aInput->setData(ret)->out();
                         }, rea::Json("name", "startServerTraining"))->nextB("callClient"),
                         rea::Json("tag", protocal_training))
-                ->nextB(rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
                             auto dt = aInput->data();
                             auto ret = protocal.value(protocal_inference).toObject().value("res").toObject();
                             auto tm0 = QDateTime::currentDateTime();
@@ -945,7 +945,7 @@ void task::serverManagement(){
                             aInput->setData(ret)->out();
                         })->nextB("callClient"),
                         rea::Json("tag", "inference"))
-                ->nextB(rea::pipeline::add<clientMessage>([](rea::stream<clientMessage>* aInput){
+                ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
                         auto dt = aInput->data();
                         auto ret = protocal.value(protocal_task_state).toObject().value("res").toObject();
                         auto id = dt.value("id").toString();
@@ -961,31 +961,31 @@ void task::serverManagement(){
                             ret.insert("state", "running");
                         else
                             ret.insert("state", "upload_finish");
-                        auto res = clientMessage(ret);
+                        auto res = rea::clientMessage(ret);
                         res.client_socket = aInput->data().client_socket;
-                        aInput->out<clientMessage>(res, "callClient");
+                        aInput->out<rea::clientMessage>(res, "callClient");
 
                         if (cnt){
-                            res = clientMessage(rea::Json(protocal.value(protocal_progress_push).toObject().value("res").toObject(),
+                            res = rea::clientMessage(rea::Json(protocal.value(protocal_progress_push).toObject().value("res").toObject(),
                                                           "job_id", dt.value("job_id"),
                                                           "progress", cnt * 100.0 / 2000,
                                                           "progress_msg", "..."));
                             res.client_socket = aInput->data().client_socket;
-                            aInput->out<clientMessage>(res, "callClient");
+                            aInput->out<rea::clientMessage>(res, "callClient");
 
-                            res = clientMessage(rea::Json(protocal.value(protocal_log_push).toObject().value("res").toObject(),
+                            res = rea::clientMessage(rea::Json(protocal.value(protocal_log_push).toObject().value("res").toObject(),
                                                           "job_id", dt.value("job_id"),
                                                           "log_level", cnt % 2 == 0 ? "info" : "warning",
                                                           "log_msg", "..."));
                             res.client_socket = aInput->data().client_socket;
-                            aInput->out<clientMessage>(res, "callClient");
+                            aInput->out<rea::clientMessage>(res, "callClient");
                         }
 
                         }, rea::Json("name", "pollingTrainingState"))->nextB("callClient"),
                         rea::Json("tag", protocal_task_state));
         }else
             aInput->out<QJsonObject>(QJsonObject(), "tryLinkServer");
-    }))->previous(rea::local("readJson"))->execute(std::make_shared<rea::stream<stgJson>>((stgJson(QJsonObject(), "config_.json"))));
+    }))->previous(rea::local("readJson"))->execute(std::make_shared<rea::stream<rea::stgJson>>((rea::stgJson(QJsonObject(), "config_.json"))));
 
     //manually link server
     rea::pipeline::find("_newObject")
@@ -1293,8 +1293,8 @@ void task::jobManagement(){
             auto ret = getResultShow();
             ret.insert("color", aInput->data());
             setResultShow(ret);
-            aInput->out<stgJson>(stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
-            aInput->out<stgJson>(stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name + "readJson");
+            aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name + "readJson");
         }), rea::Json("tag", "modifyResultColor"))
         ->nextB(s3_bucket_name + "writeJson")
         ->next(s3_bucket_name + "readJson", rea::Json("tag", "updateImageResult"));
@@ -1302,7 +1302,7 @@ void task::jobManagement(){
     //modify result show
     rea::pipeline::add<double>([this](rea::stream<double>* aInput){
         m_show_result = !m_show_result;
-        aInput->out<stgJson>(stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name + "readJson");
+        aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name + "readJson");
     }, rea::Json("name", "modifyResultShow"))
         ->next(s3_bucket_name + "readJson", rea::Json("tag", "updateImageResult"));
 
@@ -1321,14 +1321,14 @@ void task::jobManagement(){
                    if (pths.size() > 0){
                        auto pth = "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/" + m_current_job + ".zip";
                        //std::cout << pth.toStdString() << std::endl;
-                       aInput->out<stgByteArray>(stgByteArray(QByteArray(), pth), s3_bucket_name + "readByteArray")->cache<QString>(pths[0].toString());
+                       aInput->out<rea::stgByteArray>(rea::stgByteArray(QByteArray(), pth), s3_bucket_name + "readByteArray")->cache<QString>(pths[0].toString());
                    }
                }), rea::Json("tag", "downloadResultModel"))
         ->next(rea::local(s3_bucket_name + "readByteArray", rea::Json("thread", 10)))
-        ->next(rea::pipeline::add<stgByteArray>([this](rea::stream<stgByteArray>* aInput){
+        ->next(rea::pipeline::add<rea::stgByteArray>([this](rea::stream<rea::stgByteArray>* aInput){
             auto pth = aInput->cacheData<QString>(0);
             auto dt = aInput->data().getData();
-            aInput->out<stgByteArray>(stgByteArray(dt, pth + "/" + m_current_job + ".zip"), "writeByteArray");
+            aInput->out<rea::stgByteArray>(rea::stgByteArray(dt, pth + "/" + m_current_job + ".zip"), "writeByteArray");
         }))
         ->next("writeByteArray");
 
@@ -1342,7 +1342,7 @@ void task::jobManagement(){
               insertJob(job);
               m_current_job = "";
               aInput->out<QJsonObject>(prepareJobListGUI(job), "task_job_updateListView");
-              aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
+              aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
               aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
           }
     });
@@ -1406,7 +1406,7 @@ void task::jobManagement(){
 
     //update image result
     rea::pipeline::find(s3_bucket_name + "readJson")
-        ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+        ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
            for (int i = 0; i < m_show_count; ++i)
                rea::pipeline::run<QJsonArray>("updateQSGAttrs_taskimage_gridder" + QString::number(i), updateResultObjects(aInput->data().getData(), i));
            auto img_predict = getImagePredict(m_current_image, m_image_result);
@@ -1421,7 +1421,7 @@ void task::jobManagement(){
                    m_max_threshold = dt.value("max").toDouble();
                if (dt.contains("iou"))
                    m_iou = dt.value("iou").toDouble();
-               aInput->out<stgJson>(stgJson(m_image_result, ""));
+               aInput->out<rea::stgJson>(rea::stgJson(m_image_result, ""));
                aInput->out<QJsonObject>(QJsonObject(), "updateConfuseMatrix");
         }, rea::Json("name", "thresholdChanged")))
         ->next("updateConfuseMatrix");
@@ -1612,14 +1612,14 @@ void task::jobManagement(){
             }else //if (getJobState(job) == "upload_finish")
             {
                 aInput->out<QJsonObject>(QJsonObject(), "updateTaskJobProgress");
-                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/result_summary.json"));
-                aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/result_statistics.json"));
-                aInput->out<stgJson>(stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name + "readJson");
+                aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/result_summary.json"));
+                aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/result_statistics.json"));
+                aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name + "readJson");
             }
         }, rea::Json("name", "requestJobState", "thread", 5)))
         ->nextB(s3_bucket_name + "readJson", rea::Json("tag", "updateImageResult"))
         ->nextB(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10))
-                       ->nextB(rea::buffer<stgJson>(2)->nextB(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
+                       ->nextB(rea::buffer<rea::stgJson>(2)->nextB(rea::pipeline::add<std::vector<rea::stgJson>>([this](rea::stream<std::vector<rea::stgJson>>* aInput){
                                                                auto summary = aInput->data()[0].getData();
                                                                  QJsonArray title, content;
                                                                  for (auto i : summary.keys()){
@@ -1669,7 +1669,7 @@ void task::jobManagement(){
                        m_current_image = "";
                        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
                    }
-                   aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
+                   aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
                }
                std::this_thread::sleep_for(std::chrono::microseconds(500));
                aInput->out<QString>(id, "requestJobState");
@@ -1769,7 +1769,7 @@ void task::jobManagement(){
                     m_jobs.erase(m_jobs.begin() + i);
                 }
                 aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
-                aInput->out<stgJson>(stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
                 aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
             }
         }), rea::Json("tag", "deleteJob"))

@@ -1,5 +1,5 @@
 //#include "../storage/storage.h"
-#include "../socket/protocal.h"
+#include "protocal.h"
 #include "../storage/awsStorage.h"
 #include "../util/py.h"
 #include "util.h"
@@ -123,7 +123,7 @@ public:
                    projs.erase(projs.begin() + i);
                }
                setProjects(projs);
-               aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), s3_bucket_name + "writeJson");
+               aInput->out<rea::stgJson>(rea::stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), s3_bucket_name + "writeJson");
 
                if (dels.size() > 0){
                    for (auto i : dels){
@@ -131,7 +131,7 @@ public:
                        aInput->out<QString>("project/" + i + ".json", s3_bucket_name + "deletePath");
                        aInput->out<QString>("project/" + i, s3_bucket_name + "deletePath");
                    }
-                   aInput->out<stgJson>(stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
+                   aInput->out<rea::stgJson>(rea::stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
                }
 
                aInput->out<QJsonObject>(prepareProjectListGUI(getProjects()), "user_updateListView");
@@ -188,8 +188,8 @@ public:
                     projs = addProject(insertProject(proj));
             }
             aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
-            aInput->out<stgJson>(stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), s3_bucket_name + "writeJson");
-            aInput->out<stgJson>(stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), s3_bucket_name + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
             aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
         }), rea::Json("tag", "newProject"))
         ->nextB("popMessage")
@@ -199,12 +199,12 @@ public:
 
         //load user
         rea::pipeline::add<double>([](rea::stream<double>* aInput){
-            aInput->out<stgJson>(stgJson(QJsonObject(), "project.json"));
-            aInput->out<stgJson>(stgJson(QJsonObject(), "user/" + rea::GetMachineFingerPrint() + ".json"));
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project.json"));
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "user/" + rea::GetMachineFingerPrint() + ".json"));
         }, rea::Json("name", loaduser))
         ->next(rea::local(s3_bucket_name + "readJson"), rea::Json("tag", loaduser))
-        ->next(rea::buffer<stgJson>(2))
-        ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
+        ->next(rea::buffer<rea::stgJson>(2))
+        ->next(rea::pipeline::add<std::vector<rea::stgJson>>([this](rea::stream<std::vector<rea::stgJson>>* aInput){
             auto dt = aInput->data();
             m_projects = dt[0].getData();
             dt[1].getData().swap(*this);
@@ -213,7 +213,7 @@ public:
         ->next(openUser);
 
         //initialize storage
-        rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+        rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
             auto dt = aInput->data();
             if (dt.getData().value("local_fs").toBool())
                 static fsStorage file_storage(s3_bucket_name);
@@ -221,7 +221,7 @@ public:
             else
                 static customAWSStorage minio_storage(s3_bucket_name);
         })->previous(rea::local("readJson"))
-            ->execute(std::make_shared<rea::stream<stgJson>>((stgJson(QJsonObject(), "config_.json"))));
+            ->execute(std::make_shared<rea::stream<rea::stgJson>>((rea::stgJson(QJsonObject(), "config_.json"))));
     }
 };
 

@@ -100,14 +100,14 @@ private:
                 if (dt.value("id") != m_project_id){
                     m_project_id = dt.value("id").toString();
                     m_project_abstract = dt.value("abstract").toObject();
-                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/task.json"));
-                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image.json"));
-                    aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
+                    aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/task.json"));
+                    aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image.json"));
+                    aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
                 }
             }))
             ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
-            ->next(rea::buffer<stgJson>(3))
-            ->next(rea::pipeline::add<std::vector<stgJson>>([this](rea::stream<std::vector<stgJson>>* aInput){
+            ->next(rea::buffer<rea::stgJson>(3))
+            ->next(rea::pipeline::add<std::vector<rea::stgJson>>([this](rea::stream<std::vector<rea::stgJson>>* aInput){
                 auto dt = aInput->data();
                 m_first_image_index = 0;
                 m_tasks = dt[0].getData();
@@ -165,8 +165,8 @@ private:
                            insertTask(tsk);
                            auto tsks = getTasks();
                            aInput->out<QJsonObject>(prepareTaskListGUI(tsks), "project_task_updateListView");
-                           aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
-                           aInput->out<stgJson>(stgJson(m_tasks, "project/" + m_project_id + "/task.json"), s3_bucket_name + "writeJson");
+                           aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                           aInput->out<rea::stgJson>(rea::stgJson(m_tasks, "project/" + m_project_id + "/task.json"), s3_bucket_name + "writeJson");
                            aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected");
                        }
                    }), rea::Json("tag", "newTask"))
@@ -214,7 +214,7 @@ private:
                         tsks.erase(tsks.begin() + i);
                     }
                     setTasks(tsks);
-                    aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                    aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
 
                     if (dels.size() > 0){
                         for (auto i : dels){
@@ -222,7 +222,7 @@ private:
                             aInput->out<QString>("project/" + m_project_id + "/task/" + i + ".json", s3_bucket_name + "deletePath");
                             aInput->out<QString>("project/" + m_project_id + "/task/" + i, s3_bucket_name + "deletePath");
                         }
-                        aInput->out<stgJson>(stgJson(m_tasks, "project/" + m_project_id + "/task.json"), s3_bucket_name + "writeJson");
+                        aInput->out<rea::stgJson>(rea::stgJson(m_tasks, "project/" + m_project_id + "/task.json"), s3_bucket_name + "writeJson");
                     }
 
                     aInput->out<QJsonObject>(prepareTaskListGUI(getTasks()), "project_task_updateListView");
@@ -288,7 +288,7 @@ private:
                        else{
                            setLabels(rea::Json(lbls, grp, QJsonObject()));
                            aInput->out<QJsonObject>(prepareLabelListGUI(lbls), "project_label_updateListView");
-                           aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                           aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
                            aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
                        }
                    }), rea::Json("tag", "newLabelGroup"))
@@ -325,7 +325,7 @@ private:
                 auto key = (grps.begin() + idx).key();
                 grps.insert(key, lbls);
                 setLabels(grps);
-                aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
                 aInput->out<QJsonObject>(rea::Json("key", key, "val", lbls), "updateProjectLabelGUI");
             }))
             ->nextB("popMessage")
@@ -357,7 +357,7 @@ private:
                         setLabels(lbls);
                         aInput->out<QJsonObject>(prepareLabelListGUI(lbls), "project_label_updateListView");
                         aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected");
-                        aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                        aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
                     }
                 }
             }))
@@ -386,7 +386,7 @@ private:
                 auto key = (grps.begin() + idx).key();
                 grps.insert(key, lbls);
                 setLabels(grps);
-                aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
                 aInput->out<QJsonObject>(rea::Json("key", key, "val", lbls), "updateProjectLabelGUI");
             }))
             ->nextB("updateProjectLabelGUI")
@@ -411,7 +411,7 @@ private:
                 auto key = (grps.begin() + idx).key();
                 grps.insert(key, lbls);
                 setLabels(grps);
-                aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
                 aInput->out<QJsonObject>(rea::Json("key", key, "val", lbls), "updateProjectLabelGUI");
             }))
             ->nextB("updateProjectLabelGUI")
@@ -459,7 +459,7 @@ private:
                 setImageLabels(abs, lbls);
                 m_images.insert(img, abs);
             }
-            aInput->out<stgJson>(stgJson(m_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(m_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
         }), modifyImageLabel_tag)
         ->next(s3_bucket_name + "writeJson");
 
@@ -502,7 +502,7 @@ private:
                                    aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_projectimage_gridder0");
                                    m_current_image = nm;
                                    auto nms = getImageName(m_images.value(m_current_image).toObject());
-                                   aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), s3_bucket_name + "readJson", selectProjectImage);
+                                   aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), s3_bucket_name + "readJson", selectProjectImage);
                                    for (auto i = 0; i < m_show_count; ++i){
                                        auto img_nm = nms[i].toString();
                                        if (i == 0)
@@ -519,7 +519,7 @@ private:
                    }), rea::Json("tag", "manual"))
             ->nextB("updateQSGCtrl_projectimage_gridder0")
             ->nextB(rea::pipeline::find(s3_bucket_name + "readJson")
-                           ->nextB(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+                           ->nextB(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
                                        m_image = aInput->data().getData();
                                        aInput->out<QJsonObject>(rea::Json(m_image, "image_label", getImageLabels(m_images.value(m_current_image).toObject())), "updateProjectImageGUI");
                                       })->nextB("updateProjectImageGUI"),
@@ -619,7 +619,7 @@ private:
                     auto tm = QDateTime::currentDateTime().toString(Qt::DateFormat::ISODate);
                     auto tms = tm.split("T");
                     m_images.insert(id, rea::Json("name", nms, "time", tms[0] + " " + tms[1]));  //update image.json
-                    aInput->out<stgJson>(stgJson(rea::Json("width", w,  //update image_id.json
+                    aInput->out<rea::stgJson>(rea::stgJson(rea::Json("width", w,  //update image_id.json
                                                            "height", h,
                                                            "channel", channels,
                                                            "source", nms,
@@ -643,8 +643,8 @@ private:
             ->next(rea::local("updateProgress"))
             ->next(rea::pipeline::add<double>([this](rea::stream<double>* aInput){
                 if (aInput->data() == 1.0){
-                    aInput->out<stgJson>(stgJson(m_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
-                    aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"));
+                    aInput->out<rea::stgJson>(rea::stgJson(m_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
+                    aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"));
                     aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
                 }
             }))
@@ -686,7 +686,7 @@ private:
             setFilter(dt);
             aInput->out<QJsonObject>(prepareImageListGUI(imgs), "project_image_updateListView");
             aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
-            aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+            aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
         }, rea::Json("name", "filterProjectImages"))
         ->nextB("project_image_updateListView")
         ->nextB("project_image_listViewSelected", rea::Json("tag", "manual"))
@@ -716,18 +716,18 @@ private:
                 QString pth = cur;
                 if (modifyImage(aInput->data(), m_image, pth)){
                     if (m_current_image != "")
-                        aInput->out<stgJson>(stgJson(m_image, pth), s3_bucket_name + "writeJson");
+                        aInput->out<rea::stgJson>(rea::stgJson(m_image, pth), s3_bucket_name + "writeJson");
                 }else if (pth != cur){
-                    aInput->cache<QJsonArray>(aInput->data())->out<stgJson>(stgJson(QJsonObject(), pth));
+                    aInput->cache<QJsonArray>(aInput->data())->out<rea::stgJson>(rea::stgJson(QJsonObject(), pth));
                 }
             }))
             ->nextB(s3_bucket_name + "writeJson")
             ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
-            ->next(rea::pipeline::add<stgJson>([this](rea::stream<stgJson>* aInput){
+            ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
                 auto dt = aInput->data().getData();
                 auto pth = QString(aInput->data());
                 modifyImage(aInput->cacheData<QJsonArray>(0), dt, pth);
-                aInput->out<stgJson>(stgJson(dt, pth), s3_bucket_name + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(dt, pth), s3_bucket_name + "writeJson");
             }))
             ->next(s3_bucket_name + "writeJson");
 
@@ -810,7 +810,7 @@ private:
             }
             if (mdy){
                 setImageShow(show);
-                aInput->out<stgJson>(stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
                 if (m_current_image != ""){
                     for (int i = 0; i < m_show_count; ++i)
                         rea::pipeline::run<QJsonObject>("updateQSGAttr_projectimage_gridder" + QString::number(i),

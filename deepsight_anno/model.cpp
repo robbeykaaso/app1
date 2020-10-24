@@ -171,11 +171,11 @@ void imageModel::serviceLabelStatistics(const QString& aName){
         aInput->cache<std::shared_ptr<QHash<QString, groupStatisticRec>>>(ret);
         aInput->out<QJsonObject>(rea::Json("title", "statistics", "sum", imgs.size()), "updateProgress");
         for (auto i : imgs.keys())
-            aInput->out<stgJson>(stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + i + ".json"));
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + i + ".json"));
     }, rea::Json("name", "calc" + aName + "LabelStatistics"))
         ->nextB("updateProgress")
         ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
-        ->next(rea::pipeline::add<stgJson>([this, aName](rea::stream<stgJson>* aInput){
+        ->next(rea::pipeline::add<rea::stgJson>([this, aName](rea::stream<rea::stgJson>* aInput){
             auto imgs = getImageAbstracts();
 
             auto cnt = aInput->cacheData<int>(0);

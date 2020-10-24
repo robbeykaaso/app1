@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     if (prm.value("-m") == "GUI")
         engine.load(QUrl(QStringLiteral("qrc:/gui/main.qml")));
     else
-        engine.load(QUrl(QStringLiteral("qrc:/gui/deepsight_anno.qml")));
+        rea::pipeline::run<QQmlApplicationEngine*>("loadMain", &engine);
     if (engine.rootObjects().isEmpty())
         return -1;
 
