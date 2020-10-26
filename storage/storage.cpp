@@ -13,7 +13,9 @@ void fsStorage::writeCVMat(const QString& aPath, const cv::Mat& aData){
 }
 
 cv::Mat fsStorage::readCVMat(const QString& aPath){
-    return cv::imread((stgRoot(aPath)).toLocal8Bit().toStdString().data(), cv::IMREAD_UNCHANGED);
+    auto ret = cv::imread((stgRoot(aPath)).toLocal8Bit().toStdString().data(), cv::IMREAD_UNCHANGED);
+//    cv::imwrite("xxxxxx2.png", ret);
+    return ret;
 }
 
 fsStorage::fsStorage(const QString& aRoot) : fsStorage0(aRoot){

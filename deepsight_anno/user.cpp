@@ -222,6 +222,106 @@ public:
                 static customAWSStorage minio_storage(s3_bucket_name);
         })->previous(rea::local("readJson"))
             ->execute(std::make_shared<rea::stream<rea::stgJson>>((rea::stgJson(QJsonObject(), "config_.json"))));
+
+        //import old project
+      /*  rea::pipeline::find("_selectFile")
+            ->next(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
+                       auto pths = aInput->data();
+                       if (pths.size() > 0){
+                           auto usr = pths[0].toString();
+                           aInput->cache<QString>(usr.mid(0, usr.lastIndexOf("/userInfo")))->out<rea::stgJson>(rea::stgJson(QJsonObject(), usr), "readJson");
+                       }
+                   }), rea::Json("tag", "importOldProject"))
+            ->next(rea::local("readJson", rea::Json("thread", 10)))
+            ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){ //cache: root, count, hash<project_id, project_config>
+                auto rt = aInput->cacheData<QString>(0);
+                auto dt = aInput->data().getData();
+                auto projs = getProjects();
+                auto abs = dt.value("project_abstract").toObject();
+                aInput->cache<int>(abs.keys().size());
+                aInput->cache<std::shared_ptr<QHash<QString, QJsonObject>>>(std::make_shared<QHash<QString, QJsonObject>>());
+                for (auto i : abs.keys()){
+                    projs.push_back(i);
+                    auto proj = abs.value(i).toObject();
+                    m_projects.insert(i, rea::Json("name", proj.value("caption"), "time", proj.value("time"), "owner", rea::GetMachineFingerPrint()));
+                    aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), rt + "/projectInfo/" + i + ".json"));
+                }
+                setProjects(projs);
+                aInput->out<rea::stgJson>(rea::stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), s3_bucket_name + "writeJson");
+            }))
+            ->nextB(s3_bucket_name + "writeJson")
+            ->next(rea::local("readJson", rea::Json("thread", 10)))
+            ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
+                auto rt = aInput->cacheData<QString>(0);
+                auto dt = aInput->data();
+                auto id = dt.mid(dt.lastIndexOf("/") + 1, dt.length());
+                id = id.mid(0, id.lastIndexOf(".json"));
+                auto proj = dt.getData();
+                auto cnt = aInput->cacheData<int>(1);
+                m_projects.insert(id, rea::Json(m_projects.value(id).toObject(), "channel", proj.value("channelcount")));
+                if (cnt - 1)
+                    aInput->cache<int>(cnt - 1, 1);
+                else
+                    aInput->out<rea::stgJson>(rea::stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
+
+                auto proj_cfgs = aInput->cacheData<std::shared_ptr<QHash<QString, QJsonObject>>>(2);
+
+                auto tsks = proj.value("task_abstract").toObject();
+                QJsonArray tsk_lst;
+                for (auto i : tsks.keys())
+                    tsk_lst.push_back(i);
+
+                auto img_lbls0 = proj.value("image_labels").toObject();
+                QJsonObject tar_lbls;
+                for (auto i : img_lbls0.keys()){
+                    QJsonObject lbls;
+                    auto lbls0 = img_lbls0.value(i).toArray();
+                    for (auto j : lbls0){
+                        auto lbl = j.toObject();
+                        lbls.insert(lbl.value("label").toString(), lbl.value("color"));
+                    }
+                    tar_lbls.insert(i, lbls);
+                }
+                auto lbls0 = proj.value("shape_labels").toArray();
+                QJsonObject shp_lbls;
+                for (auto i : lbls0){
+                    auto lbl = i.toObject();
+                    shp_lbls.insert(lbl.value("label").toString(), lbl.value("color"));
+                }
+                tar_lbls.insert("shape", shp_lbls);
+                proj_cfgs->insert(id, rea::Json("labels", tar_lbls, "tasks", tsk_lst));
+                aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), rt + "/projectImageInfo/" + id + ".json"));
+            }))
+            ->nextB(s3_bucket_name + "writeJson")
+            ->next(rea::local("readJson", rea::Json("thread", 10)))
+            ->next(rea::pipeline::add<rea::stgJson>([](rea::stream<rea::stgJson>* aInput){
+                auto dt = aInput->data();
+                auto id = dt.mid(dt.lastIndexOf("/") + 1, dt.length());
+                id = id.mid(0, id.lastIndexOf(".json"));
+
+                auto dt0 = aInput->data().getData();
+                auto proj_cfgs = aInput->cacheData<std::shared_ptr<QHash<QString, QJsonObject>>>(2);
+                auto imgs = dt0.value("image_abstract").toObject();
+                auto proj = proj_cfgs->value(id);
+                QJsonArray img_lst;
+                for (auto i : imgs.keys()){
+                    img_lst.push_back(i);
+                }
+                proj.insert("images", img_lst);
+                proj_cfgs->insert(id, proj);
+                aInput->out<rea::stgJson>(rea::stgJson(proj, "project/" + id + ".json"));
+            }))
+            ->next(rea::local(s3_bucket_name + "writeJson", rea::Json("thread", 11)))
+            ->next(rea::pipeline::add<rea::stgJson>([](rea::stream<rea::stgJson>* aInput){
+                auto proj_cfgs = aInput->cacheData<std::shared_ptr<QHash<QString, QJsonObject>>>(2);
+                auto dt = aInput->data();
+                auto id = dt.mid(dt.lastIndexOf("/") + 1, dt.length());
+                id = id.mid(0, id.lastIndexOf(".json"));
+                proj_cfgs->remove(id);
+                if (proj_cfgs->size() == 0)
+                    aInput->out<double>(0, "loadUser");
+            }))
+            ->next("loadUser");*/
     }
 };
 

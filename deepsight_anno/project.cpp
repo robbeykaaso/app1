@@ -55,11 +55,14 @@ private:
 
     QJsonObject prepareImageListGUI(const QJsonArray& aImages){
         QJsonArray data;
+        int idx = 0;
         for (auto i : aImages){
             auto img = m_images.value(i.toString()).toObject();
-            data.push_back(rea::Json("entry", rea::JArray(getImageStringName(img), getImageTime(img))));
+            data.push_back(rea::Json("entry", rea::JArray(//getImageStringName(img),
+                                                          ++idx,
+                                                          getImageTime(img))));
         }
-        return rea::Json("title", rea::JArray("name", "time"),
+        return rea::Json("title", rea::JArray("no", "time"),
                          "entrycount", 30,
                          "selects", aImages.size() > 0 ? rea::JArray(0) : QJsonArray(),
                          "data", data);

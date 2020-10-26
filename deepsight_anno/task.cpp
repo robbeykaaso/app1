@@ -228,13 +228,15 @@ QJsonObject task::prepareLabelListGUI(const QJsonObject& aLabels){
 QJsonObject task::prepareImageListGUI(const QJsonObject& aImages){
     QJsonArray data;
     auto lst = getImageList();
+    int idx = 0;
     for (auto i : lst){
         auto img = i.toString();
-        data.push_back(rea::Json("entry", rea::JArray(getImageStringName(m_project_images->value(img).toObject()),
+        data.push_back(rea::Json("entry", rea::JArray(//getImageStringName(m_project_images->value(img).toObject()),
+                                                      ++idx,
                                                       aImages.contains(img),
                                                       getImageStage(aImages.value(img).toObject()))));
     }
-    return rea::Json("title", rea::JArray("name", "used", "stage"),
+    return rea::Json("title", rea::JArray("no", "used", "stage"),
                      "entrycount", 30,
                      "selects", lst.size() > 0 ? rea::JArray(0) : QJsonArray(),
                      "data", data);

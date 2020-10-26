@@ -368,7 +368,7 @@ static rea::regPip<QQmlApplicationEngine*> init_createimage([](rea::stream<QQmlA
     rea::pipeline::add<QJsonObject, rea::pipePartial>([](rea::stream<QJsonObject>* aInput){
         aInput->out<std::shared_ptr<rea::qsgObject>>(std::make_shared<imageObjectEx>(aInput->data()));
     }, rea::Json("name", "create_qsgobject_image"));
-}, QJsonObject(), "regQML");
+}, rea::Json("name", "create_qsgobject_image_0"), "regQML");
 
 static rea::regPip<QJsonObject> init_set_imageshow([](rea::stream<QJsonObject>* aInput){
     aInput->setData(rea::Json("resizeMode", rea::JArray("linear", "nearest", "cubic", "area", "lanczos4"),

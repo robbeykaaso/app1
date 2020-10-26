@@ -31,7 +31,8 @@ QImage cvMat2QImage(const cv::Mat& mat)
         cv::Mat dst;
         cv::cvtColor(mat, dst, cv::COLOR_BGR2RGB);
         auto image = QImage(dst.data, mat.cols, mat.rows, mat.step, QImage::Format_RGB888).copy();
-        return image.rgbSwapped();
+        //return image.rgbSwapped();
+        return image;
     }
     else if (mat.type() == CV_8UC4)
     {
@@ -53,13 +54,16 @@ cv::Mat QImage2cvMat(QImage image)
     {
     case QImage::Format_ARGB32:
     case QImage::Format_RGB32:
-    case QImage::Format_ARGB32_Premultiplied:
+    case QImage::Format_ARGB32_Premultiplied:{
         mat = cv::Mat(image.height(), image.width(), CV_8UC4, (void*)image.constBits(), image.bytesPerLine());
         break;
-    case QImage::Format_RGB888:
+    }
+    case QImage::Format_RGB888:{
         mat = cv::Mat(image.height(), image.width(), CV_8UC3, (void*)image.constBits(), image.bytesPerLine());
-        cv::cvtColor(mat, mat, cv::COLOR_BGR2RGB);
+        //        cv::imwrite("xxxxxx.png", mat);
+        cv::cvtColor(mat, mat, cv::COLOR_RGB2BGR);
         break;
+    }
     case QImage::Format_Indexed8:
         mat = cv::Mat(image.height(), image.width(), CV_8UC1, (void*)image.constBits(), image.bytesPerLine());
         break;
