@@ -192,6 +192,15 @@ void task::setLabels(const QJsonObject& aLabels){
 QString task::getImageStage(const QJsonObject& aImage){
     return aImage.value("stage").toString();
 }
+
+bool task::getImageImportant(const QJsonObject& aImage){
+    return aImage.value("important").toBool();
+}
+
+void task::setImageImportant(QJsonObject& aImage, bool aImportant){
+    aImage.insert("important", aImportant);
+}
+
 void task::setImageStage(QJsonObject& aImage, const QString& aStage){
     aImage.insert("stage", aStage);
 }
@@ -234,9 +243,10 @@ QJsonObject task::prepareImageListGUI(const QJsonObject& aImages){
         data.push_back(rea::Json("entry", rea::JArray(//getImageStringName(m_project_images->value(img).toObject()),
                                                       ++idx,
                                                       aImages.contains(img),
+                                                      getImageImportant(aImages.value(img).toObject()),
                                                       getImageStage(aImages.value(img).toObject()))));
     }
-    return rea::Json("title", rea::JArray("no", "used", "stage"),
+    return rea::Json("title", rea::JArray("no", "used", "important", "stage"),
                      "entrycount", 30,
                      "selects", lst.size() > 0 ? rea::JArray(0) : QJsonArray(),
                      "data", data);
@@ -796,6 +806,36 @@ void task::imageManagement(){
     ->nextB("task_image_updateListView")
     ->nextB(s3_bucket_name + "writeJson");
 
+    //set image important
+    rea::pipeline::add<bool>([](rea::stream<bool>* aInput){
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+    }, rea::Json("name", "setImageImportant"))
+        ->next(rea::local("task_image_listViewSelected"))
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            auto sels = aInput->data();
+            auto imgs = getImages();
+            auto lst = getImageList();
+            bool mdy = false;
+            for (auto i : sels){
+                auto nm = lst[i.toInt()].toString();
+                if (imgs.contains(nm)){
+                    auto img = imgs.value(nm).toObject();
+                    setImageImportant(img, !getImageImportant(img));
+                    imgs.insert(nm, img);
+                    mdy = true;
+                }
+            }
+            if (mdy){
+                setImages(imgs);
+                auto ret = prepareImageListGUI(imgs);
+                ret.remove("selects");
+                aInput->out<QJsonObject>(ret, "task_image_updateListView");
+                aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+            }
+        }))
+        ->nextB("task_image_updateListView")
+        ->nextB(s3_bucket_name + "writeJson");
+
     //modify project image//try update show
     rea::pipeline::find("QSGAttrUpdated_projectimage_gridder0")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
@@ -1011,7 +1051,7 @@ void task::insertJob(const QString& aID){
 }
 
 QJsonObject task::prepareTrainingData(const QJsonArray& aImages, QSet<QString>& aStageSet){
-    QJsonArray uuid_list, image_label_list, image_dataset_list;
+    QJsonArray uuid_list, image_label_list, image_dataset_list, image_important_list;
     auto imgs = getImages();
     if (aImages.size() > 0){
         auto lst = getImageList();
@@ -1030,6 +1070,7 @@ QJsonObject task::prepareTrainingData(const QJsonArray& aImages, QSet<QString>& 
         auto stg = getImageStage(img);
         aStageSet.insert(stg);
         image_dataset_list.push_back(stg);
+        image_important_list.push_back(getImageImportant(img));
 
         auto img_lbls = getImageLabels(m_project_images->value(i).toObject());
         QJsonArray lbls;
@@ -1042,7 +1083,8 @@ QJsonObject task::prepareTrainingData(const QJsonArray& aImages, QSet<QString>& 
                      "json_root", "project/" + m_project_id + "/image",
                      "uuid_list", uuid_list,
                      "image_label_list", image_label_list,
-                     "image_dataset_list", image_dataset_list);
+                     "image_dataset_list", image_dataset_list,
+                     "image_important_list", image_important_list);
 }
 
 QString task::getJobState(const QJsonObject& aJob){

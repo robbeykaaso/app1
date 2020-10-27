@@ -61,6 +61,8 @@ protected:
     }
 private:
     void setLabels(const QJsonObject& aLabels);
+    bool getImageImportant(const QJsonObject& aImage);
+    void setImageImportant(QJsonObject& aImage, bool aImportant);
     QString getImageStage(const QJsonObject& aImage);
     void setImageStage(QJsonObject& aImage, const QString& aStage);
     QJsonObject getImages();

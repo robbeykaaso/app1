@@ -352,7 +352,8 @@ public:
             }));
         rea::pipeline::find("editJobParam")
             ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
-                m_current_param = aInput->data();
+                //qDebug() << aInput->data();
+                //m_current_param = aInput->data();
             }));
     }
 private:
