@@ -87,6 +87,10 @@ bool ITaskFriend::getShowLabel(){
     return m_task->m_show_label;
 }
 
+QJsonArray ITaskFriend::getTransfrom(){
+    return m_task->m_transform;
+}
+
 void taskMode::initialize(){
     rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
         //if (getImageID() == "")
@@ -171,6 +175,7 @@ std::function<void(void)> taskMode::showQSGModel(int aChannel, stgCVMat& aImage)
     add_show = prepareQSGObjects(objs);
 
     auto cfg = rea::Json("id", getImageJsonPath(),
+                         "transform", getTransfrom(),
                          "width", img.width(),
                          "height", img.height(),
                          "face", 100,
@@ -269,7 +274,7 @@ QJsonObject task::prepareJobListGUI(const QString& aSelectedJob){
         }
     }
     if (m_jobs.size() > 0 && sels.size() == 0)
-        sels.push_back(0);
+        sels.push_back(m_jobs.size() - 1);
     return rea::Json("title", rea::JArray("time"),
                      "entrycount", 30,
                      "selects", sels,
@@ -309,6 +314,7 @@ void task::taskManagement(){
             m_image_show = dt.value("imageshow").toObject();
             m_project_name = dt.value("project_name").toString();
             m_task_name = dt.value("task_name").toString();
+            m_transform = QJsonArray();
             aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getTaskJsonPath()));
             aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getJobsJsonPath()));
         }
@@ -602,7 +608,7 @@ void task::imageManagement(){
                                        }
                                        for (auto  i: dels)
                                            img_lbls.remove(i);
-                                       aInput->out<QJsonObject>(rea::Json(m_image, "image_label", img_lbls), "updateTaskImageGUI");
+                                       aInput->out<QJsonObject>(rea::Json(m_image, "image_label", img_lbls, "id", m_current_image), "updateTaskImageGUI");
                                       })->nextB("updateTaskImageGUI"),
                                    selectTaskImage),
                 selectTaskImage)
@@ -1397,6 +1403,21 @@ void task::jobManagement(){
     ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
         auto dt = aInput->data();
         QSet<QString> st;
+
+        auto valid = [&st, aInput](){
+            if (!st.contains("train")){
+                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "No train data!"), "popMessage");
+                return false;
+            }else if (!st.contains("test")){
+                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "No test data!"), "popMessage");
+                return false;
+            }else if (!st.contains("validation")){
+                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "No validation data!"), "popMessage");
+                return false;
+            }
+            return true;
+        };
+
         auto prm = rea::Json(protocal.value(protocal_training).toObject().value("req").toObject(),
                              "project_id", m_project_id,
                              "project_name", m_project_name,
@@ -1412,19 +1433,15 @@ void task::jobManagement(){
                                 "model_path", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job);
                 if (!dt.value("statistics").toBool())
                     prm.insert("job_id", prm.value("model_id"));
+                else{
+                    if (!valid())
+                        return;
+                }
                 aInput->out<QJsonObject>(prm, "callServer");
             }
         }else{
-            if (!st.contains("train")){
-                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "No train data!"), "popMessage");
+            if (!valid())
                 return;
-            }else if (!st.contains("test")){
-                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "No test data!"), "popMessage");
-                return;
-            }else if (!st.contains("validation")){
-                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "No validation data!"), "popMessage");
-                return;
-            }
             auto train_prm = dt.value("param").toObject();
             prepareTrainParam(train_prm);
             prm = rea::Json(prm, "type", "training", "task_type", m_task_type, "params", train_prm);

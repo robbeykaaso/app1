@@ -79,8 +79,7 @@ void roiMode::initialize(){
         }else if (pth != cur && belongThisMode("roi", pth)){
             aInput->cache<QJsonArray>(aInput->data())->out<rea::stgJson>(rea::stgJson(QJsonObject(), pth));
         }
-    }, rea::Json("name", "roi_tryModifyCurrentModel"))
-        ->next("updateROIGUI");
+    }, rea::Json("name", "roi_tryModifyCurrentModel"));
 
     //interface remote save
     rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
@@ -100,7 +99,7 @@ void roiMode::initialize(){
         if (ch == getShowCount() - 1){
             if (add_show)
                 add_show();
-            rea::pipeline::run<rea::stgJson>(s3_bucket_name() + "readJson", rea::stgJson(QJsonObject(), getImageResultJsonPath()), rea::Json("tag", "updateImageResult"));
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getImageResultJsonPath()), s3_bucket_name() + "readJson", rea::Json("tag", "updateImageResult"));
         }
     }, rea::Json("name", "roi_showQSGModel"));
 
@@ -119,8 +118,7 @@ void roiMode::initialize(){
                 if (aInput->data()[0].toObject().value("type") != "roi")
                     aInput->out<QJsonObject>(QJsonObject(), "updateROIGUI");
             }
-        }))
-        ->next("updateROIGUI");
+        }));
 
     //update ROI count
     rea::pipeline::add<double>([this](rea::stream<double>* aInput){
@@ -159,9 +157,7 @@ void roiMode::initialize(){
             ad();
             aInput->out<rea::ICommand>(rea::ICommand(ad, rm), "addCommand");
         }
-    }, rea::Json("name", "updateROICount"))
-        ->nextB("taskimage_gridder0_deleteShapes")
-        ->next("addCommand");
+    }, rea::Json("name", "updateROICount"));
 
     //update roi local mode
     rea::pipeline::add<bool>([this](rea::stream<bool>* aInput){
@@ -192,10 +188,8 @@ void roiMode::initialize(){
             aInput->out<rea::stgJson>(rea::stgJson(*m_task, getTaskJsonPath()), s3_bucket_name() + "writeJson");
         }
         updateCurrentImage();
-        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-    }, rea::Json("name", "updateROILocalMode"))
-        ->nextB(s3_bucket_name() + "writeJson")
-        ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"));
+    }, rea::Json("name", "updateROILocalMode"));
 
     //auto roi
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
@@ -213,10 +207,8 @@ void roiMode::initialize(){
             setROI(*m_task, roi);
             aInput->out<rea::stgJson>(rea::stgJson(*m_task, getTaskJsonPath()), s3_bucket_name() + "writeJson");
             updateCurrentImage();
-            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-        }))
-        ->nextB(s3_bucket_name() + "writeJson")
-        ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"));
+        }));
 }
 
 roiMode::roiMode(task* aParent) : taskMode(aParent){
@@ -319,8 +311,7 @@ static rea::regPip<QQmlApplicationEngine*> init_roi_mode([](rea::stream<QQmlAppl
             auto md = new roiMode(aInput->data());
             md->initialize();
             aInput->out<QString>("roi", "customModesLoaded");
-        }))
-        ->next("customModesLoaded");
+        }));
     aInput->out();
 }, rea::Json("name", "install2_roi_mode"), "regQML");
 
@@ -343,7 +334,7 @@ public:
             ->next(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
                        auto pths = aInput->data();
                        if (pths.size() > 0){
-                           aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), pths[0].toString()), "readJson");
+                           aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), pths[0].toString()));
                        }
                    }), rea::Json("tag", "setJobParameter"))
             ->next(rea::local("readJson", rea::Json("thread", 10)))
@@ -352,8 +343,8 @@ public:
             }));
         rea::pipeline::find("editJobParam")
             ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
-                //qDebug() << aInput->data();
-                //m_current_param = aInput->data();
+                //auto dt = aInput->data();
+                m_current_param = aInput->data();
             }));
     }
 private:

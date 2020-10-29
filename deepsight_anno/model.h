@@ -58,6 +58,7 @@ protected:
     virtual QJsonObject getImageAbstracts() = 0;
     virtual int getChannelCount() = 0;
 protected:
+    QJsonArray m_transform;
     QString m_project_id = "";
     QJsonObject m_image;
     QString m_current_image = "";

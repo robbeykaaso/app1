@@ -62,8 +62,13 @@ int main(int argc, char *argv[])
         rea::pipeline::run<int>("unitTest", 0);
     if (prm.value("-m") == "GUI")
         rea::pipeline::run<QQmlApplicationEngine*>("loadGUIMain", &engine);
-    else
+    else{
         rea::pipeline::run<QQmlApplicationEngine*>("loadMain", &engine);
+        if (prm.value("-md") == "TRUE"){
+            rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){ aInput->out();}, rea::Json("name", "setDebugMode"));
+            rea::pipeline::run<QJsonObject>("setDebugMode", QJsonObject());
+        }
+    }
     if (engine.rootObjects().isEmpty())
         return -1;
 

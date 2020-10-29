@@ -34,7 +34,6 @@ protected:
 private:
     const QString openProject = "openProject";
     const QString loaduser = "loadUser";
-    const QString openUser = "openUser";
 private:
     QJsonArray getProjects(){
         return value("projects").toArray();
@@ -71,18 +70,8 @@ private:
     QJsonObject m_projects;
 public:
     user(){
-        //open user
-        rea::pipeline::add<double>([this](rea::stream<double>* aInput){
-            aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint()}), "title_updateNavigation");
-            auto projs = getProjects();
-            aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
-            aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
-        }, rea::Json("name", openUser))
-        ->nextB("user_listViewSelected", rea::Json("tag", "manual"))
-        ->nextB("title_updateNavigation", rea::Json("tag", "manual"))
-        ->next("user_updateListView");
-
-        rea::pipeline::find("user_listViewSelected")  //select project
+        //select project
+        rea::pipeline::find("user_listViewSelected")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
            auto dt = aInput->data();
            if (dt.size() == 0)
@@ -97,8 +86,7 @@ public:
                else
                    aInput->out<QJsonObject>(QJsonObject(), "updateProjectGUI");
            }
-        }), rea::Json("tag", "manual"))
-        ->next("updateProjectGUI");
+        }), rea::Json("tag", "manual"));
 
         //delete project
         rea::pipeline::find("_makeSure")
@@ -135,13 +123,9 @@ public:
                }
 
                aInput->out<QJsonObject>(prepareProjectListGUI(getProjects()), "user_updateListView");
-               aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
+               aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected", rea::Json("tag", "manual"));
            }
-        }))
-        ->nextB("user_updateListView")
-        ->nextB("user_listViewSelected", rea::Json("tag", "manual"))
-        ->nextB(s3_bucket_name + "deletePath")
-        ->next(s3_bucket_name + "writeJson");
+        }));
 
         //open project
         rea::pipeline::find("user_listViewSelected")
@@ -150,11 +134,10 @@ public:
             if (dt.size() > 0){
                 auto projs = getProjects();
                 auto id = projs[dt[0].toInt()].toString();
-                aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_projects.value(id).toObject())}), "title_updateNavigation");
+                aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_projects.value(id).toObject())}), "title_updateNavigation", rea::Json("tag", "manual"));
                 aInput->out<QJsonObject>(rea::Json("id", id, "abstract", m_projects.value(id)), openProject);
             }
         }), rea::Json("tag", openProject))
-        ->nextB("title_updateNavigation", rea::Json("tag", "manual"))
         ->next(openProject);
 
         //new project, import project
@@ -190,12 +173,8 @@ public:
             aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
             aInput->out<rea::stgJson>(rea::stgJson(*this, "user/" + rea::GetMachineFingerPrint() + ".json"), s3_bucket_name + "writeJson");
             aInput->out<rea::stgJson>(rea::stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
-            aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected");
-        }), rea::Json("tag", "newProject"))
-        ->nextB("popMessage")
-        ->nextB("user_updateListView")
-        ->nextB("user_listViewSelected", rea::Json("tag", "manual"))
-        ->next(s3_bucket_name + "writeJson");
+            aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected", rea::Json("tag", "manual"));
+        }), rea::Json("tag", "newProject"));
 
         //load user
         rea::pipeline::add<double>([](rea::stream<double>* aInput){
@@ -208,9 +187,11 @@ public:
             auto dt = aInput->data();
             m_projects = dt[0].getData();
             dt[1].getData().swap(*this);
-            aInput->out<double>(0, openUser);
-        }))
-        ->next(openUser);
+
+            aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint()}), "title_updateNavigation", rea::Json("tag", "manual"));
+            aInput->out<QJsonObject>(prepareProjectListGUI(getProjects()), "user_updateListView");
+            aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected", rea::Json("tag", "manual"));
+        }));
 
         //initialize storage
         rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){

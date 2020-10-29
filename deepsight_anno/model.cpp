@@ -173,7 +173,6 @@ void imageModel::serviceLabelStatistics(const QString& aName){
         for (auto i : imgs.keys())
             aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + i + ".json"));
     }, rea::Json("name", "calc" + aName + "LabelStatistics"))
-        ->nextB("updateProgress")
         ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
         ->next(rea::pipeline::add<rea::stgJson>([this, aName](rea::stream<rea::stgJson>* aInput){
             auto imgs = getImageAbstracts();
@@ -221,15 +220,15 @@ void imageModel::serviceLabelStatistics(const QString& aName){
                 }
             }
         }))
-        ->nextB("updateProgress")
         ->next("showLabelStatistics")
         ->next("filter" + aName + "Images", rea::Json("tag", "filter" + aName + "Images"));
 }
 
 void imageModel::serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage){
     rea::pipeline::find("updateQSGPos_" + aName + "image_gridder" + aChannel)
-        ->next(rea::pipeline::add<QJsonObject>([aName, aImage](rea::stream<QJsonObject>* aInput){
+        ->next(rea::pipeline::add<QJsonObject>([this, aName, aImage](rea::stream<QJsonObject>* aInput){
             auto dt = aInput->data();
+            m_transform = dt.value("transform").toArray();
             QJsonArray ret;
             auto x = dt.value("x").toInt(), y= dt.value("y").toInt();
             ret.push_back("x: " + QString::number(x) + "; " +
@@ -241,8 +240,7 @@ void imageModel::serviceShowPosStatus(const QString aName, const QString& aChann
                               "b: " + QString::number(clr.blue()));
             }
             aInput->out<QJsonArray>(ret, aName + "image_updateStatus");
-        }, rea::Json("name", "updateQSGPosMapShow_" + aChannel)))
-        ->next(aName + "image_updateStatus");
+        }, rea::Json("name", "updateQSGPosMapShow_" + aChannel)));
 }
 
 void imageModel::serviceSelectFirstImageIndex(const QString aName){
@@ -259,9 +257,8 @@ void imageModel::serviceSelectFirstImageIndex(const QString aName){
             m_current_image = "";
             m_first_image_index = std::min(std::max(0, dt.value("index").toInt()), chs - 1);
         }
-        aInput->out<QJsonArray>(QJsonArray(), aName + "_image_listViewSelected");
-    }, rea::Json("name", "switch" + aName + "FirstImageIndex"))
-        ->next(aName + "_image_listViewSelected", rea::Json("tag", "manual"));
+        aInput->out<QJsonArray>(QJsonArray(), aName + "_image_listViewSelected", rea::Json("tag", "manual"));
+    }, rea::Json("name", "switch" + aName + "FirstImageIndex"));
 }
 
 class scoreMapObject : public rea::imageObject{
