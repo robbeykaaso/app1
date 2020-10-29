@@ -80,6 +80,7 @@ private:
     QString m_project_name = "";
     QJsonObject m_project_labels;
     QJsonObject* m_project_images;
+    bool m_debug_mode = false;
     QString getJobsJsonPath();
     QString getTaskJsonPath();
     QString getImageResultJsonPath();

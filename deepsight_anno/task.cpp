@@ -258,9 +258,9 @@ QJsonObject task::prepareImageListGUI(const QJsonObject& aImages){
 }
 QJsonObject task::prepareJobListGUI(const QString& aSelectedJob){
     QJsonArray data;
-    for (auto i : m_jobs){
-        auto job = i.toObject();
-        data.push_back(rea::Json("entry", rea::JArray(job.value("time"))));
+    for (auto i : m_jobs.keys()){
+        auto job = m_jobs.value(i).toObject();
+        data.push_back(rea::Json("entry", rea::JArray(m_debug_mode ? i : job.value("time"))));
     }
     QJsonArray sels;
     if (aSelectedJob != ""){
@@ -275,7 +275,7 @@ QJsonObject task::prepareJobListGUI(const QString& aSelectedJob){
     }
     if (m_jobs.size() > 0 && sels.size() == 0)
         sels.push_back(m_jobs.size() - 1);
-    return rea::Json("title", rea::JArray("time"),
+    return rea::Json("title", rea::JArray(m_debug_mode ? "id" : "time"),
                      "entrycount", 30,
                      "selects", sels,
                      "data", data);
@@ -295,6 +295,12 @@ QString task::getImageResultJsonPath(){
 
 
 void task::taskManagement(){
+    //debug mode
+    rea::pipeline::find("setDebugMode")
+        ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            m_debug_mode = true;
+        }));
+
     //open project
     rea::pipeline::find("openProject")
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
@@ -1203,7 +1209,7 @@ QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex
 
 int task::calcThresholdIndex(){
     int idx1 = getThresholdIndex(m_min_threshold), idx2 = getThresholdIndex(m_max_threshold);
-    return idx2 * m_threshold_list.size() + idx1;
+    return idx1 * m_threshold_list.size() + idx2;
 }
 
 int task::getThresholdIndex(double aThreshold){
