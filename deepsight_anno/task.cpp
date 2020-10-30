@@ -260,7 +260,7 @@ QJsonObject task::prepareJobListGUI(const QString& aSelectedJob){
     QJsonArray data;
     for (auto i : m_jobs.keys()){
         auto job = m_jobs.value(i).toObject();
-        data.push_back(rea::Json("entry", rea::JArray(m_debug_mode ? i : job.value("time"))));
+        data.push_back(rea::Json("entry", rea::JArray(job.value("time"), i)));
     }
     QJsonArray sels;
     if (aSelectedJob != ""){
@@ -275,7 +275,10 @@ QJsonObject task::prepareJobListGUI(const QString& aSelectedJob){
     }
     if (m_jobs.size() > 0 && sels.size() == 0)
         sels.push_back(m_jobs.size() - 1);
-    return rea::Json("title", rea::JArray(m_debug_mode ? "id" : "time"),
+    auto title = rea::JArray("time");
+    if (m_debug_mode)
+        title.push_back("id");
+    return rea::Json("title", title,
                      "entrycount", 30,
                      "selects", sels,
                      "data", data);
@@ -1455,11 +1458,8 @@ void task::jobManagement(){
             if (jobs.size() == 0)
                 aInput->out<QJsonObject>(prm, "callServer");
             else
-                for (auto i : jobs)
-                    aInput->out<QJsonObject>(rea::Json(prm,
-                                                       "params", rea::Json(train_prm,
-                                                                           "train_from_model", (m_jobs.begin() + i.toInt()).key())),
-                                             "callServer");
+                for (int i = 0; i < jobs.size(); ++i)
+                    aInput->out<QJsonObject>(rea::Json(prm, "params", train_prm), "callServer");
         }
     }, rea::Json("name", "doStartJob")))
         ->nextB("popMessage")

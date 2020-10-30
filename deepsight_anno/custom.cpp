@@ -321,13 +321,13 @@ class modelParam{
 public:
     modelParam(){
         //interface param
-        rea::pipeline::find("startJob")
+        /*rea::pipeline::find("startJob")
             ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
                 auto prm = aInput->data().value("param").toObject();
                 for (auto i : m_current_param.keys())
                     prm.insert(i, m_current_param.value(i));
                 aInput->setData(rea::Json(aInput->data(), "param", prm));
-            }, rea::Json("name", "collect_model_param")));
+            }, rea::Json("name", "collect_model_param")));*/
 
         //set job parameter
         rea::pipeline::find("_selectFile")
@@ -340,11 +340,13 @@ public:
             ->next(rea::local("readJson", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
                 m_current_param = aInput->data().getData();
+                aInput->out<QJsonObject>(rea::Json("param", m_current_param), "startJob");
             }));
         rea::pipeline::find("editJobParam")
             ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
                 //auto dt = aInput->data();
                 m_current_param = aInput->data();
+                aInput->out<QJsonObject>(rea::Json("param", m_current_param), "startJob");
             }));
     }
 private:

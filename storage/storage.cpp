@@ -7,7 +7,7 @@
 #include <QVector>
 
 void fsStorage::writeCVMat(const QString& aPath, const cv::Mat& aData){
-    auto pth = stgRoot(aPath);
+    auto pth = stgRoot(aPath).toLocal8Bit();
     checkPath(pth);
     cv::imwrite(pth.toStdString().data(), aData);
 }
