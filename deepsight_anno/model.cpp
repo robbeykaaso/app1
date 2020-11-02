@@ -261,19 +261,6 @@ void imageModel::serviceSelectFirstImageIndex(const QString aName){
     }, rea::Json("name", "switch" + aName + "FirstImageIndex"));
 }
 
-class scoreMapObject : public rea::imageObject{
-public:
-    scoreMapObject(const QJsonObject& aConfig) : imageObject(aConfig){
-
-    }
-};
-
-static rea::regPip<QQmlApplicationEngine*> init_createscoremap([](rea::stream<QQmlApplicationEngine*>* aInput){
-    rea::pipeline::add<QJsonObject, rea::pipePartial>([](rea::stream<QJsonObject>* aInput){
-        aInput->out<std::shared_ptr<rea::qsgObject>>(std::make_shared<scoreMapObject>(aInput->data()));
-    }, rea::Json("name", "create_qsgobject_scoremap"));
-}, QJsonObject(), "regQML");
-
 class imageObjectEx : public rea::imageObject{
 private:
     cv::Mat m_image;
@@ -364,7 +351,7 @@ public:
 static rea::regPip<QQmlApplicationEngine*> init_createimage([](rea::stream<QQmlApplicationEngine*>* aInput){
     rea::pipeline::add<QJsonObject, rea::pipePartial>([](rea::stream<QJsonObject>* aInput){
         aInput->out<std::shared_ptr<rea::qsgObject>>(std::make_shared<imageObjectEx>(aInput->data()));
-    }, rea::Json("name", "create_qsgobject_image"));
+    }, rea::Json("name", "create_qsgobject_imagebak"));
 }, rea::Json("name", "create_qsgobject_image_0"), "regQML");
 
 static rea::regPip<QJsonObject> init_set_imageshow([](rea::stream<QJsonObject>* aInput){

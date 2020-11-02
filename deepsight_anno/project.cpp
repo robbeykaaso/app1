@@ -499,7 +499,7 @@ private:
                 rea::imagePool::cacheImage(pth, img);
 
                 auto objs = rea::Json("img_" + m_current_image, rea::Json(
-                                 "type", "image",
+                                 "type", "imagebak",
                                  "range", rea::JArray(0, 0, img.width(), img.height()),
                                  "path", pth,
                                  "text", QJsonObject(),

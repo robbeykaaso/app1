@@ -166,7 +166,7 @@ std::function<void(void)> taskMode::showQSGModel(int aChannel, stgCVMat& aImage)
     rea::imagePool::cacheImage(pth, img);
 
     auto objs = rea::Json("img_" + getImageID(), rea::Json(
-                                                        "type", "image",
+                                                        "type", "imagebak",
                                                         "range", rea::JArray(0, 0, img.width(), img.height()),
                                                         "path", pth,
                                                         "text", QJsonObject(),
@@ -1193,7 +1193,7 @@ QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex
                     ret.push_back(rea::Json("key", rea::JArray("objects"),
                                             "type", "add",
                                             "tar", nm,
-                                            "val", rea::Json("type", "scoremap",
+                                            "val", rea::Json("type", "image",
                                                              "caption", shp.value("label"),
                                                              "color", getResultColor(result_show),
                                                              "range", rea::JArray(bnd[0] * rx, bnd[1] * ry, bnd[2] * rx, bnd[3] * ry),
