@@ -31,7 +31,7 @@ protected:
     bool isCurrentMode(const QString& aMode);
     int getShowCount();
     void updateCurrentImage();
-    void serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage);
+    void serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage);
     bool getShowLabel();
     QJsonArray getTransfrom();
     task* m_task;

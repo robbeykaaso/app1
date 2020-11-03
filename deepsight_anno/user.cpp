@@ -181,7 +181,7 @@ public:
             aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project.json"));
             aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "user/" + rea::GetMachineFingerPrint() + ".json"));
         }, rea::Json("name", loaduser))
-        ->next(rea::local(s3_bucket_name + "readJson"), rea::Json("tag", loaduser))
+        ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
         ->next(rea::buffer<rea::stgJson>(2))
         ->next(rea::pipeline::add<std::vector<rea::stgJson>>([this](rea::stream<std::vector<rea::stgJson>>* aInput){
             auto dt = aInput->data();

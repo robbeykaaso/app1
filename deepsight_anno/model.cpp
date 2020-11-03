@@ -224,7 +224,8 @@ void imageModel::serviceLabelStatistics(const QString& aName){
         ->next("filter" + aName + "Images", rea::Json("tag", "filter" + aName + "Images"));
 }
 
-void imageModel::serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage){
+void imageModel::serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage){
+    //show mouse position and its pixel
     rea::pipeline::find("updateQSGPos_" + aName + "image_gridder" + aChannel)
         ->next(rea::pipeline::add<QJsonObject>([this, aName, aImage](rea::stream<QJsonObject>* aInput){
             auto dt = aInput->data();
@@ -241,6 +242,43 @@ void imageModel::serviceShowPosStatus(const QString aName, const QString& aChann
             }
             aInput->out<QJsonArray>(ret, aName + "image_updateStatus");
         }, rea::Json("name", "updateQSGPosMapShow_" + aChannel)));
+
+    //show selected contours' statistics
+    rea::pipeline::add<QJsonObject>([this, aImage](rea::stream<QJsonObject>* aInput){
+        auto dt = aInput->data();
+        QJsonObject statistics = rea::Json("title", rea::JArray("key", "value"));
+        if (dt.contains("shapes")){
+            auto img = QImage2cvMat(aImage);
+            std::vector<std::vector<cv::Point>> contours;
+            auto shps = dt.value("shapes").toObject();
+            for (auto i : shps){
+                auto shp = i.toObject();
+                std::vector<rea::pointList> pts;
+                if (shp.value("type") == "poly")
+                    pts = rea::polyObject(shp).toPoints();
+                else if (shp.value("type") == "ellipse")
+                    pts = rea::ellipseObject(shp).toPoints();
+
+                for (auto i : pts){
+                    std::vector<cv::Point> lop;
+                    for (auto j : i)
+                        lop.push_back(cv::Point(j.x(), j.y()));
+                    contours.push_back(lop);
+                }
+            }
+            cv::Mat tmp = cv::Mat::zeros(img.rows, img.cols, img.type());
+            cv::drawContours(tmp, contours, - 1, cv::Scalar::all(255), - 1);
+            //statistics = extractContourStatistics(img, tmp);
+            std::vector<cv::Mat> imgs;
+            imgs.push_back(img);
+            imgs.push_back(tmp);
+            aInput->out<std::vector<cv::Mat>>(imgs, "extractContourStatistics");
+        }else
+            aInput->out<QJsonObject>(statistics, "region_info_updateListView");
+        aInput->out<QJsonObject>(aInput->data());
+    }, rea::Json("name", "updateQSGSelects_" + aName + "image_gridder" + aChannel))
+        ->next("extractContourStatistics")
+        ->next("region_info_updateListView");
 }
 
 void imageModel::serviceSelectFirstImageIndex(const QString aName){
@@ -359,3 +397,12 @@ static rea::regPip<QJsonObject> init_set_imageshow([](rea::stream<QJsonObject>* 
     aInput->setData(rea::Json("resizeMode", rea::JArray("linear", "nearest", "cubic", "area", "lanczos4"),
                               "colorFormat", rea::JArray("None", "BayerRG2RGB", "BayerRG2Gray", "RGB2Gray")))->out();
 }, rea::Json("name", "setImageShow"));
+
+static rea::regPip<std::vector<cv::Mat>> init_extract_contour_statistics([](rea::stream<std::vector<cv::Mat>>* aInput){
+    QJsonArray data;
+    data.push_back(rea::Json("entry", rea::JArray("hello", "world")));
+
+    aInput->out<QJsonObject>(rea::Json("title", rea::JArray("key", "value"),
+                                       "selects", data.size() > 0 ? rea::JArray(0) : QJsonArray(),
+                                       "data", data), "region_info_updateListView");
+}, rea::Json("name", "extractContourStatistics"));

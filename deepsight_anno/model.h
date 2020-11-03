@@ -2,6 +2,7 @@
 #define REAL_APPLICATION2_MODEL_H_
 
 #include "reactive2.h"
+#include "util/cv.h"
 #include <QDateTime>
 
 class model : public QJsonObject{
@@ -53,7 +54,7 @@ protected:
     void setFilter(const QJsonObject& aFilter);
     bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
     void serviceLabelStatistics(const QString& aName);
-    void serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage);
+    void serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage);
     void serviceSelectFirstImageIndex(const QString aName);
     virtual QJsonObject getImageAbstracts() = 0;
     virtual int getChannelCount() = 0;

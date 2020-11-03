@@ -79,8 +79,8 @@ void ITaskFriend::updateCurrentImage(){
     m_task->m_current_image = "";
 }
 
-void ITaskFriend::serviceShowPosStatus(const QString aName, const QString& aChannel, QImage aImage){
-    m_task->serviceShowPosStatus(aName, aChannel, aImage);
+void ITaskFriend::serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage){
+    m_task->serviceShowImageStatus(aName, aChannel, aImage);
 }
 
 bool ITaskFriend::getShowLabel(){
@@ -185,7 +185,7 @@ std::function<void(void)> taskMode::showQSGModel(int aChannel, stgCVMat& aImage)
     updateShowConfig(cfg);
     auto ch = QString::number(aChannel);
     rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + ch, cfg);
-    serviceShowPosStatus("task", ch, img);
+    serviceShowImageStatus("task", ch, img);
     return add_show;
 }
 
@@ -340,7 +340,7 @@ void task::taskManagement(){
             aInput->out<QJsonObject>(prepareLabelListGUI(getLabels()), "task_label_updateListView");
             aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected", rea::Json("tag", "task_manual"));
             aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
-            if (m_jobs.size() > 0 && m_jobs.begin().value().toObject().value("state") != "upload_finish")
+            //if (m_jobs.size() > 0 && m_jobs.begin().value().toObject().value("state") != "upload_finish")
                 aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
             aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
             aInput->out<QJsonObject>(rea::Json("count", 1), "scattertaskImageShow");
@@ -564,6 +564,13 @@ bool task::isCurrentMode(const QString& aMode){
 }
 
 void task::imageManagement(){
+    //delete image
+    //delete image
+    rea::pipeline::find("_makeSure")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                   m_task_id = "";
+               }), rea::Json("tag", "deleteImage"));
+
     //switch first image index
     serviceSelectFirstImageIndex("task");
 

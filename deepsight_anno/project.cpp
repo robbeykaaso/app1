@@ -541,7 +541,7 @@ private:
                                      "objects", objs);
                 auto ch = QString::number(aInput->cacheData<int>(0));
                 aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder" + ch);
-                serviceShowPosStatus("project", ch, img);
+                serviceShowImageStatus("project", ch, img);
             }));
 
         //import image
@@ -610,6 +610,65 @@ private:
                     aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson", rea::Json("tag", "updateProjectImages"));
                     aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
                 }
+            }));
+
+        //delete image
+        rea::pipeline::find("_makeSure")
+            ->next(rea::local("project_image_listViewSelected"), rea::Json("tag", "deleteImage"))
+            ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                auto dt = aInput->data();
+                auto imgs = getImages();
+
+                std::vector<int> idxes;
+                for (auto i : dt)
+                    idxes.push_back(i.toInt());
+                std::sort(idxes.begin(), idxes.end(), std::greater<int>());
+
+                QJsonArray dels;
+                for (auto i : idxes){
+                    auto img = (imgs.begin() + i)->toString();
+                    imgs.removeAt(i);
+                    dels.push_back(img);
+                    m_images.remove(img);
+                }
+                setImages(imgs);
+                aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+                aInput->out<rea::stgJson>(rea::stgJson(m_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
+                for (auto i : dels){
+                    auto img = i.toString();
+                    aInput->out<QString>("project/" + m_project_id + "/image/" + img, s3_bucket_name + "deletePath");
+                    aInput->out<QString>("project/" + m_project_id + "/image/" + img + ".json", s3_bucket_name + "deletePath");
+                }
+
+                auto tsks = getTasks();
+                aInput->cache<int>(tsks.size());
+                aInput->cache<QJsonArray>(dels);
+                if (tsks.size() == 0){
+                    aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
+                    aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+                }else
+                    for (auto i : tsks)
+                        aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + "/task/" + i.toString() + ".json"));
+            }))
+            ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
+            ->next(rea::pipeline::add<rea::stgJson>([](rea::stream<rea::stgJson>* aInput){
+                auto dt = aInput->data().getData();
+                auto imgs = dt.value("images").toObject();
+                auto dels = aInput->cacheData<QJsonArray>(1);
+                for (auto i : dels)
+                    imgs.remove(i.toString());
+                dt.insert("images", imgs);
+                aInput->setData(rea::stgJson(dt, QString(aInput->data())))->out();
+            }))
+            ->next(rea::local(s3_bucket_name + "writeJson", rea::Json("thread", 11)))
+            ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
+                auto cnt = aInput->cacheData<int>(0);
+                cnt = cnt - 1;
+                if (!cnt){
+                    aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
+                    aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+                }else
+                    aInput->cache<int>(cnt, 0);
             }));
 
         //filter images
