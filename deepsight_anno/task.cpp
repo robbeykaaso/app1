@@ -338,10 +338,10 @@ void task::taskManagement(){
             m_first_image_index = 0;
             m_current_job = "";
             aInput->out<QJsonObject>(prepareLabelListGUI(getLabels()), "task_label_updateListView");
-            aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
+            aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected", rea::Json("tag", "task_manual"));
             aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
             if (m_jobs.size() > 0 && m_jobs.begin().value().toObject().value("state") != "upload_finish")
-                aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
+                aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
             aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
             aInput->out<QJsonObject>(rea::Json("count", 1), "scattertaskImageShow");
             aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
@@ -351,14 +351,8 @@ void task::taskManagement(){
                     aInput->out<rea::stgByteArray>(rea::stgByteArray(QByteArray(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + i + "/log.txt"));
                 }
             }
+            aInput->out<QJsonObject>(QJsonObject(), "switchtaskFirstImageIndex");
         }))
-        ->nextB("task_label_updateListView")
-        ->nextB("task_label_listViewSelected", rea::Json("tag", "task_manual"))
-        ->nextB("task_image_updateListView")
-        ->nextB("scattertaskImageShow")
-        ->nextB("task_job_updateListView")
-        ->nextB("task_job_listViewSelected", rea::Json("tag", "manual"))
-        ->nextB("updateTaskImageFilterGUI")
         ->next(rea::local(s3_bucket_name + "readByteArray", rea::Json("thread", 10)))
         ->next(rea::pipeline::add<rea::stgByteArray>([this](rea::stream<rea::stgByteArray>* aInput){
             auto dt = QString(aInput->data().getData()).split("\n");
@@ -368,10 +362,9 @@ void task::taskManagement(){
             for (auto i : dt)
                 cache->push_back(i);
             if (job == m_jobs.begin().key()){
-                aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected");
+                aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
             }
-        }))
-        ->next("task_job_listViewSelected", rea::Json("tag", "manual"));
+        }));
 }
 
 void task::labelManagement(){
@@ -461,6 +454,39 @@ void task::labelManagement(){
     auto addLabel = rea::buffer<QJsonArray>(2);
     auto addLabel_nm = "addTaskLabel";
     auto addLabel_tag = rea::Json("tag", addLabel_nm);
+
+    auto modifyLabels = rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        auto dt = aInput->data();
+        auto lbl = dt.value("label").toString();
+        auto add = dt.value("add").toBool();
+        auto sel = dt.value("select").toInt();
+        auto grps = getLabels();
+        auto grp = (m_project_labels.begin() + sel).key();
+        auto lbls = grps.value(grp).toObject();
+        bool updatelist = !grps.contains(grp);
+        if (add){
+            if (!lbls.contains(lbl)){
+                lbls.insert(lbl, QJsonObject());
+                grps.insert(grp, lbls);
+            }else
+                return;
+        }else{
+            lbls.remove(lbl);
+            if (lbls.size() == 0){
+                grps.remove(grp);
+                updatelist = true;
+            }else
+                grps.insert(grp, lbls);
+        }
+        if (updatelist)
+            aInput->out<QJsonObject>(rea::Json(prepareLabelListGUI(grps), "selects", rea::JArray(sel)), "task_label_updateListView");
+        setLabels(grps);
+        aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+        aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected", rea::Json("tag", "task_manual"));
+        m_current_image = "";
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"));
+    });
+
     rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
         auto dt = aInput->data();
         aInput->out<QJsonArray>(rea::JArray(dt.value("label"), dt.value("add")));
@@ -469,41 +495,40 @@ void task::labelManagement(){
         ->nextB(addLabel)
         ->next("task_label_listViewSelected", addLabel_tag)
         ->next(addLabel, addLabel_tag)
-        ->next(rea::pipeline::add<std::vector<QJsonArray>>([this](rea::stream<std::vector<QJsonArray>>* aInput){
+        ->next(rea::pipeline::add<std::vector<QJsonArray>>([this, addLabel_nm](rea::stream<std::vector<QJsonArray>>* aInput){
             auto dt = aInput->data();
             auto lbl = dt[0][0].toString();
             auto add = dt[0][1].toBool();
             auto sel = dt[1][0].toInt();
             auto grps = getLabels();
             auto grp = (m_project_labels.begin() + sel).key();
-            auto lbls = grps.value(grp).toObject();
-            bool updatelist = !grps.contains(grp);
+            auto ret = rea::Json("label", lbl, "add", add, "select", sel);
             if (add){
-                if (!lbls.contains(lbl)){
-                    lbls.insert(lbl, QJsonObject());
-                    grps.insert(grp, lbls);
-                }else
-                    return;
-            }else{
-                lbls.remove(lbl);
-                if (lbls.size() == 0){
-                    grps.remove(grp);
-                    updatelist = true;
-                }else
-                    grps.insert(grp, lbls);
+                QSet<QString> sels;
+                for (auto i : grps.keys())
+                    if (i != "shape")
+                        sels.insert(i);
+                if (m_task_type == "classification"){
+                    if (sels.size() > 0 && !sels.contains(grp) && grp != "shape"){
+                        aInput->out<QJsonObject>(rea::Json(ret, "title", "warning",
+                                                                "text", "当前标签和已选择标签不属于同一组，确定添加?",
+                                                                "tag", addLabel_nm), "popMessage");
+                        return;
+                    }
+                }else{
+                    if (grp != "shape" && !sels.contains(grp)){
+                        aInput->out<QJsonObject>(rea::Json(ret, "title", "warning",
+                                                                "text", "当前任务为检测或分割，选择的标签不是图形标签，确定添加?",
+                                                                "tag", addLabel_nm), "popMessage");
+                        return;
+                    }
+                }
             }
-            if (updatelist)
-                aInput->out<QJsonObject>(rea::Json(prepareLabelListGUI(grps), "selects", rea::JArray(sel)), "task_label_updateListView");
-            setLabels(grps);
-            aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
-            aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected");
-            m_current_image = "";
-            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+            aInput->out<QJsonObject>(ret);
         }))
-        ->nextB("task_label_updateListView")
-        ->nextB(s3_bucket_name + "writeJson")
-        ->nextB("task_label_listViewSelected", rea::Json("tag", "task_manual"))
-        ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+        ->nextB(modifyLabels)
+        ->next("popMessage")
+        ->next(modifyLabels, addLabel_tag);
 
     //modifyImageLabel
     const QString modifyImageLabel_nm = "modifyTaskImageLabel";
@@ -1344,6 +1369,45 @@ void task::prepareTrainParam(QJsonObject& aParam){
     aParam.insert("setting", m_image_show);
 }
 
+QJsonObject task::getTrainParam(){
+    return value("train_param").toObject();
+}
+
+void task::setTrainParam(const QJsonObject& aParam){
+    insert("train_param", aParam);
+}
+
+void task::paramManagement(){
+    //set job parameter
+    rea::pipeline::find("_selectFile")
+        ->next(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
+                   auto pths = aInput->data();
+                   if (pths.size() > 0){
+                       aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), pths[0].toString()));
+                   }
+               }), rea::Json("tag", "setJobParameter"))
+        ->next(rea::local("readJson", rea::Json("thread", 10)))
+        ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
+            m_current_param = aInput->data().getData();
+            aInput->out<QJsonObject>(rea::Json("param", m_current_param), "startJob");
+        }));
+
+    //save job parameter
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        setTrainParam(aInput->data());
+        aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+    }, rea::Json("name", "saveJobParam"));
+
+    //open job parameter
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        aInput->setData(getTrainParam())->out();
+    }, rea::Json("name", "openJobParam"))
+    ->next("editJobParam")
+    ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        m_current_param = aInput->data();
+        aInput->out<QJsonObject>(rea::Json("param", m_current_param), "startJob");
+    }));
+}
 
 void task::jobManagement(){
     //modify result color
@@ -1655,13 +1719,6 @@ void task::jobManagement(){
                aInput->out<QJsonObject>(QJsonObject(), "_updateTHistogramGUI");
                aInput->out<QJsonObject>(rea::Json("content", rea::JArray(QJsonArray(), QJsonArray())), "result_confuse_updateMatrix");
            }), rea::Json("tag", "manual"))
-        ->nextB("result_abstract_updateMatrix")
-        ->nextB("_updateLineChart")
-        ->nextB("_updateTHistogramGUI")
-        ->nextB("result_confuse_updateMatrix")
-        ->nextB("updateTaskJobProgress")
-        ->nextB("updateTaskJobGUI")
-        ->nextB("updateTaskJobLog")
         ->next(rea::pipeline::add<QString>([this](rea::stream<QString>* aInput){
             if (aInput->data() != m_current_request)
                 return;
@@ -1703,13 +1760,7 @@ void task::jobManagement(){
                                                                                                     "show", m_threshold_list.size() > 1), "_updateTHistogramGUI");
                                                                  m_for_image = true;
                                                                  aInput->out<QJsonObject>(rea::Json("has_object", m_statistics.value("has_object")), "updateConfuseMatrix");
-                                                             })->nextB("result_abstract_updateMatrix")
-                                                                 ->nextB("_updateLineChart")
-                                                                 ->nextB("_updateTHistogramGUI")
-                                                                 ->nextB("updateConfuseMatrix"))))
-
-        ->nextB("updateTaskJobProgress")
-        ->nextB("updateTaskJobGUI")
+                                                             }))))
         ->next("callServer")
         ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
                auto res = aInput->data();
@@ -1734,17 +1785,13 @@ void task::jobManagement(){
                        m_jobs.insert(m_current_job, job);
                    if (st == "upload_finish"){
                        m_current_image = "";
-                       aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+                       aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"));
                    }
                    aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
                }
                std::this_thread::sleep_for(std::chrono::microseconds(500));
                aInput->out<QString>(id, "requestJobState");
-        }, rea::Json("thread", 5)), rea::Json("tag", protocal_task_state))
-        ->nextB("callServer")
-        ->nextB(s3_bucket_name + "writeJson")
-        ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
-        ->next("requestJobState");
+        }, rea::Json("thread", 5)), rea::Json("tag", protocal_task_state));
 
     //update job progress
     rea::pipeline::find("receiveFromServer")
@@ -1866,6 +1913,7 @@ task::task(){
     guiManagement();
     serverManagement();
     jobManagement();
+    paramManagement();
 }
 
 static rea::regPip<QQmlApplicationEngine*> init_task([](rea::stream<QQmlApplicationEngine*>* aInput){

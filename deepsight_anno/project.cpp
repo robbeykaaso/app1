@@ -145,6 +145,7 @@ private:
                 aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected", rea::Json("tag", "project_manual"));
                 aInput->out<QJsonObject>(getFilter(), "updateProjectImageFilterGUI");
                 aInput->out<double>(0, "updateProjectChannelCountGUI");
+                aInput->out<QJsonObject>(QJsonObject(), "switchprojectFirstImageIndex");
             }));
     }
     void taskManagement(){

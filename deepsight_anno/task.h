@@ -123,6 +123,11 @@ private:
 
     void jobManagement();
 private:
+    void paramManagement();
+    QJsonObject getTrainParam();
+    void setTrainParam(const QJsonObject& aParam);
+    QJsonObject m_current_param;
+private:
     void updateStatisticsModel(const QJsonObject& aStatistics);
     int getIOUIndex(double aIOU);
     int getThresholdIndex(double aThreshold);

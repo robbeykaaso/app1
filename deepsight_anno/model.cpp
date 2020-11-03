@@ -258,6 +258,7 @@ void imageModel::serviceSelectFirstImageIndex(const QString aName){
             m_first_image_index = std::min(std::max(0, dt.value("index").toInt()), chs - 1);
         }
         aInput->out<QJsonArray>(QJsonArray(), aName + "_image_listViewSelected", rea::Json("tag", "manual"));
+        aInput->out<double>(m_first_image_index);
     }, rea::Json("name", "switch" + aName + "FirstImageIndex"));
 }
 
