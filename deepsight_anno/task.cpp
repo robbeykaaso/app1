@@ -1394,25 +1394,33 @@ void task::paramManagement(){
                    }
                }), rea::Json("tag", "setJobParameter"))
         ->next(rea::local("readJson", rea::Json("thread", 10)))
-        ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
-            m_current_param = aInput->data().getData();
-            aInput->out<QJsonObject>(rea::Json("param", m_current_param), "startJob");
+        ->next(rea::pipeline::add<rea::stgJson>([](rea::stream<rea::stgJson>* aInput){
+            aInput->out<QJsonObject>(rea::Json("param", aInput->data().getData()), "startJob");
         }));
 
-    //save job parameter
+    //save/export job parameter
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
-        setTrainParam(aInput->data());
-        aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
-    }, rea::Json("name", "saveJobParam"));
+        auto dt = aInput->data();
+        if (dt.value("folder").toBool()){
+            m_current_param = dt.value("param").toObject();
+            aInput->out<QJsonObject>(rea::Json("folder", true, "tag", rea::Json("tag", "exportJobParam")), "_selectFile");
+        }else{
+            setTrainParam(dt.value("param").toObject());
+            aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
+        }
+    }, rea::Json("name", "saveJobParam"))
+        ->next("_selectFile")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            aInput->out<rea::stgJson>(rea::stgJson(m_current_param, aInput->data()[0].toString() + "/param.json"), "writeJson");
+        }), rea::Json("tag", "exportJobParam"));
 
     //open job parameter
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
         aInput->setData(getTrainParam())->out();
     }, rea::Json("name", "openJobParam"))
     ->next("editJobParam")
-    ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
-        m_current_param = aInput->data();
-        aInput->out<QJsonObject>(rea::Json("param", m_current_param), "startJob");
+    ->next(rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+        aInput->out<QJsonObject>(rea::Json("param", aInput->data()), "startJob");
     }));
 }
 

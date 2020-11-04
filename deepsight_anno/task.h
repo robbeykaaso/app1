@@ -60,6 +60,7 @@ protected:
     int getChannelCount() override{
         return m_channel_count;
     }
+    QJsonObject getImageShow() override {return m_image_show;}
 private:
     void setLabels(const QJsonObject& aLabels);
     bool getImageImportant(const QJsonObject& aImage);

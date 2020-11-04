@@ -58,12 +58,16 @@ protected:
     void serviceSelectFirstImageIndex(const QString aName);
     virtual QJsonObject getImageAbstracts() = 0;
     virtual int getChannelCount() = 0;
+    virtual QJsonObject getImageShow() = 0;
 protected:
     QJsonArray m_transform;
     QString m_project_id = "";
     QJsonObject m_image;
     QString m_current_image = "";
     int m_first_image_index = 0; //the first grid image channel
+private:
+    QJsonObject m_selects_cache;
+    QJsonObject m_show_selects_cache;
 private:
     struct labelStatisticRec{
         int count = 0;

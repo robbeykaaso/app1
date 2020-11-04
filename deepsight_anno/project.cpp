@@ -434,12 +434,12 @@ private:
             aInput->out();
         }, rea::Json("name", "projectLabelChanged"));
     }
-private:
-    const QJsonObject selectProjectImage = rea::Json("tag", "selectProjectImage");
-
-    QJsonObject getImageShow(){
+protected:
+    QJsonObject getImageShow() override{
         return value("imageShow").toObject();
     }
+private:
+    const QJsonObject selectProjectImage = rea::Json("tag", "selectProjectImage");
 
     void setImageShow(const QJsonObject& aImageShow){
         insert("imageShow", aImageShow);

@@ -244,8 +244,9 @@ void imageModel::serviceShowImageStatus(const QString aName, const QString& aCha
         }, rea::Json("name", "updateQSGPosMapShow_" + aChannel)));
 
     //show selected contours' statistics
-    rea::pipeline::add<QJsonObject>([this, aImage](rea::stream<QJsonObject>* aInput){
+    rea::pipeline::add<QJsonObject>([aImage, this](rea::stream<QJsonObject>* aInput){
         auto dt = aInput->data();
+        m_selects_cache = dt;
         QJsonObject statistics = rea::Json("title", rea::JArray("key", "value"));
         if (dt.contains("shapes")){
             auto img = QImage2cvMat(aImage);
@@ -272,13 +273,18 @@ void imageModel::serviceShowImageStatus(const QString aName, const QString& aCha
             std::vector<cv::Mat> imgs;
             imgs.push_back(img);
             imgs.push_back(tmp);
-            aInput->out<std::vector<cv::Mat>>(imgs, "extractContourStatistics");
+            aInput->out<std::vector<cv::Mat>>(imgs, "extractContourStatistics", QJsonObject(), false)->cache<QJsonObject>(getImageShow());
         }else
             aInput->out<QJsonObject>(statistics, "region_info_updateListView");
         aInput->out<QJsonObject>(aInput->data());
-    }, rea::Json("name", "updateQSGSelects_" + aName + "image_gridder" + aChannel))
+    }, rea::Json("name", "updateQSGSelects_" + aName + "image_gridder" + aChannel, "replace", true))
         ->next("extractContourStatistics")
         ->next("region_info_updateListView");
+
+    if (m_show_selects_cache.contains("shapes")){
+        rea::pipeline::run<QJsonObject>("updateQSGSelects_projectimage_gridder0", m_show_selects_cache);
+        m_show_selects_cache = QJsonObject();
+    }
 }
 
 void imageModel::serviceSelectFirstImageIndex(const QString aName){
@@ -297,6 +303,7 @@ void imageModel::serviceSelectFirstImageIndex(const QString aName){
         }
         aInput->out<QJsonArray>(QJsonArray(), aName + "_image_listViewSelected", rea::Json("tag", "manual"));
         aInput->out<double>(m_first_image_index);
+        m_show_selects_cache = m_selects_cache;
     }, rea::Json("name", "switch" + aName + "FirstImageIndex"));
 }
 
