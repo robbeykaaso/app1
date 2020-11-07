@@ -541,7 +541,7 @@ private:
                                      "objects", objs);
                 auto ch = QString::number(aInput->cacheData<int>(0));
                 aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder" + ch);
-                serviceShowImageStatus("project", ch, img, "img_" + m_current_image);
+                serviceShowImageStatus("project", ch, img, pth);
             }));
 
         //import image

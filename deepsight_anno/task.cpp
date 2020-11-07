@@ -79,8 +79,8 @@ void ITaskFriend::updateCurrentImage(){
     m_task->m_current_image = "";
 }
 
-void ITaskFriend::serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImageID){
-    m_task->serviceShowImageStatus(aName, aChannel, aImage, aImageID);
+void ITaskFriend::serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImagePath){
+    m_task->serviceShowImageStatus(aName, aChannel, aImage, aImagePath);
 }
 
 bool ITaskFriend::getShowLabel(){
@@ -185,7 +185,7 @@ std::function<void(void)> taskMode::showQSGModel(int aChannel, stgCVMat& aImage)
     updateShowConfig(cfg);
     auto ch = QString::number(aChannel);
     rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + ch, cfg);
-    serviceShowImageStatus("task", ch, img, "img_" + getImageID());
+    serviceShowImageStatus("task", ch, img, pth);
     return add_show;
 }
 

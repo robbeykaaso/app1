@@ -54,7 +54,7 @@ protected:
     void setFilter(const QJsonObject& aFilter);
     bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
     void serviceLabelStatistics(const QString& aName);
-    void serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImageID);
+    void serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImagePath);
     void serviceSelectFirstImageIndex(const QString aName);
     virtual QJsonObject getImageAbstracts() = 0;
     virtual int getChannelCount() = 0;
