@@ -41,7 +41,7 @@ add_executable(${PROJECT_NAME}
     "storage/awsStorage.h"
     "storage/awsStorage.cpp"
     "storage/mysql.cpp"
-    #"device/camera.cpp"
+#    "device/camera.cpp"
     #"device/io.cpp"
     "util/cv.h"
     "util/cv.cpp"

@@ -88,7 +88,7 @@ rxCameras::rxCameras(){
                                              "updateQSGAttr_" + nm);
             }
         }, rea::Json("name", nm + "_cameraShow", "thread", 2))
-        ->nextB(0, "updateQSGModel_" + nm, QJsonObject())
+        ->nextB("updateQSGModel_" + nm)
         ->next("updateQSGAttr_" + nm);
 
         rea::pipeline::add<QJsonObject>([this, nm](rea::stream<QJsonObject>* aInput){

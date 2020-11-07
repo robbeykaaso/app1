@@ -79,8 +79,8 @@ void ITaskFriend::updateCurrentImage(){
     m_task->m_current_image = "";
 }
 
-void ITaskFriend::serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage){
-    m_task->serviceShowImageStatus(aName, aChannel, aImage);
+void ITaskFriend::serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImageID){
+    m_task->serviceShowImageStatus(aName, aChannel, aImage, aImageID);
 }
 
 bool ITaskFriend::getShowLabel(){
@@ -185,7 +185,7 @@ std::function<void(void)> taskMode::showQSGModel(int aChannel, stgCVMat& aImage)
     updateShowConfig(cfg);
     auto ch = QString::number(aChannel);
     rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + ch, cfg);
-    serviceShowImageStatus("task", ch, img);
+    serviceShowImageStatus("task", ch, img, "img_" + getImageID());
     return add_show;
 }
 
@@ -293,9 +293,12 @@ QString task::getTaskJsonPath(){
 }
 
 QString task::getImageResultJsonPath(){
-    return "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/predictions/" + m_current_image + ".json";
+    return getImageResultJsonDir() + "/" + m_current_image + ".json";
 }
 
+QString task::getImageResultJsonDir(){
+    return "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/predictions";
+}
 
 void task::taskManagement(){
     //debug mode
@@ -601,23 +604,21 @@ void task::imageManagement(){
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                if (m_task_id == "")
                    return;
-               auto dt = aInput->data();
-               if (dt.size() == 0){
-                   rea::pipeline::run<QJsonArray>("updateQSGCtrl_taskimage_gridder0", QJsonArray());  //must be before "updateQSGModel_projectimage_gridder"
-                   m_current_image = "";
-                   for (int i = 0; i < m_show_count; ++i)
-                       rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + QString::number(i), QJsonObject());
-                   aInput->out<QJsonObject>(QJsonObject(), "updateTaskImageGUI");
-               }
-               else{
+               do{
+                   auto dt = aInput->data();
+                   if (dt.size() == 0)
+                       break;
                    auto lst = getImageList();
                    auto idx = dt[0].toInt();
                    if (idx < lst.size()){
                        auto nm = lst[idx].toString();
                        if (nm != m_current_image){
                            aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_taskimage_gridder0");
+                           auto img_cfg = m_project_images->value(nm).toObject();
+                           if (img_cfg.empty())
+                               break;
                            m_current_image = nm;
-                           auto nms = getImageName(m_project_images->value(m_current_image).toObject());
+                           auto nms = getImageName(img_cfg);
                            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), s3_bucket_name + "readJson", selectTaskImage);
                            for (auto i = 0; i < m_show_count; ++i){
                                auto img_nm = nms[i].toString();
@@ -631,7 +632,13 @@ void task::imageManagement(){
                    }else{
                        aInput->out<QJsonObject>(QJsonObject(), "updateTaskImageGUI");
                    }
-               }
+                   return;
+               }while(0);
+               rea::pipeline::run<QJsonArray>("updateQSGCtrl_taskimage_gridder0", QJsonArray());  //must be before "updateQSGModel_projectimage_gridder"
+               m_current_image = "";
+               for (int i = 0; i < m_show_count; ++i)
+                   rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + QString::number(i), QJsonObject());
+               aInput->out<QJsonObject>(QJsonObject(), "updateTaskImageGUI");
            }), rea::Json("tag", "manual"))
         ->nextB("updateQSGCtrl_taskimage_gridder0")
         ->nextB(rea::pipeline::find(s3_bucket_name + "readJson")
@@ -728,6 +735,8 @@ void task::imageManagement(){
             }
             setImageList(lst);
         }else if (dt.value("type") == "label"){
+            setImageList(dt.value("value").toArray());
+        }else if (dt.value("type") == "result"){
             setImageList(dt.value("value").toArray());
         }else
             return;
@@ -1343,7 +1352,7 @@ QJsonObject task::getImagePredict(const QString& aImageID, const QJsonObject& aI
                 for (int i = 0; i < pred_lbls.size(); ++i){
                     if (i != 0)
                         ret += "; ";
-                    ret += pred_lbls[i].toString() + ": " + QString::number(pred_scrs[i].toDouble());
+                    ret += pred_lbls[i].toString() + ": " + i < pred_scrs.size() ? QString::number(pred_scrs[i].toDouble()) : "";
                 }
             }
        /* }
@@ -1425,6 +1434,52 @@ void task::paramManagement(){
 }
 
 void task::jobManagement(){
+    //filter result2
+    rea::pipeline::find("result_confuse_matrixSelected")
+        ->next(rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+            auto refs = m_matrix_map.value(aInput->data(), "").split(";");
+            auto idx = calcThresholdIndex();
+            if (m_for_image){
+                QJsonArray imgs;
+                for (auto i : m_images_statistics.keys()){
+                    auto rets0 = m_images_statistics.value(i).value("image_value").toArray();
+                    auto ret = rets0[idx].toString();
+                    QStringList lst;
+                    auto rets = ret.split("#");
+                    lst.push_back(rets[1].split(":")[1].trimmed());
+                    lst.push_back(rets[0].split(":")[1].trimmed());
+                    if ((refs[0] == "" || refs[0] == lst[0]) && (refs[1] == "" || refs[1] == "total" || refs[1] == lst[1]))
+                        imgs.push_back(i);
+                }
+                aInput->out<QJsonObject>(rea::Json("type", "result", "value", imgs), "filterTaskImages");
+            }else{
+                if (m_statistics.value("object_table_type") == "statistics"){
+                    QJsonArray imgs;
+                    QJsonArray content, titles;
+                    idx += getIOUIndex(m_iou) * m_threshold_list.size() * m_threshold_list.size();
+                    auto key = "label:" + refs[0] + "#" + "title:" + refs[1];
+                    for (auto i : m_instances_statistics.keys()){
+                        auto rets0 = m_instances_statistics.value(i);
+                        if (rets0.value(key).isArray()){
+                            auto lst = rets0.value(key).toArray();
+                            if (idx >= 0 && idx < lst.size() && lst[idx].toInt())
+                                imgs.push_back(i);
+                        }else if (rets0.value(key).isDouble()){
+                            if (rets0.value(key).toInt())
+                                imgs.push_back(i);
+                        }
+                    }
+                    aInput->out<QJsonObject>(rea::Json("type", "result", "value", imgs), "filterTaskImages");
+                }else{
+                    aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Contact Robbey to realize it!"), "popMessage");
+                    QJsonArray imgs;
+                    for (auto i : m_instances_statistics.keys()){
+                        auto rets0 = m_instances_statistics.value(i);
+                    }
+                }
+            }
+        }), rea::Json("tag", "manual"));
+
     //modify result color
     rea::pipeline::find("_selectColor")
         ->next(rea::pipeline::add<QString>([this](rea::stream<QString>* aInput){
@@ -1532,6 +1587,13 @@ void task::jobManagement(){
                 return;
             auto train_prm = dt.value("param").toObject();
             prepareTrainParam(train_prm);
+            auto bsc = train_prm.value("basic").toObject();
+            auto mdl = bsc.value("train_from_model").toString("None");
+            if (mdl != "None"){
+                mdl = "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + mdl;
+                bsc.insert("train_from_model", mdl);
+                train_prm.insert("basic", bsc);
+            }
             prm = rea::Json(prm, "type", "training", "task_type", m_task_type, "params", train_prm);
             auto jobs = dt.value("jobs").toArray();
             if (jobs.size() == 0)
@@ -1580,10 +1642,12 @@ void task::jobManagement(){
             m_for_image = dt.value("for_image").toBool();
         auto idx = calcThresholdIndex();
         QJsonArray lbls;
+        m_matrix_map.clear();
         if (m_for_image){
             lbls = m_statistics.value("image_label_list").toArray();
             if (m_statistics.value("image_table_type") == "binary_without_inter"){
                 if (lbls.size() == 2){
+                    const QString tt = "total";
                     auto lbl0 = lbls[0].toString(), lbl1 = lbls[1].toString();
                     auto m00 = rea::tryFind(&m_image_level_statistics, lbl0)->value(lbl0)[idx].toInt(),
                          m01 = rea::tryFind(&m_image_level_statistics, lbl0)->value(lbl1)[idx].toInt(),
@@ -1591,23 +1655,33 @@ void task::jobManagement(){
                          m11 = rea::tryFind(&m_image_level_statistics, lbl1)->value(lbl1)[idx].toInt();
                     aInput->out<QJsonObject>(rea::Json("rowcap", "predict",
                                                        "colcap", "actual",
-                                                       "content", rea::JArray(rea::JArray("", lbls[0].toString(), lbls[1].toString(), "total"),
-                                                                              rea::JArray(lbls[0].toString(), m00, m01, m00 + m01),
-                                                                              rea::JArray(lbls[1].toString(), m10, m11, m10 + m11))), "result_confuse_updateMatrix");
+                                                       "content", rea::JArray(rea::JArray("", lbl0, lbl1, tt),
+                                                                              rea::JArray(lbl0, m00, m01, m00 + m01),
+                                                                              rea::JArray(lbl1, m10, m11, m10 + m11))), "result_confuse_updateMatrix");
+                    m_matrix_map.insert(0, ";"); m_matrix_map.insert(1, ";" + lbl0); m_matrix_map.insert(2, ";" + lbl1); m_matrix_map.insert(3, ";" + tt);
+                    m_matrix_map.insert(4, lbl0 + ";"); m_matrix_map.insert(5, lbl0 + ";" + lbl0); m_matrix_map.insert(6, lbl0 + ";" + lbl1); m_matrix_map.insert(7, lbl0 + ";" + tt);
+                    m_matrix_map.insert(8, lbl1 + ";"); m_matrix_map.insert(9, lbl1 + ";" + lbl0); m_matrix_map.insert(10, lbl1 + ";" + lbl1); m_matrix_map.insert(11, lbl1 + ";" + tt);
                     return;
                 }
             }else if (m_statistics.value("image_table_type") == "multi"){
+                int idx2 = 0;
                 QJsonArray content, titles;
                 titles.push_back("");
-                for (auto i : m_image_level_statistics.keys())
+                m_matrix_map.insert(idx2++, ";");
+                for (auto i : m_image_level_statistics.keys()){
                     titles.push_back(i);
+                    m_matrix_map.insert(idx2++, ";" + i);
+                }
                 content.push_back(titles);
                 for (auto i : m_image_level_statistics.keys()){
                     QJsonArray ret;
                     ret.push_back(i);
+                    m_matrix_map.insert(idx2++, i + ";");
                     auto i2 = m_image_level_statistics.value(i);
-                    for (auto j : i2.keys())
+                    for (auto j : i2.keys()){
                         ret.push_back(i2.value(j)[idx]);
+                        m_matrix_map.insert(idx2++, i + ";" + j);
+                    }
                     content.push_back(ret);
                 }
                 aInput->out<QJsonObject>(rea::Json("rowcap", "attribute",
@@ -1619,6 +1693,7 @@ void task::jobManagement(){
             }else //if (m_statistics.value("image_table_type") == "binary_with_inter")
             {
                 if (lbls.size() == 2){
+                    const QString it = "inter", tt = "total";
                     auto lbl0 = lbls[0].toString(), lbl1 = lbls[1].toString();
                     auto m00 = rea::tryFind(&m_image_level_statistics, lbl0)->value(lbl0)[idx].toInt(),
                          m01 = rea::tryFind(&m_image_level_statistics, lbl0)->value(lbl1)[idx].toInt(),
@@ -1629,9 +1704,12 @@ void task::jobManagement(){
                     aInput->out<QJsonObject>(rea::Json("rowcap", "predict",
                                                        "colcap", "actual",
                                                        "content", rea::JArray(QJsonArray(),
-                                                                              rea::JArray("", lbls[0].toString(), lbls[1].toString(), "inter", "total"),
-                                                                              rea::JArray(lbls[0].toString(), m00, m01, m02, m00 + m01 + m02),
-                                                                              rea::JArray(lbls[1].toString(), m10, m11, m12, m10 + m11 + m12))), "result_confuse_updateMatrix");
+                                                                              rea::JArray("", lbl0, lbl1, it, tt),
+                                                                              rea::JArray(lbl0, m00, m01, m02, m00 + m01 + m02),
+                                                                              rea::JArray(lbl1, m10, m11, m12, m10 + m11 + m12))), "result_confuse_updateMatrix");
+                    m_matrix_map.insert(0, ";"); m_matrix_map.insert(1, ";" + lbl0); m_matrix_map.insert(2, ";" + lbl1); m_matrix_map.insert(3, ";" + it); m_matrix_map.insert(4, ";" + tt);
+                    m_matrix_map.insert(5, lbl0 + ";"); m_matrix_map.insert(6, lbl0 + ";" + lbl0); m_matrix_map.insert(7, lbl0 + ";" + lbl1); m_matrix_map.insert(8, lbl0 + ";" + it); m_matrix_map.insert(9, lbl0 + ";" + tt);
+                    m_matrix_map.insert(10, lbl1 + ";"); m_matrix_map.insert(11, lbl1 + ";" + lbl0); m_matrix_map.insert(12, lbl1 + ";" + lbl1); m_matrix_map.insert(13, lbl1 + ";" + it); m_matrix_map.insert(14, lbl1 + ";" + tt);
                     return;
                 }
             }
@@ -1640,17 +1718,24 @@ void task::jobManagement(){
             if (m_statistics.value("object_table_type") == "binary_without_inter"){
 
             }else if (m_statistics.value("object_table_type") == "multi"){
+                int idx2 = 0;
                 QJsonArray content, titles;
                 titles.push_back("");
-                for (auto i : m_instance_level_statistics.keys())
+                m_matrix_map.insert(idx2++, ";");
+                for (auto i : m_instance_level_statistics.keys()){
                     titles.push_back(i);
+                    m_matrix_map.insert(idx2++, ";" + i);
+                }
                 content.push_back(titles);
                 for (auto i : m_instance_level_statistics.keys()){
                     QJsonArray ret;
                     ret.push_back(i);
+                    m_matrix_map.insert(idx2++, i + ";");
                     auto i2 = m_instance_level_statistics.value(i);
-                    for (auto j : i2.keys())
+                    for (auto j : i2.keys()){
                         ret.push_back(i2.value(j)[idx]);
+                        m_matrix_map.insert(idx2++, i + ";" + j);
+                    }
                     content.push_back(ret);
                 }
                 aInput->out<QJsonObject>(rea::Json("rowcap", "attribute",
@@ -1658,6 +1743,7 @@ void task::jobManagement(){
                                                    "content", content), "result_confuse_updateMatrix");
                 return;
             }else if (m_statistics.value("object_table_type") == "statistics"){
+                int idx2 = 0;
                 QJsonArray content, titles;
                 idx += getIOUIndex(m_iou) * m_threshold_list.size() * m_threshold_list.size();
                 for (auto i : m_instance_level_statistics.keys()){
@@ -1672,12 +1758,18 @@ void task::jobManagement(){
                     }
 
                     if (titles.size() < stat.size()){
+                        m_matrix_map.insert(idx2++, ";");
                         titles.push_back("");
-                        for (auto j : stat.keys())
+                        for (auto j : stat.keys()){
+                            m_matrix_map.insert(idx2++, j);
                             titles.push_back(j);
+                        }
                         content.push_back(titles);
                     }
                     content.push_back(ret);
+                    m_matrix_map.insert(idx2++, i + ";");
+                    for (auto j : stat.keys())
+                        m_matrix_map.insert(idx2++, i + ";" + j);
                 }
                 aInput->out<QJsonObject>(rea::Json("rowcap", "attribute",
                                                    "colcap", "target",
@@ -1686,6 +1778,7 @@ void task::jobManagement(){
             }else //if (m_statistics.value("object_table_type") == "binary_with_inter")
             {
                 if (lbls.size() == 2){
+                    const QString it = "inter", tt = "total";
                     auto lbl0 = lbls[0].toString(), lbl1 = lbls[1].toString();
                     auto m00 = rea::tryFind(&m_instance_level_statistics, lbl0)->value(lbl0)[idx].toInt(),
                          m01 = rea::tryFind(&m_instance_level_statistics, lbl1)->value(lbl0)[idx].toInt(),
@@ -1695,13 +1788,17 @@ void task::jobManagement(){
                          m12 = rea::tryFind(&m_instance_level_statistics, QString("inter"))->value(lbl1)[idx].toInt();
                     aInput->out<QJsonObject>(rea::Json("rowcap", "predict",
                                                        "colcap", "actual",
-                                                       "content", rea::JArray(rea::JArray("", lbls[0].toString(), lbls[1].toString(), "inter", "total"),
-                                                                              rea::JArray(lbls[0].toString(), m00, m01, m02, m00 + m01 + m02),
-                                                                              rea::JArray(lbls[1].toString(), m10, m11, m12, m10 + m11 + m12))), "result_confuse_updateMatrix");
+                                                       "content", rea::JArray(rea::JArray("", lbl0, lbl1, it, tt),
+                                                                              rea::JArray(lbl0, m00, m01, m02, m00 + m01 + m02),
+                                                                              rea::JArray(lbl1, m10, m11, m12, m10 + m11 + m12))), "result_confuse_updateMatrix");
+                    m_matrix_map.insert(0, ";"); m_matrix_map.insert(1, ";" + lbl0); m_matrix_map.insert(2, ";" + lbl1); m_matrix_map.insert(3, ";" + it); m_matrix_map.insert(4, ";" + tt);
+                    m_matrix_map.insert(5, lbl0 + ";"); m_matrix_map.insert(6, lbl0 + ";" + lbl0); m_matrix_map.insert(7, lbl0 + ";" + lbl1); m_matrix_map.insert(8, lbl0 + ";" + it); m_matrix_map.insert(9, lbl0 + ";" + tt);
+                    m_matrix_map.insert(10, lbl1 + ";"); m_matrix_map.insert(11, lbl1 + ";" + lbl0); m_matrix_map.insert(12, lbl1 + ";" + lbl1); m_matrix_map.insert(13, lbl1 + ";" + it); m_matrix_map.insert(14, lbl1 + ";" + tt);
                     return;
                 }
             }
         }
+
         aInput->out<QJsonObject>(rea::Json("content", rea::JArray(QJsonArray(), QJsonArray())), "result_confuse_updateMatrix");
     }, rea::Json("name", "updateConfuseMatrix"))
         ->next("result_confuse_updateMatrix");

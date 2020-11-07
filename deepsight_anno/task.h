@@ -31,7 +31,7 @@ protected:
     bool isCurrentMode(const QString& aMode);
     int getShowCount();
     void updateCurrentImage();
-    void serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage);
+    void serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImageID);
     bool getShowLabel();
     QJsonArray getTransfrom();
     task* m_task;
@@ -85,6 +85,7 @@ private:
     QString getJobsJsonPath();
     QString getTaskJsonPath();
     QString getImageResultJsonPath();
+    QString getImageResultJsonDir();
     void taskManagement();
     void labelManagement();
 private:
@@ -136,9 +137,10 @@ private:
     QJsonObject getImagePredict(const QString& aImageID, const QJsonObject& aImageResult);
     void prepareTrainParam(QJsonObject& aParam);
     QJsonObject m_statistics;
-    double m_min_threshold = 0, m_max_threshold = 0.7;
+    double m_min_threshold = 0.4, m_max_threshold = 0.6;
     double m_iou = 0;
     bool m_for_image = true;
+    QHash<double, QString> m_matrix_map;
     std::vector<double> m_threshold_list;
     std::vector<double> m_iou_list;
     QMap<QString, QMap<QString, QJsonArray>> m_image_level_statistics;

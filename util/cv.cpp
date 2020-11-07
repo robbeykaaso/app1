@@ -71,26 +71,50 @@ cv::Mat QImage2cvMat(QImage image)
     return mat;
 }
 
-std::vector< std::vector<cv::Point>> extractCounter(const cv::Point& aTopLeft, const QImage& aImage, int aEpsilon){
+std::vector<std::vector<rea::pointList>> extractCounter(const QPoint& aTopLeft, const QImage& aImage, int aEpsilon, int aThreshold){
     auto img = QImage2cvMat(aImage);
     std::vector< std::vector<cv::Point>> contours;
     cv::cvtColor(img, img, cv::COLOR_BGRA2GRAY);
-    cv::threshold(img, img, 50, 255, cv::THRESH_BINARY);
-    cv::findContours(
-        img,
-        contours,
-        cv::noArray(),
-        cv::RETR_CCOMP,
-        cv::CHAIN_APPROX_SIMPLE,
-        {aTopLeft.x - 1, aTopLeft.y - 1}
-    );
+    cv::threshold(img, img, aThreshold, 255, cv::THRESH_BINARY);
 
-    for (int i = 0; i < contours.size(); ++i){
-        //epsilon = 0.1*cv.arcLength(cnt,True)
-        std::vector<cv::Point> ret2;
-        cv::approxPolyDP(contours[i], ret2, aEpsilon, true);
-        ret2.push_back(ret2[0]);
-        contours[i] = ret2;
-    }
-    return contours;
+    //https://blog.csdn.net/guduruyu/article/details/69220296
+    std::vector<cv::Vec4i> topo;
+    cv::findContours(img, contours, topo, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, {aTopLeft.x() - 1, aTopLeft.y() - 1});
+
+    QSet<int> got;
+    std::vector<std::vector< std::vector<QPointF>>> ret;
+    for (int i = 0; i < topo.size(); ++i)
+        if (!got.contains(i)){
+            got.insert(i);
+            std::vector< std::vector<QPointF>> polys;
+            std::vector<cv::Point> poly;
+            cv::approxPolyDP(contours[i], poly, aEpsilon, true);
+            poly.push_back(poly[0]);
+            std::vector<QPointF> ply;
+            for (auto i : poly)
+                ply.push_back(QPointF(i.x, i.y));
+            polys.push_back(ply);
+
+            auto ch = topo[i][2];
+            while (ch >= 0){
+                auto ch_topo = topo[ch];
+                got.insert(ch);
+                poly.clear();
+                cv::approxPolyDP(contours[ch], poly, aEpsilon, true);
+                poly.push_back(poly[0]);
+                ply.clear();
+                for (auto i : poly)
+                    ply.push_back(QPointF(i.x, i.y));
+                polys.push_back(ply);
+                ch = ch_topo[0];
+            }
+            ret.push_back(polys);
+        }
+    return ret;
 }
+
+static rea::regPip<InterfaceExtractCounter> init_extract_counter([](rea::stream<InterfaceExtractCounter>* aInput){
+    auto dt = aInput->data();
+    dt.counters = extractCounter(dt.topLeft, dt.image, dt.epsilon, dt.threshold);
+    aInput->setData(dt);
+}, rea::Json("name", "extractAllCounters"));

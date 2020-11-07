@@ -224,12 +224,13 @@ void imageModel::serviceLabelStatistics(const QString& aName){
         ->next("filter" + aName + "Images", rea::Json("tag", "filter" + aName + "Images"));
 }
 
-void imageModel::serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage){
+void imageModel::serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImageID){
     //show mouse position and its pixel
     rea::pipeline::find("updateQSGPos_" + aName + "image_gridder" + aChannel)
-        ->next(rea::pipeline::add<QJsonObject>([this, aName, aImage](rea::stream<QJsonObject>* aInput){
+        ->next(rea::pipeline::add<QJsonObject>([this, aName, aImage, aImageID](rea::stream<QJsonObject>* aInput){
             auto dt = aInput->data();
             m_transform = dt.value("transform").toArray();
+
             QJsonArray ret;
             auto x = dt.value("x").toInt(), y= dt.value("y").toInt();
             ret.push_back("x: " + QString::number(x) + "; " +
@@ -240,7 +241,9 @@ void imageModel::serviceShowImageStatus(const QString aName, const QString& aCha
                               "g: " + QString::number(clr.green()) + "; " +
                               "b: " + QString::number(clr.blue()));
             }
-            aInput->out<QJsonArray>(ret, aName + "image_updateStatus");
+
+            aInput->out<QJsonObject>(rea::Json(dt, "coor", ret, "cmd", aName + "image_updateStatus"), "updateActualImagePixel" + aImageID);
+            //aInput->out<QJsonArray>(ret, aName + "image_updateStatus");
         }, rea::Json("name", "updateQSGPosMapShow_" + aChannel)));
 
     //show selected contours' statistics
@@ -259,6 +262,19 @@ void imageModel::serviceShowImageStatus(const QString aName, const QString& aCha
                     pts = rea::polyObject(shp).toPoints();
                 else if (shp.value("type") == "ellipse")
                     pts = rea::ellipseObject(shp).toPoints();
+                else if (shp.value("type") == "image"){
+                    auto pts0 = shp.value("points").toArray();
+                    for (auto j : pts0){
+                        auto pts1 = j.toArray();
+                        rea::pointList lst;
+                        for (auto k : pts1){
+                            auto pts3 = k.toArray();
+                            for (int l = 0; l < pts3.size(); l += 2)
+                                lst.push_back(QPointF(pts3[l].toDouble(), pts3[l + 1].toDouble()));
+                        }
+                        pts.push_back(lst);
+                    }
+                }
 
                 for (auto i : pts){
                     std::vector<cv::Point> lop;
@@ -282,7 +298,8 @@ void imageModel::serviceShowImageStatus(const QString aName, const QString& aCha
         ->next("region_info_updateListView");
 
     if (m_show_selects_cache.contains("shapes")){
-        rea::pipeline::run<QJsonObject>("updateQSGSelects_projectimage_gridder0", m_show_selects_cache);
+        m_show_selects_cache.insert("invisible", true);
+        rea::pipeline::run<QJsonObject>("updateQSGSelects_" + aName + "image_gridder0", m_show_selects_cache);
         m_show_selects_cache = QJsonObject();
     }
 }
