@@ -4,6 +4,8 @@
 #include "storage/storage.h"
 #include <QQuickItem>
 
+QString s3_bucket_name = "deepsight";
+
 QString model::getProjectName(const QJsonObject& aProject){
     return aProject.value("name").toString();
 }

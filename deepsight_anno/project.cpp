@@ -505,27 +505,29 @@ private:
                                  "path", pth,
                                  "text", QJsonObject(),
                                  "transform", getImageShow()));
-                auto shps = getShapes(m_image);
-                auto lbls = getShapeLabels(getLabels());
-                for (auto i : shps.keys()){
-                    auto shp = shps.value(i).toObject();
-                    if (shp.value("type") == "ellipse"){
-                        objs.insert(i, rea::Json("type", "ellipse",
-                                                 "caption", shp.value("label"),
-                                                 "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
-                                                 "center", shp.value("center"),
-                                                 "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
-                                                 "angle", shp.value("angle")));
-                    }else if (shp.value("type") == "polyline"){
-                        QJsonArray pts;
-                        pts.push_back(shp.value("points"));
-                        auto holes = shp.value("holes").toArray();
-                        for (auto i : holes)
-                            pts.push_back(i);
-                        objs.insert(i, rea::Json("type", "poly",
-                                                 "caption", shp.value("label"),
-                                                 "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
-                                                 "points", pts));
+                if (m_show_label) {
+                    auto shps = getShapes(m_image);
+                    auto lbls = getShapeLabels(getLabels());
+                    for (auto i : shps.keys()){
+                        auto shp = shps.value(i).toObject();
+                        if (shp.value("type") == "ellipse"){
+                            objs.insert(i, rea::Json("type", "ellipse",
+                                                     "caption", shp.value("label"),
+                                                     "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
+                                                     "center", shp.value("center"),
+                                                     "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
+                                                     "angle", shp.value("angle")));
+                        }else if (shp.value("type") == "polyline"){
+                            QJsonArray pts;
+                            pts.push_back(shp.value("points"));
+                            auto holes = shp.value("holes").toArray();
+                            for (auto i : holes)
+                                pts.push_back(i);
+                            objs.insert(i, rea::Json("type", "poly",
+                                                     "caption", shp.value("label"),
+                                                     "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
+                                                     "points", pts));
+                        }
                     }
                 }
 
@@ -758,8 +760,17 @@ private:
     }
 private:
     int m_show_count = 1;
+    bool m_show_label = true;
+
     const QString setImageShow0 = "setImageShow";
     void guiManagement(){
+        //modify image show
+        rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+            m_show_label = !m_show_label;
+            m_current_image = "";
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+        }, rea::Json("name", "modifyProjectLabelShow"));
+
         //update channel count
         rea::pipeline::add<double>([this](rea::stream<double>* aInput){
             aInput->setData(getChannelCount())->out();
@@ -843,4 +854,4 @@ public:
 static rea::regPip<QQmlApplicationEngine*> init_proj([](rea::stream<QQmlApplicationEngine*>* aInput){
     static project cur_proj;
     aInput->out();
-}, QJsonObject(), "regQML");
+}, rea::Json("name", "install2_project"), "regQML");

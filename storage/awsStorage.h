@@ -1,13 +1,14 @@
 #ifndef REAL_FRAMEWORK_AWSSTORAGE_H_
 #define REAL_FRAMEWORK_AWSSTORAGE_H_
 
-#include "storage.h"
 #include "aws_s3.h"
+#include "storage.h"
 
-class awsStorage : public fsStorage{
+class awsStorage : public fsStorage {
 public:
-    awsStorage(const QString& aType = "");
-    bool isValid() override {return m_aws.isValid();}
+     awsStorage(const QString& aType = "", const QJsonObject& aConfig = QJsonObject());
+     bool isValid() override { return m_aws.isValid(); }
+
 protected:
     std::vector<QString> listFiles(const QString& aDirectory) override;
     void writeJson(const QString& aPath, const QJsonObject& aData) override;

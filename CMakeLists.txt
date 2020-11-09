@@ -48,6 +48,8 @@ add_executable(${PROJECT_NAME}
     "util/pack.cpp"
 #    "util/py.h"
 #    "util/py.cpp"
+    "deepsight_anno/storage.h"
+    "deepsight_anno/storage.cpp"
     "deepsight_anno/protocal.h"
     "deepsight_anno/model.h"
     "deepsight_anno/model.cpp"

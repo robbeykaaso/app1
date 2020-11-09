@@ -5,6 +5,8 @@
 #include "util/cv.h"
 #include <QDateTime>
 
+extern QString s3_bucket_name;
+
 class model : public QJsonObject{
 public:
 /*#define ABSTRACT(MODEL) \
@@ -32,7 +34,6 @@ public:
     }*/
     virtual ~model(){}
 protected:
-    const QString s3_bucket_name = "deepsight";
     QString getProjectName(const QJsonObject& aProject);
 };
 

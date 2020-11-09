@@ -1,0 +1,10 @@
+{
+    "test_server": true,
+    "local_fs": true,
+    "fs_root": "deepsight",
+    "aws_fs": {
+        "ip": "http://192.168.1.122:9000",
+        "access": "YKFERVMC3AK54Y1X150B",
+        "secret": "4y0PzVzrvyiE6RzssCbrgO7HCxPIDRrK2pO1qJ5C"
+    }
+}

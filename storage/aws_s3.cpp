@@ -34,7 +34,7 @@ void AWSClient::tryStartMinIO(bool aFirstTry){
    }
 }
 
-void AWSClient::initialize(std::function<bool(void)> aStartService){
+void AWSClient::initialize(std::function<bool(void)> aStartService, const QJsonObject& aConfig){
     m_valid = aStartService();
     QDir dir("minIO");
     m_local_storage = dir.exists();
@@ -59,9 +59,9 @@ void AWSClient::initialize(std::function<bool(void)> aStartService){
         m_access_key = "deepsight"; //credential.value("accessKey").toString();
         //minio_cfg.close();
     }else{
-        QString s3_ip_port = "http://192.168.1.122:9000";
-        QString s3_access_key = "YKFERVMC3AK54Y1X150B";
-        QString s3_secret_key = "4y0PzVzrvyiE6RzssCbrgO7HCxPIDRrK2pO1qJ5C";
+        QString s3_ip_port = aConfig.value("ip").toString(); //"http://192.168.1.122:9000";
+        QString s3_access_key = aConfig.value("access").toString(); //"YKFERVMC3AK54Y1X150B";
+        QString s3_secret_key = aConfig.value("secret").toString(); //"4y0PzVzrvyiE6RzssCbrgO7HCxPIDRrK2pO1qJ5C";
     }
 
     Aws::SDKOptions options;

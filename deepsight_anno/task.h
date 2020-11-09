@@ -13,7 +13,7 @@ public:
         m_task = aTask;
     }
 protected:
-    QString s3_bucket_name();
+    QString s3_bucket_name_();
     QJsonObject getShapeLabels(const QJsonObject& aLabels);
     bool modifyImage(const QJsonArray& aModification, QJsonObject& aImage, QString& aPath);
     QString getTaskJsonPath();

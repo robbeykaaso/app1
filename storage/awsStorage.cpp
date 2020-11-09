@@ -102,7 +102,7 @@ QJsonObject checkMinIO(){
     }*/
 }
 
-awsStorage::awsStorage(const QString& aType) : fsStorage(aType){
+awsStorage::awsStorage(const QString& aType, const QJsonObject& aConfig) : fsStorage(aType){
     m_aws.initialize([](){
         bool ret = false;
         auto sts = checkMinIO();
@@ -121,7 +121,7 @@ awsStorage::awsStorage(const QString& aType) : fsStorage(aType){
             system(cmd.toStdString().c_str());
         }while(0);
         return ret;
-    });
+    }, aConfig);
     m_aws.create_bucket(m_root.toStdString().c_str());
 }
 
