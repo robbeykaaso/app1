@@ -258,9 +258,7 @@ void imageModel::serviceShowImageStatus(const QString aName, const QString& aCha
         }else
             aInput->out<QJsonObject>(statistics, "region_info_updateListView");
         aInput->out<QJsonObject>(aInput->data());
-    }, rea::Json("name", "updateQSGSelects_" + aName + "image_gridder" + aChannel, "replace", true))
-        ->next("extractContourStatistics" + aImagePath)
-        ->next("region_info_updateListView");
+    }, rea::Json("name", "updateQSGSelects_" + aName + "image_gridder" + aChannel, "replace", true));
 
     if (m_show_selects_cache.contains("shapes")){
         m_show_selects_cache.insert("invisible", true);

@@ -13,3 +13,5 @@
     - -d: run the "unitTest" pipeline  
     - -m GUI: start the software by demo mode  
     - -md: start the software by engineer mode  
+
+* (link)[https://docs.google.com/document/d/1JOe9oP9cqXy2dsT74yxIzFMnMRENll_8Aa-BqERd4IQ/edit?usp=sharing]
