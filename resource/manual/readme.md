@@ -3,8 +3,8 @@
         if it is true, software will use the integrated server, otherwise software will use the remote server  
     - local_fs  
         if it is true, software will use the filesystem, otherwise software will try to use minIO. if the minIO folder is existed in the current work directory, software will use the local minIO service, otherwise software will use the remote minIO service  
-    - fs_root  
-        it defines the root directory of filesystem for `local_fs`, the default is "deepsight"  
+    - root_dir  
+        it defines the root directory of storage, the default is "deepsight"  
     - aws_fs  
         it defines the config for the remote minIO service  
 </br>

@@ -14,9 +14,9 @@ private:
   const QString loaduser = "loadUser";
 
 private:
-  QJsonArray getProjects() { return value("projects").toArray(); }
-  void setProjects(const QJsonArray &aProjects) {
-    insert("projects", aProjects);
+    QJsonArray getProjects(const QJsonObject& aUserConfig) { return aUserConfig.value("projects").toArray(); }
+  void setProjects(QJsonObject& aUserConfig, const QJsonArray &aProjects) {
+      aUserConfig.insert("projects", aProjects);
   }
   QString getProjectOwner(const QJsonObject &aProject) {
     return aProject.value("owner").toString();
@@ -35,9 +35,9 @@ private:
                      "data", data);
   }
   QJsonArray addProject(const QString &aID) {
-    auto mdls = getProjects();
+    auto mdls = getProjects(*this);
     mdls.push_back(aID);
-    setProjects(mdls);
+    setProjects(*this, mdls);
     return mdls;
   }
   QString insertProject(QJsonObject &aProject) {
@@ -56,9 +56,8 @@ public:
       // initialize storage
       rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson> *aInput) {
           auto dt = aInput->data();
-          if (dt.getData().contains("fs_root"))
-              s3_bucket_name = dt.getData().value("fs_root").toString();
-          auto tmp = s3_bucket_name;
+          if (dt.getData().contains("root_dir"))
+              s3_bucket_name = dt.getData().value("root_dir").toString();
           if (dt.getData().value("local_fs").toBool())
               static fsStorage2 file_storage(s3_bucket_name,
                                              [this]() { return m_project_owner; });
@@ -82,7 +81,7 @@ public:
                     aInput->out<QJsonObject>(QJsonObject(), "updateProjectGUI");
                   else {
                     auto idx = dt[0].toInt();
-                    auto projs = getProjects();
+                    auto projs = getProjects(*this);
                     if (idx < projs.size()) {
                       auto nm = projs[idx].toString();
                       aInput->out<QJsonObject>(m_projects.value(nm).toObject(),
@@ -110,7 +109,7 @@ public:
 
                 auto owner = rea::GetMachineFingerPrint();
                 QStringList dels;
-                auto projs = getProjects();
+                auto projs = getProjects(*this);
                 for (auto i : idxes) {
                   auto nm = projs[i].toString();
                   if (getProjectOwner(m_projects.value(nm).toObject()) ==
@@ -119,7 +118,7 @@ public:
                   }
                   projs.erase(projs.begin() + i);
                 }
-                setProjects(projs);
+                setProjects(*this, projs);
                 aInput->out<rea::stgJson>(
                     rea::stgJson(*this, "user/" + rea::GetMachineFingerPrint() +
                                             ".json"),
@@ -138,7 +137,7 @@ public:
                       s3_bucket_name + "writeJson");
                 }
 
-                aInput->out<QJsonObject>(prepareProjectListGUI(getProjects()),
+                aInput->out<QJsonObject>(prepareProjectListGUI(getProjects(*this)),
                                          "user_updateListView");
                 aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected",
                                         rea::Json("tag", "manual"));
@@ -152,7 +151,7 @@ public:
                 [this](rea::stream<QJsonArray> *aInput) {
                   auto dt = aInput->data();
                   if (dt.size() > 0) {
-                    auto projs = getProjects();
+                    auto projs = getProjects(*this);
                     auto id = projs[dt[0].toInt()].toString();
                     aInput->out<QJsonArray>(
                         QJsonArray(
@@ -168,8 +167,31 @@ public:
                         openProject);
                   }
                 }),
-            rea::Json("tag", openProject))
-        ->next(openProject);
+            rea::Json("tag", openProject));
+
+    // share project
+    rea::pipeline::find("user_listViewSelected")
+        ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+            auto dt = aInput->data();
+            auto projs = getProjects(*this);
+            QJsonArray ret;
+            for (auto i : dt)
+                ret.push_back(projs[i.toInt()]);
+            aInput->cache<QJsonArray>(ret)->out<rea::stgVector<QString>>(rea::stgVector<QString>(std::vector<QString>(), "user"));
+        }), rea::Json("tag", "shareProject"))
+        ->next(rea::local(s3_bucket_name + "listFiles"))
+        ->next(rea::pipeline::add<rea::stgVector<QString>>([](rea::stream<rea::stgVector<QString>>* aInput){
+            auto dt = aInput->data().getData();
+            for (auto i : dt)
+                if (i != "." && i != "..")
+                    aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "user/" + i));
+        }))
+        ->next(rea::local(s3_bucket_name + "readJson"))
+        ->next(rea::pipeline::add<rea::stgJson>([](rea::stream<rea::stgJson>* aInput){
+            auto projs = aInput->cacheData<QJsonArray>(0);
+            auto dt = aInput->data();
+
+        }));
 
     // new project, import project
     rea::pipeline::find("_newObject")
@@ -178,7 +200,7 @@ public:
                                                        *aInput) {
               auto proj = aInput->data();
 
-              auto projs = getProjects();
+              auto projs = getProjects(*this);
               if (proj.contains("id")) {
                 auto id = proj.value("id").toString();
                 if (!m_projects.contains(id)) {
@@ -246,7 +268,7 @@ public:
               aInput->out<QJsonArray>(
                   QJsonArray({rea::GetMachineFingerPrint()}),
                   "title_updateNavigation", rea::Json("tag", "manual"));
-              aInput->out<QJsonObject>(prepareProjectListGUI(getProjects()),
+              aInput->out<QJsonObject>(prepareProjectListGUI(getProjects(*this)),
                                        "user_updateListView");
               aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected",
                                       rea::Json("tag", "manual"));

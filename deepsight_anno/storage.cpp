@@ -17,7 +17,8 @@ QJsonObject fsStorage2::readJson(const QString& aPath){
     auto tmp = aPath.mid(0, aPath.lastIndexOf("/"));
     if (tmp.endsWith("/image"))
         anno_json.insert(aPath);
-    return fsStorage::readJson(aPath);
+    auto ret = fsStorage::readJson(aPath);
+    return ret;
 }
 
 void fsStorage2::writeJson(const QString& aPath, const QJsonObject& aData) {
