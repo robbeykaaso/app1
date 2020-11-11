@@ -69,7 +69,7 @@ mkdir %buildApp%\Release\qtinstall
 xcopy .\qtinstall\* %buildApp%\qtinstall /e /y
 
 xcopy %buildApp%\Release\* %buildApp%\qtinstall\mypackages\content\data\ /e /y
-xcopy .\pack\* %buildApp%\qtinstall\mypackages\content2\data\ /e /y
+::xcopy .\pack\* %buildApp%\qtinstall\mypackages\content2\data\ /e /y
 xcopy %buildApp%\Release\* %buildApp%\qtinstall\mypackages\content3\data\ /e /y
 
 cd pack
