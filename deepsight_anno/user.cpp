@@ -187,10 +187,23 @@ public:
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "user/" + i));
         }))
         ->next(rea::local(s3_bucket_name + "readJson"))
-        ->next(rea::pipeline::add<rea::stgJson>([](rea::stream<rea::stgJson>* aInput){
+        ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
             auto projs = aInput->cacheData<QJsonArray>(0);
-            auto dt = aInput->data();
-
+            auto dt = aInput->data().getData();
+            auto tar = getProjects(dt);
+            QSet<QString> has;
+            for (auto i : tar)
+                has.insert(i.toString());
+            bool added = false;
+            for (auto i : projs)
+                if (!has.contains(i.toString())){
+                    tar.push_back(i);
+                    added = true;
+                }
+            if (added){
+                setProjects(dt, tar);
+                aInput->out<rea::stgJson>(rea::stgJson(dt, aInput->data()), s3_bucket_name + "writeJson");
+            }
         }));
 
     // new project, import project
