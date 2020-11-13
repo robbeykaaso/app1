@@ -385,6 +385,11 @@ static rea::regPip<QJsonObject> init_set_imageshow([](rea::stream<QJsonObject>* 
                               "colorFormat", rea::JArray("None", "BayerRG2RGB", "BayerRG2Gray", "RGB2Gray")))->out();
 }, rea::Json("name", "setImageShow"));
 
+static rea::regPip<std::vector<stgCVMat>, rea::pipePartial> init_custom_show_imgs([](rea::stream<std::vector<stgCVMat>>* aInput){
+    aInput->out();
+}, rea::Json("name", "imageShowFilter"));
+//
+
 /*static rea::regPip<std::vector<cv::Mat>> init_extract_contour_statistics([](rea::stream<std::vector<cv::Mat>>* aInput){
     QJsonArray data;
     data.push_back(rea::Json("entry", rea::JArray("hello", "world")));

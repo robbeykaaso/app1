@@ -38,7 +38,6 @@ private:
     std::string m_ip_port = "http://192.168.1.122:9000";
     std::string m_access_key = "YKFERVMC3AK54Y1X150B";
     std::string m_secret_key = "4y0PzVzrvyiE6RzssCbrgO7HCxPIDRrK2pO1qJ5C";
-    bool m_local_storage;
     bool m_valid = false;
 };
 

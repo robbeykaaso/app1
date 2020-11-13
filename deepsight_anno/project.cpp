@@ -53,6 +53,14 @@ private:
         return aImage.value("time").toString();
     }
 
+    QJsonArray getImageFilter(){
+        return value("image_filter").toArray();
+    }
+
+    void setImageFilter(const QJsonArray& aImageFilter){
+        insert("image_filter", aImageFilter);
+    }
+
     QJsonObject prepareImageListGUI(const QJsonArray& aImages){
         QJsonArray data;
         int idx = 0;
@@ -470,12 +478,13 @@ private:
                                    m_current_image = nm;
                                    auto nms = getImageName(m_images.value(m_current_image).toObject());
                                    aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + nm + ".json"), s3_bucket_name + "readJson", selectProjectImage);
+                                   aInput->cache<std::vector<stgCVMat>>(std::vector<stgCVMat>());
                                    for (auto i = 0; i < m_show_count; ++i){
                                        auto img_nm = nms[i].toString();
                                        if (i == 0)
                                            img_nm = nms[m_first_image_index].toString();
                                        auto img = "project/" + m_project_id + "/image/" + nm + "/" + img_nm;
-                                       aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img), "", QJsonObject(), false)->cache<int>(i);
+                                       aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img));
                                    }
                                }
                                //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateProjectImageGUI");
@@ -494,57 +503,75 @@ private:
                     selectProjectImage)
             ->next(rea::local(s3_bucket_name + "readCVMat", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
-                auto dt = aInput->data();
-                auto pth = QString(dt);
-                auto img = cvMat2QImage(dt.getData());
-                rea::imagePool::cacheImage(pth, img);
+                auto imgs = aInput->cacheData<std::vector<stgCVMat>>(0);
+                imgs.push_back(stgCVMat(aInput->data().getData(), QString(aInput->data())));
+                if (int(imgs.size()) == m_show_count){
+                    aInput->out<std::vector<stgCVMat>>(imgs, "imageShowFilter", QJsonObject(), false)
+                        ->cache<QJsonObject>(m_image)
+                        ->cache<QJsonArray>(getImageFilter());
+                }else
+                    aInput->cache<std::vector<stgCVMat>>(imgs, 0);
+            }))
+            ->next("imageShowFilter", rea::Json("tag", "project"))
+            ->nextF<std::vector<stgCVMat>>([this](rea::stream<std::vector<stgCVMat>>* aInput){
+                auto imgs = aInput->data();
+                for (auto i = 0; i < int(imgs.size()); ++i){
+                    auto dt = imgs[i];
+                    auto pth = QString(dt);
+                    auto img = cvMat2QImage(dt.getData());
+                    rea::imagePool::cacheImage(pth, img);
 
-                auto objs = rea::Json("img_" + m_current_image, rea::Json(
-                                 "type", "imagebak",
-                                 "range", rea::JArray(0, 0, img.width(), img.height()),
-                                 "path", pth,
-                                 "text", QJsonObject(),
-                                 "transform", getImageShow()));
-                if (m_show_label) {
-                    auto shps = getShapes(m_image);
-                    auto lbls = getShapeLabels(getLabels());
-                    for (auto i : shps.keys()){
-                        auto shp = shps.value(i).toObject();
-                        if (shp.value("type") == "ellipse"){
-                            objs.insert(i, rea::Json("type", "ellipse",
-                                                     "caption", shp.value("label"),
-                                                     "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
-                                                     "center", shp.value("center"),
-                                                     "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
-                                                     "angle", shp.value("angle")));
-                        }else if (shp.value("type") == "polyline"){
-                            QJsonArray pts;
-                            pts.push_back(shp.value("points"));
-                            auto holes = shp.value("holes").toArray();
-                            for (auto i : holes)
-                                pts.push_back(i);
-                            objs.insert(i, rea::Json("type", "poly",
-                                                     "caption", shp.value("label"),
-                                                     "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
-                                                     "points", pts));
+                    auto img_show = getImageShow();
+                    if (getImageFilter().size() > 0)
+                        img_show.insert("disp_image_format", "none");
+
+                    auto objs = rea::Json("img_" + m_current_image, rea::Json(
+                                                                        "type", "imagebak",
+                                                                        "range", rea::JArray(0, 0, img.width(), img.height()),
+                                                                        "path", pth,
+                                                                        "text", QJsonObject(),
+                                                                        "transform", img_show));
+                    if (m_show_label) {
+                        auto shps = getShapes(m_image);
+                        auto lbls = getShapeLabels(getLabels());
+                        for (auto i : shps.keys()){
+                            auto shp = shps.value(i).toObject();
+                            if (shp.value("type") == "ellipse"){
+                                objs.insert(i, rea::Json("type", "ellipse",
+                                                         "caption", shp.value("label"),
+                                                         "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
+                                                         "center", shp.value("center"),
+                                                         "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
+                                                         "angle", shp.value("angle")));
+                            }else if (shp.value("type") == "polyline"){
+                                QJsonArray pts;
+                                pts.push_back(shp.value("points"));
+                                auto holes = shp.value("holes").toArray();
+                                for (auto i : holes)
+                                    pts.push_back(i);
+                                objs.insert(i, rea::Json("type", "poly",
+                                                         "caption", shp.value("label"),
+                                                         "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
+                                                         "points", pts));
+                            }
                         }
                     }
-                }
 
-                auto cfg = rea::Json("id", "project/" + m_project_id + "/image/" + m_current_image + ".json",
-                                     "width", img.width(),
-                                     "height", img.height(),
-                                     "transform", m_transform,
-                                     "face", 100,
-                                     "text", rea::Json("visible", true,
-                                                       "size", rea::JArray(80, 30)
-                                                       //"location", "bottom"
-                                                       ),
-                                     "objects", objs);
-                auto ch = QString::number(aInput->cacheData<int>(0));
-                aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder" + ch);
-                serviceShowImageStatus("project", ch, img, pth);
-            }));
+                    auto cfg = rea::Json("id", "project/" + m_project_id + "/image/" + m_current_image + ".json",
+                                         "width", img.width(),
+                                         "height", img.height(),
+                                         "transform", m_transform,
+                                         "face", 100,
+                                         "text", rea::Json("visible", true,
+                                                           "size", rea::JArray(80, 30)
+                                                           //"location", "bottom"
+                                                                                                                              ),
+                                         "objects", objs);
+                    auto ch = QString::number(i);
+                    rea::pipeline::run<QJsonObject>("updateQSGModel_projectimage_gridder" + ch, cfg);
+                    serviceShowImageStatus("project", ch, img, pth);
+                }
+            }, rea::Json("tag", "project"));
 
         //import image
         rea::pipeline::find("_selectFile")
@@ -764,6 +791,21 @@ private:
 
     const QString setImageShow0 = "setImageShow";
     void guiManagement(){
+        // set image filter
+        rea::pipeline::find("setImageFilter")
+            ->nextF<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                setImageFilter(aInput->data());
+                aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
+            });
+
+        // update image
+        rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            m_current_image = "";
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+            if (m_selects_cache.contains("shapes"))
+                aInput->out<QJsonObject>(rea::Json(m_selects_cache, "invisible", true), "updateQSGSelects_projectimage_gridder0");
+        }, rea::Json("name", "refreshProjectImage"));
+
         //modify image show
         rea::pipeline::add<double>([this](rea::stream<double>* aInput){
             m_show_label = !m_show_label;

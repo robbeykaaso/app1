@@ -35,12 +35,13 @@ void AWSClient::tryStartMinIO(bool aFirstTry){
 }
 
 void AWSClient::initialize(std::function<bool(void)> aStartService, const QJsonObject& aConfig){
-    m_valid = aStartService();
+
     QDir dir("minIO");
-    m_local_storage = dir.exists();
+   // m_local_storage = dir.exists();
 
     QJsonObject cfg;
-    if (m_local_storage){
+    if (aConfig.value("local").toBool()){
+        m_valid = aStartService();
         //tryStartMinIO(true);
         if (!m_valid){
             std::cout << "minIO start failed!" << std::endl;
@@ -59,9 +60,10 @@ void AWSClient::initialize(std::function<bool(void)> aStartService, const QJsonO
         m_access_key = "deepsight"; //credential.value("accessKey").toString();
         //minio_cfg.close();
     }else{
+        m_valid = true;
         m_ip_port = aConfig.value("ip").toString().toStdString(); //"http://192.168.1.122:9000";
-        m_secret_key = aConfig.value("access").toString().toStdString(); //"YKFERVMC3AK54Y1X150B";
-        m_access_key = aConfig.value("secret").toString().toStdString(); //"4y0PzVzrvyiE6RzssCbrgO7HCxPIDRrK2pO1qJ5C";
+        m_access_key = aConfig.value("access").toString().toStdString(); //"YKFERVMC3AK54Y1X150B";
+        m_secret_key = aConfig.value("secret").toString().toStdString(); //"4y0PzVzrvyiE6RzssCbrgO7HCxPIDRrK2pO1qJ5C";
         //m_ip_port = "http://192.168.1.105:9000";
         //m_secret_key = "deepsight";
         //m_access_key = "deepsight";
@@ -94,11 +96,11 @@ AWSClient::AWSClient(){
 AWSClient::~AWSClient(){
     Aws::SDKOptions options;
     Aws::ShutdownAPI(options);
-    if (m_local_storage){
+    //if (m_local_storage){
         //auto cmd = "\"" + QDir::currentPath() + "/minIO/storage_stop.bat\"";
         //system(cmd.toStdString().c_str());
         //system("taskkill /im minio.exe /f");
-    }
+   // }
 }
 
 bool AWSClient::create_bucket(const Aws::String &bucket_name,

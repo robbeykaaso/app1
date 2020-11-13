@@ -66,8 +66,8 @@ protected:
     QJsonObject m_image;
     QString m_current_image = "";
     int m_first_image_index = 0; //the first grid image channel
-private:
     QJsonObject m_selects_cache;
+private:
     QJsonObject m_show_selects_cache;
 private:
     struct labelStatisticRec{

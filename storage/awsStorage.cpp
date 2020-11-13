@@ -328,7 +328,7 @@ void testStorage(const QString& aRoot = ""){ //for fs: aRoot == ""; for minIO: a
 static rea::regPip<int> unit_test([](rea::stream<int>* aInput){
     static fsStorage local_storage;
     testStorage();
-    static awsStorage minio_storage("testminio");
-    testStorage("testminio");
+    //static awsStorage minio_storage("testminio");
+    //testStorage("testminio");
     aInput->out();
 }, QJsonObject(), "unitTest");
