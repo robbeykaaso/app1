@@ -26,6 +26,7 @@ private:
     QJsonObject m_project_abstract;
     QJsonObject m_tasks;
     QJsonObject m_images;
+    int m_last_state = 0;
 private:
     QJsonArray getImages(){
         return value("images").toArray();
@@ -154,6 +155,7 @@ private:
                 aInput->out<QJsonObject>(getFilter(), "updateProjectImageFilterGUI");
                 aInput->out<double>(0, "updateProjectChannelCountGUI");
                 aInput->out<QJsonObject>(QJsonObject(), "switchprojectFirstImageIndex");
+                aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract)}), "title_updateNavigation", rea::Json("tag", "manual"));
             }));
     }
     void taskManagement(){
@@ -515,14 +517,19 @@ private:
             ->next("imageShowFilter", rea::Json("tag", "project"))
             ->nextF<std::vector<stgCVMat>>([this](rea::stream<std::vector<stgCVMat>>* aInput){
                 auto imgs = aInput->data();
-                for (auto i = 0; i < int(imgs.size()); ++i){
-                    auto dt = imgs[i];
+
+                auto page_count = int(imgs.size()) / m_show_count;
+                m_show_page = std::min(page_count - 1, m_show_page);
+                aInput->out<QJsonObject>(rea::Json("all", page_count, "index", m_show_page), "updateImageShowPages");
+
+                for (auto i = 0; i < m_show_count; ++i){
+                    auto dt = imgs[m_show_page * m_show_count + i];
                     auto pth = QString(dt);
                     auto img = cvMat2QImage(dt.getData());
                     rea::imagePool::cacheImage(pth, img);
 
                     auto img_show = getImageShow();
-                    if (getImageFilter().size() > 0)
+                    if (aInput->cacheData<QJsonArray>(1).size() > 0)
                         img_show.insert("disp_image_format", "none");
 
                     auto objs = rea::Json("img_" + m_current_image, rea::Json(
@@ -532,27 +539,35 @@ private:
                                                                         "text", QJsonObject(),
                                                                         "transform", img_show));
                     if (m_show_label) {
-                        auto shps = getShapes(m_image);
+                        auto shps = getShapes(aInput->cacheData<QJsonObject>(0));
                         auto lbls = getShapeLabels(getLabels());
                         for (auto i : shps.keys()){
                             auto shp = shps.value(i).toObject();
                             if (shp.value("type") == "ellipse"){
-                                objs.insert(i, rea::Json("type", "ellipse",
-                                                         "caption", shp.value("label"),
-                                                         "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
-                                                         "center", shp.value("center"),
-                                                         "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
-                                                         "angle", shp.value("angle")));
+                                shp = rea::Json("type", "ellipse",
+                                                "caption", shp.value("label"),
+                                                "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
+                                                "center", shp.value("center"),
+                                                "radius", rea::JArray(shp.value("xradius"), shp.value("yradius")),
+                                                "angle", shp.value("angle"),
+                                                "text", shp.value("text"),
+                                                "tag", shp.value("tag"));
                             }else if (shp.value("type") == "polyline"){
                                 QJsonArray pts;
                                 pts.push_back(shp.value("points"));
                                 auto holes = shp.value("holes").toArray();
                                 for (auto i : holes)
                                     pts.push_back(i);
-                                objs.insert(i, rea::Json("type", "poly",
-                                                         "caption", shp.value("label"),
-                                                         "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
-                                                         "points", pts));
+                                shp = rea::Json("type", "poly",
+                                                "caption", shp.value("label"),
+                                                "color", lbls.value(shp.value("label").toString()).toObject().value("color"),
+                                                "points", pts,
+                                                "text", shp.value("text"),
+                                                "tag", shp.value("tag"));
+                            }else
+                                shp = QJsonObject();
+                            if (!shp.empty()){
+                                objs.insert(i, shp);
                             }
                         }
                     }
@@ -786,6 +801,7 @@ private:
         }, rea::Json("name", "getProjectCurrentImage"));
     }
 private:
+    int m_show_page = 0;
     int m_show_count = 1;
     bool m_show_label = true;
 
@@ -800,7 +816,10 @@ private:
 
         // update image
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
             m_current_image = "";
+            if (dt.contains("page"))
+                m_show_page = dt.value("page").toInt();
             aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
             if (m_selects_cache.contains("shapes"))
                 aInput->out<QJsonObject>(rea::Json(m_selects_cache, "invisible", true), "updateQSGSelects_projectimage_gridder0");
@@ -821,10 +840,13 @@ private:
         //the qsgnode will be destroyed by qt after switch page
         rea::pipeline::find("title_updateNavigation")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-                if (aInput->data().size() == 2)
-                    aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+                if (aInput->data().size() == 2){
+                    if (m_last_state == 3)
+                        aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+                }
                 else
                     m_current_image = "";
+                m_last_state = aInput->data().size();
             }), rea::Json("tag", "manual"));
 
         //switch scatter mode

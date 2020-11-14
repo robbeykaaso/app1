@@ -152,11 +152,6 @@ public:
             if (dt.size() > 0) {
                 auto projs = getProjects(*this);
                 auto id = projs[dt[0].toInt()].toString();
-                aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(),
-                                                    getProjectName(m_projects.value(id).toObject())}),
-                                        "title_updateNavigation",
-                                        rea::Json("tag", "manual"));
-
                 m_project_owner = getProjectOwner(m_projects.value(id).toObject()) == rea::GetMachineFingerPrint();
                 aInput->out<QJsonObject>(rea::Json("id", id, "abstract", m_projects.value(id)), openProject);
             }

@@ -4,13 +4,15 @@
 
 static QSet<QString> anno_json;
 
-bool checkValidOperation(const QString& aPath, bool aDelete = false) {
+bool checkValidOperation(const QString& aPath, bool aIsOwner, bool aDelete = false) {
     if (aPath.startsWith("user/") || aPath.endsWith("project.json"))
         return true;
     else if (!aDelete && anno_json.contains(aPath)){ //forbid delete anno.json and add anno.json, only permit modify anno.json
         return true;
     }
-    return false;
+    if (!aIsOwner)
+        rea::pipeline::run("popMessage", rea::Json("title", "error", "text", "invalid storage operation!"));
+    return aIsOwner;
 }
 
 QJsonObject fsStorage2::readJson(const QString& aPath){
@@ -22,27 +24,27 @@ QJsonObject fsStorage2::readJson(const QString& aPath){
 }
 
 void fsStorage2::writeJson(const QString& aPath, const QJsonObject& aData) {
-    if (checkValidOperation(aPath) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner()))
         fsStorage0::writeJson(aPath, aData);
 }
 
 void fsStorage2::writeQImage(const QString& aPath, const QImage& aData) {
-    if (checkValidOperation(aPath) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner()))
         fsStorage0::writeQImage(aPath, aData);
 }
 
 void fsStorage2::writeByteArray(const QString& aPath, const QByteArray& aData) {
-    if (checkValidOperation(aPath) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner()))
         fsStorage0::writeByteArray(aPath, aData);
 }
 
 void fsStorage2::deletePath(const QString& aPath) {
-    if (checkValidOperation(aPath, true) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner(), true))
         fsStorage0::deletePath(aPath);
 }
 
 void fsStorage2::writeCVMat(const QString& aPath, const cv::Mat& aData) {
-    if (checkValidOperation(aPath) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner()))
         fsStorage::writeCVMat(aPath, aData);
 }
 
@@ -80,21 +82,21 @@ QJsonObject awsStorage2::readJson(const QString& aPath){
 }
 
 void awsStorage2::writeJson(const QString& aPath, const QJsonObject& aData) {
-    if (checkValidOperation(aPath) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner()))
         awsStorage::writeJson(aPath, aData);
 }
 
 void awsStorage2::writeCVMat(const QString& aPath, const cv::Mat& aData) {
-    if (checkValidOperation(aPath) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner()))
         awsStorage::writeCVMat(aPath, aData);
 }
 
 void awsStorage2::writeByteArray(const QString& aPath, const QByteArray& aData) {
-    if (checkValidOperation(aPath) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner()))
         awsStorage::writeByteArray(aPath, aData);
 }
 
 void awsStorage2::deletePath(const QString& aPath) {
-    if (checkValidOperation(aPath, true) || m_is_owner())
+    if (checkValidOperation(aPath, m_is_owner(), true))
         awsStorage::deletePath(aPath);
 }
