@@ -387,6 +387,7 @@ static rea::regPip<QJsonObject> init_set_imageshow([](rea::stream<QJsonObject>* 
 
 static rea::regPip<std::vector<stgCVMat>, rea::pipePartial> init_custom_show_imgs([](rea::stream<std::vector<stgCVMat>>* aInput){
     aInput->cache<QJsonArray>(QJsonArray(), 1);
+    aInput->cache<QJsonArray>(QJsonArray());
     aInput->out();
 }, rea::Json("name", "imageShowFilter"));
 //

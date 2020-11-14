@@ -539,7 +539,9 @@ private:
                                                                         "text", QJsonObject(),
                                                                         "transform", img_show));
                     if (m_show_label) {
-                        auto shps = getShapes(aInput->cacheData<QJsonObject>(0));
+                        auto new_annos = aInput->cacheData<QJsonArray>(2);
+                        auto act_anno = new_annos.size() == 0 ? aInput->cacheData<QJsonObject>(0) : new_annos[m_show_page].toObject();
+                        auto shps = getShapes(act_anno);
                         auto lbls = getShapeLabels(getLabels());
                         for (auto i : shps.keys()){
                             auto shp = shps.value(i).toObject();
@@ -596,13 +598,14 @@ private:
                        while (remain--)
                            pths.pop_back();
                        aInput->out<QJsonObject>(rea::Json("title", importImage, "sum", pths.size()), "updateProgress");
-                       aInput->cache<std::vector<stgCVMat>>(std::vector<stgCVMat>());
+                       aInput->cache<std::vector<stgCVMat>>(std::vector<stgCVMat>())->cache<QJsonArray>(QJsonArray());
                        for (auto i : pths)
                            aInput->out<stgCVMat>(stgCVMat(cv::Mat(), i.toString()));
                    }), rea::Json("tag", importImage))
             ->next(rea::local("readCVMat", rea::Json("thread", 10)))
             ->next(rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 auto imgs_cache = aInput->cacheData<std::vector<stgCVMat>>(0);
+                auto annos = aInput->cacheData<QJsonArray>(0);
                 imgs_cache.push_back(aInput->data());
                 int sz = int(imgs_cache.size());
                 if (sz == getChannelCount()){
@@ -843,9 +846,11 @@ private:
                 if (aInput->data().size() == 2){
                     if (m_last_state == 3)
                         aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
-                }
-                else
+                }else{
+                    if (aInput->data().size() == 1)
+                        m_project_id = "";
                     m_current_image = "";
+                }
                 m_last_state = aInput->data().size();
             }), rea::Json("tag", "manual"));
 
