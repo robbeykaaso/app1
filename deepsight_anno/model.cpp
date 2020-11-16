@@ -18,6 +18,10 @@ QJsonObject imageModel::getShapeLabels(const QJsonObject& aLabels){
     return aLabels.value("shape").toObject();
 }
 
+void imageModel::setShapeLabels(QJsonObject& aLabelGroups, const QJsonObject& aLabels){
+    aLabelGroups.insert("shape", aLabels);
+}
+
 QJsonObject imageModel::getImageLabels(const QJsonObject& aImageAbstract){
     return aImageAbstract.value("image_label").toObject();
 }

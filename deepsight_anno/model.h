@@ -47,6 +47,7 @@ class imageModel : public model, public shapeModel{
 protected:
     QJsonObject getLabels();
     QJsonObject getShapeLabels(const QJsonObject& aLabels);
+    void setShapeLabels(QJsonObject& aLabelGroups, const QJsonObject& aLabels);
     QJsonObject getImageLabels(const QJsonObject& aImageAbstract);
     void setImageLabels(QJsonObject& aImageAbstract, const QJsonObject& aLabels);
     QJsonArray getImageName(const QJsonObject& aImage);
