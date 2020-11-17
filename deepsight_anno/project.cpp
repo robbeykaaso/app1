@@ -590,6 +590,24 @@ private:
                 }
             }, rea::Json("tag", "project"));
 
+        //apply transform
+        rea::pipeline::find("_newObject")
+            ->next(rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+               aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Function is not realized!"), "popMessage");
+               return;
+               if (aInput->data().value("suffix").toString() == "")
+                   aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid suffix!"), "popMessage");
+               aInput->cache<QString>(aInput->data().value("suffix").toString())->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
+                   }), rea::Json("tag", "applyTransform"))
+            ->next(rea::local("project_image_listViewSelected"))
+            ->nextF<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
+                auto dt = aInput->data();
+                auto imgs = getImages();
+                for (auto i : dt){
+                    auto img = (imgs.begin() + i.toInt())->toString();
+                }
+            });
+
         //import image
         rea::pipeline::find("_selectFile")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
@@ -868,6 +886,8 @@ private:
 
         // update image
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            if (m_last_state == 1) //avoid free parent qsgnode crash
+                return;
             auto dt = aInput->data();
             m_current_image = "";
             if (dt.contains("page"))
