@@ -593,8 +593,6 @@ private:
         //apply transform
         rea::pipeline::find("_newObject")
             ->next(rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
-               aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Function is not realized!"), "popMessage");
-               return;
                if (aInput->data().value("suffix").toString() == "")
                    aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid suffix!"), "popMessage");
                aInput->cache<QString>(aInput->data().value("suffix").toString())->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
@@ -603,8 +601,67 @@ private:
             ->nextF<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                 auto dt = aInput->data();
                 auto imgs = getImages();
+                aInput->out<QJsonObject>(rea::Json("title", importImage, "sum", dt.size() * getChannelCount()), "updateProgress");
                 for (auto i : dt){
                     auto img = (imgs.begin() + i.toInt())->toString();
+                    aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + img + ".json"), s3_bucket_name + "readJson", QJsonObject(), false)
+                        ->cache<QString>(aInput->cacheData<QString>(0));
+                }
+            })
+            ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
+            ->nextF<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
+                auto dt = aInput->data();
+                auto pth = dt.mid(dt.lastIndexOf("/") + 1, dt.length());
+                pth = pth.mid(0, pth.lastIndexOf("."));
+                auto imgs = dt.getData().value("source").toArray();
+                auto anno = dt.getData();
+                auto img_abs = m_images.value(pth).toObject();
+                setImageLabels(anno, getImageLabels(img_abs));
+                aInput->cache<std::vector<stgCVMat>>(std::vector<stgCVMat>())->cache<QJsonObject>(anno);
+                for (auto i : imgs)
+                    aInput->out<stgCVMat>(stgCVMat(cv::Mat(), "project/" + m_project_id + "/image/" + pth + "/" + i.toString()));
+            })
+            ->next(rea::local(s3_bucket_name + "readCVMat", rea::Json("thread", 10)))
+            ->nextF<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
+                auto dt = aInput->data();
+                auto imgs = aInput->cacheData<std::vector<stgCVMat>>(1);
+                imgs.push_back(dt);
+                if (int(imgs.size()) == getChannelCount()){
+                    aInput->out<std::vector<stgCVMat>>(imgs, "applyTransform", QJsonObject(), false)
+                        ->cache<QJsonObject>(aInput->cacheData<QJsonObject>(2))
+                        ->cache<QJsonArray>(getImageFilter())
+                        ->cache<QString>(aInput->cacheData<QString>(0));
+                }else
+                    aInput->cache<std::vector<stgCVMat>>(imgs, 1);
+            })
+            ->next("applyTransform")
+            ->nextF<std::vector<stgCVMat>>([this](rea::stream<std::vector<stgCVMat>>* aInput){
+                auto anno = aInput->cacheData<QJsonObject>(0);
+                auto suffix = "_" + aInput->cacheData<QString>(2) + "_";
+                auto annos = aInput->cacheData<QJsonArray>(3);
+                auto dt = aInput->data();
+
+                auto ch = getChannelCount();
+                auto ex = int(dt.size() / ch - 1);
+                if (ex)
+                    aInput->out<QJsonObject>(rea::Json("step", ex * (- ch)), "updateProgress");
+                for (auto i = 0; i < dt.size(); i += ch){
+                    std::vector<stgCVMat> imgs;
+                    for (auto j = 0; j < ch - 1; ++j)
+                        imgs.push_back(dt[size_t(i + j)]);
+                    auto idx = i / ch;
+                    if (idx < annos.size())
+                        anno = annos[idx].toObject();
+                    auto srcs = anno.value("source").toArray();
+                    for (int k = 0; k < srcs.size(); ++k){
+                        auto src = srcs[k].toString();
+                        src.insert(src.lastIndexOf("."), suffix + QString::number(idx));
+                        srcs[k] = src;
+                    }
+                    anno.insert("source", srcs);
+                    aInput->out<stgCVMat>(dt[i + ch - 1], "importImage", QJsonObject(), false)
+                        ->cache<std::vector<stgCVMat>>(imgs)
+                        ->cache<QJsonObject>(anno);
                 }
             });
 
@@ -686,7 +743,10 @@ private:
                             aInput->out<stgCVMat>(stgCVMat(imgs_cache[i].getData(), "project/" + m_project_id + "/image/" + id + "/" + nms[i].toString()));
                         auto tm = QDateTime::currentDateTime().toString(Qt::DateFormat::ISODate);
                         auto tms = tm.split("T");
-                        m_images.insert(id, rea::Json("name", nms, "time", tms[0] + " " + tms[1]));  //update image.json
+
+                        auto img_abs = rea::Json("name", nms, "time", tms[0] + " " + tms[1]);
+                        setImageLabels(img_abs, getImageLabels(anno));
+                        m_images.insert(id, img_abs);  //update image.json
                         aInput->out<rea::stgJson>(rea::stgJson(anno, "project/" + m_project_id + "/image/" + id + ".json"), s3_bucket_name + "writeJson");
 
                         auto grps = getLabels();
