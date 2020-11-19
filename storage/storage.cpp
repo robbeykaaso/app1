@@ -7,9 +7,9 @@
 #include "reactive2.h"
 
 void fsStorage::writeCVMat(const QString& aPath, const cv::Mat& aData) {
-  auto pth = stgRoot(aPath).toLocal8Bit();
+  auto pth = stgRoot(aPath);
   checkPath(pth);
-  cv::imwrite(pth.toStdString().data(), aData);
+  cv::imwrite(pth.toLocal8Bit().toStdString().data(), aData);
 }
 
 cv::Mat fsStorage::readCVMat(const QString& aPath) {
