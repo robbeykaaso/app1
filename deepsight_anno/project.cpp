@@ -27,6 +27,7 @@ private:
     QJsonObject m_project_abstract;
     QJsonObject m_tasks;
     QJsonObject m_images;
+    QJsonObject m_image_filter;
     int m_last_state = 0;
 private:
     QJsonArray getImages(){
@@ -56,11 +57,7 @@ private:
     }
 
     QJsonArray getImageFilter(){
-        return value("image_filter").toArray();
-    }
-
-    void setImageFilter(const QJsonArray& aImageFilter){
-        insert("image_filter", aImageFilter);
+        return m_image_filter.value("operators").toArray();
     }
 
     QJsonObject prepareImageListGUI(const QJsonArray& aImages){
@@ -116,10 +113,11 @@ private:
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/task.json"));
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image.json"));
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
+                    aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image_filter.json"));
                 }
             }))
             ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
-            ->next(rea::buffer<rea::stgJson>(3))
+            ->next(rea::buffer<rea::stgJson>(4))
             ->next(rea::pipeline::add<std::vector<rea::stgJson>>([this](rea::stream<std::vector<rea::stgJson>>* aInput){
                 auto dt = aInput->data();
                 m_first_image_index = 0;
@@ -127,6 +125,7 @@ private:
                 m_tasks = dt[0].getData();
                 m_images = dt[1].getData();
                 dt[2].getData().swap(*this);
+                m_image_filter = dt[3].getData();
 
                 auto tsks = getTasks();
                 auto imgs = getImages();
@@ -965,9 +964,9 @@ private:
         // set image filter
         rea::pipeline::find("setImageFilter")
             ->nextF<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
-                setImageFilter(aInput->data());
-                aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
-            });
+                m_image_filter.insert("operators", aInput->data());
+                aInput->out<rea::stgJson>(rea::stgJson(m_image_filter, "project/" + m_project_id + "/" + "image_filter.json"), s3_bucket_name + "writeJson");
+            }, QJsonObject(), rea::Json("name", "saveImageFilter", "thread", 11));
 
         // update image
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){

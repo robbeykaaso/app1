@@ -734,6 +734,19 @@ void task::imageManagement(){
                     lst.push_back(i);
             }
             setImageList(lst);
+        }else if (dt.value("type") == "name"){
+            auto nm = dt.value("value").toString();
+            if (nm != ""){
+                for (auto i : m_project_images->keys()){
+                    auto nms = getImageName(m_project_images->value(i).toObject());
+                    for (auto j : nms)
+                        if (j.toString().indexOf(nm) >= 0){
+                            lst.push_back(i);
+                            break;
+                        }
+                }
+                setImageList(lst);
+            }
         }else if (dt.value("type") == "label"){
             setImageList(dt.value("value").toArray());
         }else if (dt.value("type") == "result"){
