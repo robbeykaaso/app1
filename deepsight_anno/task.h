@@ -70,9 +70,9 @@ private:
     QJsonObject getImages();
     void setImages(const QJsonObject& aImages);
     QJsonArray getImageList();
-    void setImageList(const QJsonArray& aList, bool aRemove = false);
+    void setImageList(QJsonArray& aImageList);
     QJsonObject prepareLabelListGUI(const QJsonObject& aLabels);
-    QJsonObject prepareImageListGUI(const QJsonObject& aImages);
+    QJsonObject prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList);
     QJsonObject prepareJobListGUI(const QString& aSelectedJob = "");
 private:
     QString m_task_id = "";

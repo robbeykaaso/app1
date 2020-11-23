@@ -225,12 +225,11 @@ QJsonArray task::getImageList(){
         return ret;
     }
 }
-void task::setImageList(const QJsonArray& aList, bool aRemove){
-    if (aRemove)
-        remove("image_list");
-    else
-        insert("image_list", aList);
+void task::setImageList(QJsonArray& aImageList){
+    sortImagesByTime(aImageList, *m_project_images);
+    insert("image_list", aImageList);
 }
+
 QJsonObject task::prepareLabelListGUI(const QJsonObject& aLabels){
     QJsonArray data;
     for (auto i : m_project_labels.keys())
@@ -239,28 +238,28 @@ QJsonObject task::prepareLabelListGUI(const QJsonObject& aLabels){
                      "selects", m_project_labels.size() > 0 ? rea::JArray(0) : QJsonArray(),
                      "data", data);
 }
-QJsonObject task::prepareImageListGUI(const QJsonObject& aImages){
+QJsonObject task::prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList){
     QJsonArray data;
-    auto lst = getImageList();
     int idx = 0;
-    for (auto i : lst){
-        auto img = i.toString();
+    for (auto i : aImageList){
+        auto id = i.toString();
+        auto img = aImageAbstract.value(id).toObject();
         data.push_back(rea::Json("entry", rea::JArray(//getImageStringName(m_project_images->value(img).toObject()),
                                                       ++idx,
-                                                      aImages.contains(img),
-                                                      getImageImportant(aImages.value(img).toObject()),
-                                                      getImageStage(aImages.value(img).toObject()))));
+                                                      aImageAbstract.contains(id),
+                                                      getImageImportant(img),
+                                                      getImageStage(img))));
     }
     return rea::Json("title", rea::JArray("no", "used", "important", "stage"),
                      "entrycount", 30,
-                     "selects", lst.size() > 0 ? rea::JArray(0) : QJsonArray(),
+                     "selects", aImageList.size() > 0 ? rea::JArray(0) : QJsonArray(),
                      "data", data);
 }
 QJsonObject task::prepareJobListGUI(const QString& aSelectedJob){
     QJsonArray data;
     for (auto i : m_jobs.keys()){
         auto job = m_jobs.value(i).toObject();
-        data.push_back(rea::Json("entry", rea::JArray(job.value("time"), i)));
+        data.push_back(rea::Json("entry", rea::JArray(job.value("time"), i, job.value("state"))));
     }
     QJsonArray sels;
     if (aSelectedJob != ""){
@@ -344,8 +343,8 @@ void task::taskManagement(){
             aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected", rea::Json("tag", "task_manual"));
             aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
             //if (m_jobs.size() > 0 && m_jobs.begin().value().toObject().value("state") != "upload_finish")
-                aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
-            aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
+            aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
+            aInput->out<QJsonObject>(prepareImageListGUI(getImages(), getImageList()), "task_image_updateListView");
             aInput->out<QJsonObject>(rea::Json("count", 1), "scattertaskImageShow");
             aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
             for (auto i : m_jobs.keys()){
@@ -544,7 +543,6 @@ void task::labelManagement(){
                    auto st = aInput->cacheData<QJsonObject>(0);
                    auto sels = aInput->data();
                    auto lst = getImageList();
-                   auto imgs = getImages();
                    for (auto i : sels){
                        auto img = lst[i.toInt()].toString();
                        auto abs = m_project_images->value(img).toObject();
@@ -594,7 +592,7 @@ void task::imageManagement(){
         if (m_task_id == "")
             return;
         //m_project_images = aInput->data().getData();
-        aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "task_image_updateListView");
+        aInput->out<QJsonObject>(prepareImageListGUI(getImages(), getImageList()), "task_image_updateListView");
     }), rea::Json("tag", "updateProjectImages"))
     ->nextB("task_image_updateListView");
 
@@ -704,7 +702,7 @@ void task::imageManagement(){
             if (mdy){
                 setImages(imgs);
                 aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
-                auto ret = prepareImageListGUI(getImages());
+                auto ret = prepareImageListGUI(getImages(), getImageList());
                 ret.remove("selects");
                 aInput->out<QJsonObject>(ret, "task_image_updateListView");
             }
@@ -718,7 +716,9 @@ void task::imageManagement(){
         QJsonArray lst;
         auto imgs = getImages();
         if (dt.value("type") == "all"){
-            setImageList(lst, true);
+            for (auto i : m_project_images->keys())
+                lst.push_back(i);
+            setImageList(lst);
         }else if (dt.value("type") == "used"){
             for (auto i : imgs.keys())
                 lst.push_back(i);
@@ -748,13 +748,15 @@ void task::imageManagement(){
                 setImageList(lst);
             }
         }else if (dt.value("type") == "label"){
-            setImageList(dt.value("value").toArray());
+            lst = dt.value("value").toArray();
+            setImageList(lst);
         }else if (dt.value("type") == "result"){
-            setImageList(dt.value("value").toArray());
+            lst = dt.value("value").toArray();
+            setImageList(lst);
         }else
             return;
         setFilter(dt);
-        aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
+        aInput->out<QJsonObject>(prepareImageListGUI(imgs, getImageList()), "task_image_updateListView");
         aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
         aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
     }, rea::Json("name", "filterTaskImages"))
@@ -830,7 +832,7 @@ void task::imageManagement(){
             imgs.insert(i, rea::Json("stage", ret.value(i).toObject().value("stage")));
         }
         setImages(imgs);
-        aInput->out<QJsonObject>(prepareImageListGUI(imgs), "task_image_updateListView");
+        aInput->out<QJsonObject>(prepareImageListGUI(imgs, getImageList()), "task_image_updateListView");
         aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", QJsonObject(), false);
         aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
     }))
@@ -866,7 +868,7 @@ void task::imageManagement(){
         }
         if (mdy){
             setImages(imgs);
-            auto ret = prepareImageListGUI(imgs);
+            auto ret = prepareImageListGUI(imgs, getImageList());
             ret.remove("selects");
             aInput->out<QJsonObject>(ret, "task_image_updateListView");
             aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
@@ -896,7 +898,7 @@ void task::imageManagement(){
             }
             if (mdy){
                 setImages(imgs);
-                auto ret = prepareImageListGUI(imgs);
+                auto ret = prepareImageListGUI(imgs, getImageList());
                 ret.remove("selects");
                 aInput->out<QJsonObject>(ret, "task_image_updateListView");
                 aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");

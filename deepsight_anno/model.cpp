@@ -3,6 +3,7 @@
 #include "../util/cv.h"
 #include "storage/storage.h"
 #include <QQuickItem>
+#include <QDateTime>
 
 QString s3_bucket_name = "deepsight";
 
@@ -289,6 +290,32 @@ void imageModel::serviceSelectFirstImageIndex(const QString aName){
         aInput->out<double>(m_first_image_index);
         m_show_selects_cache = m_selects_cache;
     }, rea::Json("name", "switch" + aName + "FirstImageIndex"));
+}
+
+struct item{
+    item(int aIndex, int aTimeStamp){
+        idx = aIndex;
+        timestamp = aTimeStamp;
+    }
+    int idx;
+    int timestamp;
+};
+bool early_than(const item& aFirst, const item& aSecond){
+    return aFirst.timestamp < aSecond.timestamp;
+}
+
+void imageModel::sortImagesByTime(QJsonArray& aImageList, const QJsonObject& aImageAbstracts){
+    QJsonArray ret;
+    std::vector<item> items;
+    for (int i = 0; i < aImageList.size(); ++i){
+        auto str_tm = aImageAbstracts.value(aImageList[i].toString()).toObject().value("time").toString();
+        auto tm = QDateTime::fromString(str_tm.replace(" ", "T"), Qt::DateFormat::ISODate);
+        items.push_back(item(i, tm.toTime_t()));
+    }
+    std::sort(items.begin(), items.end(), early_than);
+    for (auto i : items)
+        ret.push_back(aImageList[i.idx]);
+    aImageList = ret;
 }
 
 class imageObjectEx : public rea::imageObject{

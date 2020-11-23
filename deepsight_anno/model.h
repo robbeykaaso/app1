@@ -58,6 +58,7 @@ protected:
     void serviceLabelStatistics(const QString& aName);
     void serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImagePath);
     void serviceSelectFirstImageIndex(const QString aName);
+    void sortImagesByTime(QJsonArray& aImageList, const QJsonObject& aImageAbstracts);
     virtual QJsonObject getImageAbstracts() = 0;
     virtual int getChannelCount() = 0;
     virtual QJsonObject getImageShow() = 0;

@@ -30,11 +30,12 @@ private:
     QJsonObject m_image_filter;
     int m_last_state = 0;
 private:
-    QJsonArray getImages(){
+    QJsonArray getImageList(){
         return value("images").toArray();
     }
-    void setImages(const QJsonArray& aImages){
-        insert("images", aImages);
+    void setImageList(QJsonArray& aImageList){
+        sortImagesByTime(aImageList, m_images);
+        insert("images", aImageList);
     }
     QJsonArray getTasks(){
         return value("tasks").toArray();
@@ -60,18 +61,18 @@ private:
         return m_image_filter.value("operators").toArray();
     }
 
-    QJsonObject prepareImageListGUI(const QJsonArray& aImages){
+    QJsonObject prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList){
         QJsonArray data;
         int idx = 0;
-        for (auto i : aImages){
-            auto img = m_images.value(i.toString()).toObject();
+        for (auto i : aImageList){
+            auto img = aImageAbstract.value(i.toString()).toObject();
             data.push_back(rea::Json("entry", rea::JArray(//getImageStringName(img),
                                                           ++idx,
                                                           getImageTime(img))));
         }
         return rea::Json("title", rea::JArray("no", "time"),
                          "entrycount", 30,
-                         "selects", aImages.size() > 0 ? rea::JArray(0) : QJsonArray(),
+                         "selects", aImageList.size() > 0 ? rea::JArray(0) : QJsonArray(),
                          "data", data);
     }
     QJsonObject prepareLabelListGUI(const QJsonObject& aLabels){
@@ -128,7 +129,7 @@ private:
                 m_image_filter = dt[3].getData();
 
                 auto tsks = getTasks();
-                auto imgs = getImages();
+                auto imgs = getImageList();
                 auto lbls = getLabels();
                 bool dflt = false;
                 if (!lbls.contains("shape")){
@@ -146,7 +147,7 @@ private:
                     setLabels(value("labels").toObject());
 
                 aInput->out<QJsonObject>(prepareTaskListGUI(tsks), "project_task_updateListView");
-                aInput->out<QJsonObject>(prepareImageListGUI(imgs), "project_image_updateListView");
+                aInput->out<QJsonObject>(prepareImageListGUI(m_images, imgs), "project_image_updateListView");
                 aInput->out<QJsonObject>(prepareLabelListGUI(lbls), "project_label_updateListView");
                 aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected", rea::Json("tag", "manual"));
                 //aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
@@ -428,7 +429,7 @@ private:
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
             auto st = aInput->cacheData<QJsonObject>(0);
             auto sels = aInput->data();
-            auto imgs = getImages();
+            auto imgs = getImageList();
             for (auto i : sels){
                 auto img = imgs[i.toInt()].toString();
                 auto abs = m_images.value(img).toObject();
@@ -472,7 +473,7 @@ private:
                        }
                        else{
                            auto idx = dt[0].toInt();
-                           auto imgs = getImages();
+                           auto imgs = getImageList();
                            if (idx < imgs.size()){
                                auto nm = imgs[idx].toString();
                                if (nm != m_current_image){
@@ -597,7 +598,7 @@ private:
         next(rea::local("project_image_listViewSelected")) \
             ->nextF<QJsonArray>([this](rea::stream<QJsonArray>* aInput){ \
                 auto dt = aInput->data(); \
-                auto imgs = getImages(); \
+                auto imgs = getImageList(); \
                 aInput->out<QJsonObject>(rea::Json("title", importImage, "sum", dt.size() * getChannelCount()), "updateProgress"); \
                 for (auto i : dt){ \
                     auto img = (imgs.begin() + i.toInt())->toString(); \
@@ -787,9 +788,9 @@ private:
                         }
                     }
 
-                    auto imgs = getImages();
+                    auto imgs = getImageList();
                     imgs.push_back(id);
-                    setImages(imgs);   //update project_id.json
+                    setImageList(imgs);   //update project_id.json
 
                     imgs_cache.clear();
                 }
@@ -805,7 +806,7 @@ private:
                 if (aInput->data() == 1.0){
                     aInput->out<rea::stgJson>(rea::stgJson(m_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
                     aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson", rea::Json("tag", "updateProjectImages"));
-                    aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
+                    aInput->out<QJsonObject>(prepareImageListGUI(m_images, getImageList()), "project_image_updateListView");
                     aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
                 }
             }));
@@ -815,7 +816,7 @@ private:
             ->next(rea::local("project_image_listViewSelected"), rea::Json("tag", "deleteImage"))
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                 auto dt = aInput->data();
-                auto imgs = getImages();
+                auto imgs = getImageList();
 
                 std::vector<int> idxes;
                 for (auto i : dt)
@@ -829,7 +830,7 @@ private:
                     dels.push_back(img);
                     m_images.remove(img);
                 }
-                setImages(imgs);
+                setImageList(imgs);
                 aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
                 aInput->out<rea::stgJson>(rea::stgJson(m_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
                 for (auto i : dels){
@@ -842,7 +843,7 @@ private:
                 aInput->cache<int>(tsks.size());
                 aInput->cache<QJsonArray>(dels);
                 if (tsks.size() == 0){
-                    aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
+                    aInput->out<QJsonObject>(prepareImageListGUI(m_images, getImageList()), "project_image_updateListView");
                     aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
                 }else
                     for (auto i : tsks)
@@ -863,7 +864,7 @@ private:
                 auto cnt = aInput->cacheData<int>(0);
                 cnt = cnt - 1;
                 if (!cnt){
-                    aInput->out<QJsonObject>(prepareImageListGUI(getImages()), "project_image_updateListView");
+                    aInput->out<QJsonObject>(prepareImageListGUI(m_images, getImageList()), "project_image_updateListView");
                     aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
                 }else
                     aInput->cache<int>(cnt, 0);
@@ -899,9 +900,9 @@ private:
                 imgs = dt.value("value").toArray();
             }else
                 return;
-            setImages(imgs);
+            setImageList(imgs);
             setFilter(dt);
-            aInput->out<QJsonObject>(prepareImageListGUI(imgs), "project_image_updateListView");
+            aInput->out<QJsonObject>(prepareImageListGUI(m_images, imgs), "project_image_updateListView");
             aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
             aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
         }, rea::Json("name", "filterProjectImages"));
