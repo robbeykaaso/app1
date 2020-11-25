@@ -10,7 +10,7 @@ bool checkValidOperation(const QString& aPath, bool aIsOwner, bool aDelete = fal
     else if (!aDelete && anno_json.contains(aPath)){ //forbid delete anno.json and add anno.json, only permit modify anno.json
         return true;
     }
-    if (!aIsOwner)
+    if (!aIsOwner && !aDelete)
         rea::pipeline::run("popMessage", rea::Json("title", "error", "text", "invalid storage operation!"));
     return aIsOwner;
 }
