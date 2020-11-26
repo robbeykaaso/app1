@@ -967,7 +967,7 @@ private:
             ->nextF<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                 m_image_filter.insert("operators", aInput->data());
                 aInput->out<rea::stgJson>(rea::stgJson(m_image_filter, "project/" + m_project_id + "/" + "image_filter.json"), s3_bucket_name + "writeJson");
-            }, QJsonObject(), rea::Json("name", "saveImageFilter", "thread", 11));
+            }, QJsonObject(), rea::Json("name", "saveImageFilter"));
 
         // update image
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
