@@ -1109,7 +1109,7 @@ void task::serverManagement(){
                    else
                        aInput->out<QJsonObject>(rea::Json("ip", dt.value("ip"),
                                                           "port", dt.value("port"),
-                                                          "id", "hello"), "tryLinkServer");
+                                                          "id", 0), "tryLinkServer");
         }), rea::Json("tag", "setServer"))
         ->next("tryLinkServer");
 }
