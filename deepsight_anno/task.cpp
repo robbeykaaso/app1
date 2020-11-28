@@ -313,23 +313,26 @@ void task::taskManagement(){
         }));
 
     //open task
-    rea::pipeline::add<IProjectInfo>([this](rea::stream<IProjectInfo>* aInput){
-        auto dt = aInput->data();
-        if (dt.value("id") != m_task_id){
-            m_task_id = dt.value("id").toString();
-            m_task_type = dt.value("type").toString();
-            m_project_labels = dt.value("labels").toObject();
-            m_project_images = dt.project_images;
-            m_channel_count = dt.value("channel").toInt();
-            m_project_id = dt.value("project").toString();
-            m_image_show = dt.value("imageshow").toObject();
-            m_project_name = dt.value("project_name").toString();
-            m_task_name = dt.value("task_name").toString();
-            m_transform = QJsonArray();
-            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getTaskJsonPath()));
-            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getJobsJsonPath()));
-        }
+    rea::pipeline::add<IProjectInfo>([](rea::stream<IProjectInfo>* aInput){
+        aInput->out();
     }, rea::Json("name", "openTask"))
+        ->nextF<IProjectInfo>([this](rea::stream<IProjectInfo>* aInput){
+            auto dt = aInput->data();
+            if (dt.value("id") != m_task_id){
+                m_task_id = dt.value("id").toString();
+                m_task_type = dt.value("type").toString();
+                m_project_labels = dt.value("labels").toObject();
+                m_project_images = dt.project_images;
+                m_channel_count = dt.value("channel").toInt();
+                m_project_id = dt.value("project").toString();
+                m_image_show = dt.value("imageshow").toObject();
+                m_project_name = dt.value("project_name").toString();
+                m_task_name = dt.value("task_name").toString();
+                m_transform = QJsonArray();
+                aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getTaskJsonPath()));
+                aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getJobsJsonPath()));
+            }
+        })
         ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
         ->next(rea::buffer<rea::stgJson>(2))
         ->next(rea::pipeline::add<std::vector<rea::stgJson>>([this](rea::stream<std::vector<rea::stgJson>>* aInput){

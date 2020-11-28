@@ -79,13 +79,14 @@ protected:
             return m_project_abstract.value("channel").toInt();
     }
 private:
-    const QString openTask = "openTask";
     const QString importImage = "importImage";
+    const QString openTask = "openTask";
 private:
     QJsonObject m_project_abstract;
     QJsonObject m_tasks;
     QJsonObject m_images;
     QJsonObject m_image_filter;
+    QString m_current_task;
     int m_last_state = 0;
 private:
     QJsonArray getImageList(){
@@ -169,6 +170,7 @@ private:
                 if (dt.value("id") != m_project_id){
                     m_project_id = dt.value("id").toString();
                     m_project_abstract = dt.value("abstract").toObject();
+                    m_current_task = dt.value("current_task").toString();
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/task.json"));
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image.json"));
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
@@ -207,14 +209,26 @@ private:
                 aInput->out<QJsonObject>(prepareTaskListGUI(tsks), "project_task_updateListView");
                 aInput->out<QJsonObject>(prepareImageListGUI(m_images, imgs), "project_image_updateListView");
                 aInput->out<QJsonObject>(prepareLabelListGUI(lbls), "project_label_updateListView");
-                aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected", rea::Json("tag", "manual"));
                 //aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+                aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected", rea::Json("tag", "manual"));
                 aInput->out<QJsonObject>(rea::Json("count", 1), "scatterprojectImageShow");
                 aInput->out<QJsonArray>(QJsonArray(), "project_label_listViewSelected", rea::Json("tag", "project_manual"));
                 aInput->out<QJsonObject>(getFilter(), "updateProjectImageFilterGUI");
                 aInput->out<double>(0, "updateProjectChannelCountGUI");
                 aInput->out<QJsonObject>(QJsonObject(), "switchprojectFirstImageIndex");
                 aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract)}), "title_updateNavigation", rea::Json("tag", "manual"));
+                /*if (m_current_task != ""){
+                    aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract), getTaskName(m_tasks.value(m_current_task).toObject())}), "title_updateNavigation", rea::Json("tag", "manual"));
+                    aInput->out<IProjectInfo>(IProjectInfo(&m_images, rea::Json("id", m_current_task,
+                                                                                "labels", getLabels(),
+                                                                                "channel", getChannelCount(),
+                                                                                "project", m_project_id,
+                                                                                "project_name", getProjectName(m_project_abstract),
+                                                                                "task_name", getTaskName(m_tasks.value(m_current_task).toObject()),
+                                                                                "imageshow", getImageShow(),
+                                                                                "type", getTaskType(m_tasks.value(m_current_task).toObject()))), openTask);
+                    m_current_task = "";
+                }*/
             }));
     }
     void taskManagement(){

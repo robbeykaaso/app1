@@ -19,4 +19,5 @@ Controller.prototype.uninstallationStarted = function()
 Controller.prototype.installationFinished = function()
 {
     installer.performOperation("Execute", ["@TargetDir@/key.bat"]);
+    installer.performOperation("Execute", ["@TargetDir@/minIO/minIO_netsh.bat"]);
 }
