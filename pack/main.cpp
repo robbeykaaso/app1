@@ -12,6 +12,13 @@
                            "qmladdition", dst::JArray("D:/mydll3", "D:/mydll2"),
                            "addition", dst::JArray("D:/build-deepinspection-Desktop_Qt_5_12_2_MSVC2015_64bit-Default/plugin"));*/
 
+bool checkWhite(const std::vector<std::string> aWhite, const std::string& aName) {
+    for (auto i : aWhite)
+        if (int(aName.find(i)) >= 0)
+            return true;
+    return false;
+}
+
 bool checkFilter(const std::vector<std::string> aFilters, const std::string& aName) {
     for (auto i : aFilters)
         if (int(aName.find(i)) >= 0)
@@ -19,7 +26,7 @@ bool checkFilter(const std::vector<std::string> aFilters, const std::string& aNa
     return true;
 }
 
-void parseDependsAndCopy(const std::string& aDir, const std::vector<std::string>& aFilters){
+void parseDependsAndCopy(const std::string& aDir, const std::vector<std::string>& aFilters, const std::vector<std::string>& aWhite){
     auto ifs = std::ifstream(aDir + "/depends");
     if (!ifs.is_open())
         return;
@@ -35,9 +42,11 @@ void parseDependsAndCopy(const std::string& aDir, const std::vector<std::string>
             break;
         if (int(i->find("[")) >= 0) {
             int st = i->find("["), ed = i->find("]") + 1;
+            auto ret = i->substr(ed + 2, i->length());
             auto entry = i->substr(st, ed - st);
-            if (int(entry.find("?")) < 0 && int(entry.find("E")) < 0) {
-                auto ret = i->substr(ed + 2, i->length());
+            if (checkWhite(aWhite, ret))
+                depends.push_back(ret.substr(0, ret.find("     ")));
+            else if((int(entry.find("?")) < 0 && int(entry.find("E")) < 0)) {
                 if (checkFilter(aFilters, ret))
                     depends.push_back(ret.substr(0, ret.find("     ")));
             }
@@ -49,7 +58,7 @@ void parseDependsAndCopy(const std::string& aDir, const std::vector<std::string>
     }
 }
 
-void packExe(const QJsonObject& aConfig){
+void packExe(const QJsonObject& aConfig){    
     auto app = aConfig.value("app").toString();
     auto dir = app.mid(0, app.lastIndexOf("/"));
 
@@ -57,6 +66,10 @@ void packExe(const QJsonObject& aConfig){
     auto filters0 = aConfig.value("filter").toArray();
     for (auto i : filters0)
         filters.push_back(i.toString().toStdString());
+    std::vector<std::string> white;
+    auto spec = aConfig.value("specific").toArray();
+    for (auto i : spec)
+        white.push_back(i.toString().toStdString());
     QString cmd;
 
     cmd = "windeployqt --qmldir " + aConfig.value("source").toString() + " " + app;
@@ -64,7 +77,7 @@ void packExe(const QJsonObject& aConfig){
 
     cmd = aConfig.value("depends").toString() + " /c /ot:" + dir + "/depends" + " /f:1 /sm:15 \"" + app + "\"";
     system(cmd.toStdString().data());
-    parseDependsAndCopy(dir.toStdString(), filters);
+    parseDependsAndCopy(dir.toStdString(), filters, white);
 
     auto qmladd = aConfig.value("qmladdition").toArray();
     for (auto i : qmladd){
@@ -81,9 +94,16 @@ void packExe(const QJsonObject& aConfig){
                 auto dll = i.toString() + "/" + j;
                 cmd = aConfig.value("depends").toString() + " /c /ot:" + dir + "/depends" + " /f:1 /sm:15 \"" + dll + "\"";
                 system(cmd.toStdString().data());
-                parseDependsAndCopy(dir.toStdString(), filters);
+                parseDependsAndCopy(dir.toStdString(), filters, white);
             }
     }
+
+    /*auto spec = aConfig.value("specific").toArray();
+    for (auto j : spec) {
+        auto i = j.toString();
+        auto nm = dir.toStdString() + "/" +  i.mid(i.lastIndexOf("/") + 1, i.length()).toStdString();
+        CopyFile(i.toStdString().data(), nm.data(), FALSE);
+    }*/
 }
 
 int main(int argc, char *argv[])

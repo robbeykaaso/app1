@@ -1,8 +1,9 @@
 { 
-    "source": "..",
-    "app": "../../buildApp/qtinstall/mypackages/content3/data/DeepInspection.exe",
+    "source": "D:/mywork/app",
+    "app": "D:/mywork/build-app-Desktop_Qt_5_12_2_MSVC2017_64bit-Release/DeepInspection.exe",
     "depends": "G:/dependency_walker/depends.exe",
     "filter": ["windows"],
-    "qmladdition": ["../../frm", "../../dll2"],
-    "addition": ["../../buildApp/qtinstall/mypackages/content3/data/plugin"]
+    "qmladdition": ["D:/mywork/dll2"],
+    "addition": ["D:/mywork/build-app-Desktop_Qt_5_12_2_MSVC2017_64bit-Release/plugin"],
+    "specific": ["IEFRAME.DLL"]
 }
