@@ -1616,7 +1616,7 @@ void task::jobManagement(){
                 prm = rea::Json(prm, "type", "inference",
                                 "statistics", dt.value("statistics"),
                                 "model_id", (m_jobs.begin() + i.toInt()).key(),
-                                "model_path", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job);
+                                "model_path", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job + "/" + m_jobs.value(m_current_job).toObject().value("model").toString());
                 if (!dt.value("statistics").toBool())
                     prm.insert("job_id", prm.value("model_id"));
                 else{
