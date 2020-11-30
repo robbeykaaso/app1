@@ -42,6 +42,17 @@ private:
   QString getCurrentTask(){
       return value("current_task").toString();
   }
+  bool setPageIndex(const QString& aType, int aIndex){
+      auto key = aType + "_page_index";
+      auto ret = value(key) != aIndex;
+      if (ret)
+          insert(key, aIndex);
+      return ret;
+  }
+  int getPageIndex(const QString& aType){
+      auto key = aType + "_page_index";
+      return value(key).toInt();
+  }
   QJsonObject prepareProjectListGUI(const QJsonArray &aProjects) {
     QJsonArray data;
     for (auto i : aProjects) {
@@ -264,12 +275,15 @@ public:
                 ->outB<QJsonArray>(QJsonArray(), "user_listViewSelected", rea::Json("tag", "manual"));
 
             auto cur_proj = getCurrentProject();
+            auto cur_task = getCurrentTask();
             if (cur_proj != ""){
                 m_project_owner = getProjectOwner(m_projects.value(cur_proj).toObject()) == rea::GetMachineFingerPrint();
                 aInput->out<QJsonObject>(rea::Json("id", cur_proj,
                                                    "abstract", m_projects.value(cur_proj),
-                                                   "current_task", getCurrentTask()), openProject);
+                                                   "current_task", cur_task), openProject);
             }
+            aInput->out<QJsonObject>(rea::Json("project", cur_proj == "" ? 0 : getPageIndex("project"),
+                                               "task", cur_task == "" ? 0 : getPageIndex("task")), "recoverPageIndex");
         });
 
     // record current task
@@ -296,6 +310,17 @@ public:
             m_title_state = dt.size();
         }, rea::Json("tag", "manual"));
 
+    //record page index
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        auto dt = aInput->data();
+        if (setPageIndex(dt.value("type").toString(), dt.value("index").toInt()))
+            aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+    }, rea::Json("name", "pageIndexChanged"));
+
+    //recover page index
+    rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+        aInput->out();
+    }, rea::Json("name", "recoverPageIndex"));
   }
 };
 

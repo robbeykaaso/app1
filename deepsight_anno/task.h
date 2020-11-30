@@ -111,7 +111,7 @@ private:
     QString m_current_request = "";
     QHash<QString, QJsonArray> m_log_cache;
 
-    void insertJob(const QString& aID);
+    void insertJob(const QString& aID, const QString& aState = "running");
     QJsonObject prepareTrainingData(const QJsonArray& aImages, QSet<QString>& aStageSet);
     QString getJobState(const QJsonObject& aJob);
     void setJobState(QJsonObject& aJob, const QString& aState);

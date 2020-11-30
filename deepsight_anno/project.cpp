@@ -217,7 +217,7 @@ private:
                 aInput->out<double>(0, "updateProjectChannelCountGUI");
                 aInput->out<QJsonObject>(QJsonObject(), "switchprojectFirstImageIndex");
                 aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract)}), "title_updateNavigation", rea::Json("tag", "manual"));
-                /*if (m_current_task != ""){
+                if (m_current_task != ""){
                     aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint(), getProjectName(m_project_abstract), getTaskName(m_tasks.value(m_current_task).toObject())}), "title_updateNavigation", rea::Json("tag", "manual"));
                     aInput->out<IProjectInfo>(IProjectInfo(&m_images, rea::Json("id", m_current_task,
                                                                                 "labels", getLabels(),
@@ -228,7 +228,7 @@ private:
                                                                                 "imageshow", getImageShow(),
                                                                                 "type", getTaskType(m_tasks.value(m_current_task).toObject()))), openTask);
                     m_current_task = "";
-                }*/
+                }
             }));
     }
     void taskManagement(){
@@ -1201,8 +1201,8 @@ private:
 
         // update image
         rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
-            if (m_last_state == 1) //avoid free parent qsgnode crash
-                return;
+            //if (m_last_state == 1) //avoid free parent qsgnode crash
+            //    return;
             auto dt = aInput->data();
             m_current_image = "";
             if (dt.contains("page"))

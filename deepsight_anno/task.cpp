@@ -3,6 +3,7 @@
 #include "command.h"
 #include "server.h"
 #include "protocal.h"
+#include <QFileInfo>
 #include "../util/cv.h"
 
 QString ITaskFriend::s3_bucket_name_(){
@@ -1117,11 +1118,11 @@ void task::serverManagement(){
         ->next("tryLinkServer");
 }
 
-void task::insertJob(const QString& aID){
+void task::insertJob(const QString& aID, const QString& aState){
     auto tm0 = QDateTime::currentDateTime();
     auto tm = tm0.toString(Qt::DateFormat::ISODate);
     auto tms = tm.split("T");
-    m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", "running"));
+    m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", aState));
 }
 
 QJsonObject task::prepareTrainingData(const QJsonArray& aImages, QSet<QString>& aStageSet){
@@ -1622,7 +1623,7 @@ void task::jobManagement(){
             auto bsc = train_prm.value("basic").toObject();
             auto mdl = bsc.value("train_from_model").toString("None");
             if (mdl != "None"){
-                mdl = "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + mdl;
+                mdl = s3_bucket_name + "/project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + mdl;
                 bsc.insert("train_from_model", mdl);
                 train_prm.insert("basic", bsc);
             }
@@ -2036,6 +2037,32 @@ void task::jobManagement(){
         ->nextB("task_job_updateListView")
         ->nextB(s3_bucket_name + "writeJson")
         ->nextB("task_job_listViewSelected", rea::Json("tag", "manual"));
+
+    //import Job
+    rea::pipeline::find("_selectFile")
+        ->next(rea::pipeline::add<QJsonArray>([](rea::stream<QJsonArray>* aInput){
+             auto pths = aInput->data();
+             aInput->out<QJsonObject>(rea::Json("title", "import job", "sum", pths.size()), "updateProgress");
+             for (auto i : pths)
+                 aInput->out<rea::stgByteArray>(rea::stgByteArray(i.toString()));
+        }), rea::Json("tag", "importJobResult"))->next(rea::local("readByteArray", rea::Json("thread", 10)))
+        ->nextF<rea::stgByteArray>([this](rea::stream<rea::stgByteArray>* aInput){
+            auto dt = aInput->data();
+            auto fl = QFileInfo(dt);
+            auto nm = fl.completeBaseName() + "." + fl.suffix();
+            auto id = rea::generateUUID();
+            insertJob(id, "upload_finish");
+            aInput->outB<rea::stgByteArray>(rea::stgByteArray(dt.getData(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + id + "/" + nm), s3_bucket_name + "writeByteArray")
+                ->out<QJsonObject>(QJsonObject(), "updateProgress");
+        })
+        ->next(rea::local("updateProgress"))
+        ->next(rea::pipeline::add<double>([this](rea::stream<double>* aInput){
+            if (aInput->data() == 1.0){
+                aInput->outB<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson")
+                    ->outB<QJsonObject>(prepareJobListGUI(), "task_job_updateListView")
+                    ->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
+            }
+        }));;
 }
 
 task::task(){
