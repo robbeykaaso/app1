@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.1)
 project(DeepInspection LANGUAGES CXX)
 
 add_definitions( -DRX_USE_EXCEPTIONS=OFF )
+set(USEAWS ON)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
@@ -20,7 +21,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #message("include: ${PROJECT_SOURCE_DIR}")
 find_package(Qt5 COMPONENTS Widgets Core Quick Sql SerialPort SerialBus REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(AWSSDK REQUIRED COMPONENTS core s3)
 set(REA_DIR ${CMAKE_CURRENT_LIST_DIR}/../frm/cmake)
 #message("xxx: ${CMAKE_CURRENT_LIST_DIR}")
 find_package(REA)
@@ -32,14 +32,10 @@ find_package(REA)
 #qtquick_compiler_add_resources(RESOURCES qml.qrc)
 #find_package(VTK REQUIRED)
 
-add_executable(${PROJECT_NAME}
+set(my_Sources
     "main.cpp" #WIN32: to disable the console window
-    "storage/aws_s3.h"
-    "storage/aws_s3.cpp"
     "storage/storage.h"
     "storage/storage.cpp"
-    "storage/awsStorage.h"
-    "storage/awsStorage.cpp"
     "storage/mysql.cpp"
     #"device/camera.cpp"
     #"device/io.cpp"
@@ -61,16 +57,45 @@ add_executable(${PROJECT_NAME}
     "qml.qrc"
     "resource/logo.rc"
     )
+
+set(my_Libs
+    Qt5::Core Qt5::Quick Qt5::Widgets Qt5::Sql Qt5::SerialPort Qt5::SerialBus
+    ${REA_LIBS}
+    ${OpenCV_LIBS}
+    )
+
+if (${USEAWS} STREQUAL "ON")
+    message("use aws")
+    find_package(AWSSDK REQUIRED COMPONENTS core s3)
+    add_definitions(-DUSEAWS)
+    add_executable(${PROJECT_NAME}
+        ${my_Sources}
+        "storage/aws_s3.h"
+        "storage/aws_s3.cpp"
+        "storage/awsStorage.h"
+        "storage/awsStorage.cpp"
+        )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        ${my_Libs}
+        ${AWSSDK_LINK_LIBRARIES}
+
+    #    ${DeepInspectSDK_LIBS}
+    #    ${PYTHON_LIBRARIES}
+        )# ${VTK_LIBRARIES})# #  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
+    include_directories(${AWSSDK_INCLUDE_DIR})
+else()
+    message("not use aws")
+    add_executable(${PROJECT_NAME}
+        ${my_Sources}
+        )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        ${my_Libs}
+        )
+endif()
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
 #message(${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME} PRIVATE
-    Qt5::Core Qt5::Quick Qt5::Widgets Qt5::Sql Qt5::SerialPort Qt5::SerialBus
-    ${OpenCV_LIBS}
-    ${AWSSDK_LINK_LIBRARIES}
-    ${REA_LIBS}
-#    ${DeepInspectSDK_LIBS}
-#    ${PYTHON_LIBRARIES}
-    )# ${VTK_LIBRARIES})# #  ${DeepInspectSDK_LIBS} ${gflags_LIBRARIES} glog::glog) # "${deepinspectapptemplate_ROOT}/deepTemplateExe/deepinspectControl.lib")
+
 #include_directories("${deepinspectapptemplate_ROOT}/deepinspectControl")
 include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${REA_INCLUDE_DIRS})
@@ -85,7 +110,6 @@ include_directories(${REA_INCLUDE_DIRS})
 #include_directories(${RapidJSON_INCLUDE_DIRS})
 #include_directories(${RxCpp_INCLUDE_DIRS})
 #include_directories (${gflags_INCLUDE_DIR})
-#include_directories(${AWSSDK_INCLUDE_DIR})
 #include_directories("D:/catch/Catch2/single_include/catch2")
 
 #message("include ${RapidJSON_INCLUDE_DIRS}")

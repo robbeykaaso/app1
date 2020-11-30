@@ -80,14 +80,18 @@ public:
           auto dt = aInput->data();
           if (dt.getData().contains("root_dir"))
               s3_bucket_name = dt.getData().value("root_dir").toString();
+#ifdef USEAWS
           if (dt.getData().value("local_fs").toBool())
               static fsStorage2 file_storage(s3_bucket_name,
                                              [this]() { return m_project_owner; });
-          // static fsStorage file_storage("Z:/deepsight");
           else
               static awsStorage2 minio_storage(s3_bucket_name,
                                                dt.getData().value("aws_fs").toObject(),
                                                [this]() { return m_project_owner; });
+#else
+          static fsStorage2 file_storage(s3_bucket_name,
+                                         [this]() { return m_project_owner; });
+#endif
       })
           ->previous(rea::local("readJson"))
           ->execute(std::make_shared<rea::stream<rea::stgJson>>((rea::stgJson("config_.json"))));
@@ -245,8 +249,8 @@ public:
 
     // load user
     rea::pipeline::add<double>([this](rea::stream<double> *aInput) {
-        aInput->out<rea::stgJson>(rea::stgJson("project.json"));
-        aInput->out<rea::stgJson>(rea::stgJson(getStoragePath()));
+        aInput->outB<rea::stgJson>(rea::stgJson("project.json"))
+            ->out<rea::stgJson>(rea::stgJson(getStoragePath()));
     }, rea::Json("name", "loadUser"))
         ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
         ->next(rea::buffer<rea::stgJson>(2))
@@ -255,9 +259,9 @@ public:
             m_projects = dt[0].getData();
             dt[1].getData().swap(*this);
 
-            aInput->out<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint()}), "title_updateNavigation", rea::Json("tag", "manual"));
-            aInput->out<QJsonObject>(prepareProjectListGUI(getProjects(*this)), "user_updateListView");
-            aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected", rea::Json("tag", "manual"));
+            aInput->outB<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint()}), "title_updateNavigation", rea::Json("tag", "manual"))
+                ->outB<QJsonObject>(prepareProjectListGUI(getProjects(*this)), "user_updateListView")
+                ->outB<QJsonArray>(QJsonArray(), "user_listViewSelected", rea::Json("tag", "manual"));
 
             auto cur_proj = getCurrentProject();
             if (cur_proj != ""){

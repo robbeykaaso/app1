@@ -48,6 +48,8 @@ void fsStorage2::writeCVMat(const QString& aPath, const cv::Mat& aData) {
         fsStorage::writeCVMat(aPath, aData);
 }
 
+#ifdef USEAWS
+
 awsStorage2::awsStorage2(const QString& aType, const QJsonObject& aConfig, std::function<bool()> isOwner) : awsStorage(aType, aConfig) {
   m_is_owner = isOwner;
   // tell server aws info
@@ -100,3 +102,5 @@ void awsStorage2::deletePath(const QString& aPath) {
     if (checkValidOperation(aPath, m_is_owner(), true))
         awsStorage::deletePath(aPath);
 }
+
+#endif

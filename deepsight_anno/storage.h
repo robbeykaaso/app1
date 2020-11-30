@@ -1,7 +1,6 @@
 #ifndef REAL_APP_STORAGE_H_
 #define REAL_APP_STORAGE_H_
 
-#include "../storage/awsStorage.h"
 #include "../storage/storage.h"
 
 class fsStorage2 : public fsStorage {
@@ -23,6 +22,9 @@ class fsStorage2 : public fsStorage {
   std::function<bool()> m_is_owner;
 };
 
+#ifdef USEAWS
+#include "../storage/awsStorage.h"
+
 class awsStorage2 : public awsStorage {
  public:
      awsStorage2(const QString& aType, const QJsonObject& aConfig = QJsonObject(), std::function<bool()> isOwner = nullptr);
@@ -37,5 +39,7 @@ class awsStorage2 : public awsStorage {
  private:
   std::function<bool()> m_is_owner;
 };
+
+#endif
 
 #endif
