@@ -69,6 +69,11 @@ const auto protocal = rea::Json(protocal_test,
                                                      "type", protocal_upload,
                                                      "token", rea::GetMachineFingerPrint(),
                                                      "data_type", "prediction"
+                                                     ),
+                                          "res", rea::Json(
+                                                     "type", protocal_upload,
+                                                     "err_code", 0,
+                                                     "msg", "..."
                                                      )),
                                 protocal_progress_push,
                                 rea::Json("res", rea::Json(

@@ -1024,6 +1024,13 @@ void task::serverManagement(){
                            })->nextB("callClient"),
                         rea::Json("tag", protocal_connect))
                 ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
+                            auto dt = aInput->data();
+                            auto ret = protocal.value(protocal_upload).toObject().value("res").toObject();
+                            auto job = dt.value("job_id").toString();
+                            aInput->setData(rea::Json(ret, "model_id", job, "upload_model_file_list", rea::JArray(job + ".zip")))->out();
+                        })->nextB("callClient"),
+                        rea::Json("tag", protocal_upload))
+                ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
                                auto dt = aInput->data();
                                auto ret = protocal.value(protocal_stop_job).toObject().value("res").toObject();
                                job_states.insert(dt.value("stop_job_id").toString(), - 1);
@@ -1118,11 +1125,14 @@ void task::serverManagement(){
         ->next("tryLinkServer");
 }
 
-void task::insertJob(const QString& aID, const QString& aState){
+void task::insertJob(const QString& aID, const QString& aState, const QString& aName){
     auto tm0 = QDateTime::currentDateTime();
     auto tm = tm0.toString(Qt::DateFormat::ISODate);
     auto tms = tm.split("T");
-    m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", aState));
+    if (aName == "")
+        m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", aState));
+    else
+        m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", aState, "model", aName));
 }
 
 QJsonObject task::prepareTrainingData(const QJsonArray& aImages, QSet<QString>& aStageSet){
@@ -1623,7 +1633,7 @@ void task::jobManagement(){
             auto bsc = train_prm.value("basic").toObject();
             auto mdl = bsc.value("train_from_model").toString("None");
             if (mdl != "None"){
-                mdl = s3_bucket_name + "/project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + mdl;
+                mdl = "/project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + mdl + "/" + m_jobs.value(mdl).toObject().value("model").toString();
                 bsc.insert("train_from_model", mdl);
                 train_prm.insert("basic", bsc);
             }
@@ -1936,7 +1946,19 @@ void task::jobManagement(){
                }
                std::this_thread::sleep_for(std::chrono::microseconds(500));
                aInput->out<QString>(id, "requestJobState");
-        }, rea::Json("thread", 5)), rea::Json("tag", protocal_task_state));
+        }, rea::Json("thread", 5)), rea::Json("tag", protocal_task_state))
+        ->next("callServer")
+        ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            auto id = dt.value("model_id").toString();
+            auto job = m_jobs.value(id).toObject();
+            auto fls = dt.value("upload_model_file_list").toArray();
+            if (fls.size() > 0){
+                job.insert("model", fls[0]);
+                m_jobs.insert(id, job);
+                aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
+            }
+        }, rea::Json("thread", 5)), rea::Json("tag", protocal_upload));
 
     //update job progress
     rea::pipeline::find("receiveFromServer")
@@ -2051,7 +2073,7 @@ void task::jobManagement(){
             auto fl = QFileInfo(dt);
             auto nm = fl.completeBaseName() + "." + fl.suffix();
             auto id = rea::generateUUID();
-            insertJob(id, "upload_finish");
+            insertJob(id, "upload_finish", nm);
             aInput->outB<rea::stgByteArray>(rea::stgByteArray(dt.getData(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + id + "/" + nm), s3_bucket_name + "writeByteArray")
                 ->out<QJsonObject>(QJsonObject(), "updateProgress");
         })
