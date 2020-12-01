@@ -660,7 +660,7 @@ private:
                                                                                                                               ),
                                          "objects", objs);
                     auto ch = QString::number(i);
-                    rea::pipeline::run<QJsonObject>("updateQSGModel_projectimage_gridder" + ch, cfg);
+                    aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder" + ch);
                     serviceShowImageStatus("project", ch, img, pth);
                 }
             }, rea::Json("tag", "project"));

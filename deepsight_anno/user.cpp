@@ -53,6 +53,18 @@ private:
       auto key = aType + "_page_index";
       return value(key).toInt();
   }
+  QJsonObject getDrawFreeParam(){
+      return value("draw_free").toObject();
+  }
+  int getDrawFreeRadius(const QJsonObject& aParam){
+      return aParam.value("radius").toInt(10);
+  }
+  void setDrawFreeRadius(QJsonObject& aParam, int aRadius){
+      aParam.insert("radius", aRadius);
+  }
+  void setDrawFreeParam(const QJsonObject& aParam){
+      insert("draw_free", aParam);
+  }
   QJsonObject prepareProjectListGUI(const QJsonArray &aProjects) {
     QJsonArray data;
     for (auto i : aProjects) {
@@ -71,7 +83,7 @@ private:
     mdls.push_back(aID);
     setProjects(*this, mdls);
     return mdls;
-  }
+  }  
   QString insertProject(QJsonObject &aProject) {
     auto tm = QDateTime::currentDateTime().toString(Qt::DateFormat::ISODate);
     auto tms = tm.split("T");
@@ -85,7 +97,7 @@ private:
   int m_title_state = 0;
 
 public:
-    user() {
+    user() {        
       // initialize storage
       rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson> *aInput) {
           auto dt = aInput->data();
@@ -321,6 +333,34 @@ public:
     rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
         aInput->out();
     }, rea::Json("name", "recoverPageIndex"));
+
+    //get mode param
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        auto dt = aInput->data();
+        auto cmd = dt.value("cmd").toString();
+        auto prms = dt.value("prm").toArray();
+        if (prms.size() > 0){
+            auto prm = prms[0].toObject();
+            if (prm.value("type") == "drawfree" || prm.value("type") == "drawmask")
+                prms[0] = rea::Json(getDrawFreeParam(), "type", prm.value("type"));
+        }
+        aInput->out<QJsonArray>(prms, cmd);
+    }, rea::Json("name", "beforeUpdateQSGCtrl"));
+
+    //set drawfree param
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        auto prm = getDrawFreeParam();
+        aInput->setData(rea::Json("title", "draw free", "content", rea::Json("radius", getDrawFreeRadius(prm)), "tag", rea::Json("tag", "setDrawFreeParam")))->out();
+    }, rea::Json("name", "setDrawFreeParam"))
+        ->next("_newObject")
+        ->nextF<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+            auto prm = getDrawFreeParam();
+            auto dt = aInput->data();
+            setDrawFreeRadius(prm, dt.value("radius").toInt());
+            setDrawFreeParam(prm);
+            aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+            aInput->out<QJsonObject>(dt, "afterSetDrawFreeParam");
+        }, rea::Json("tag", "setDrawFreeParam"));
   }
 };
 

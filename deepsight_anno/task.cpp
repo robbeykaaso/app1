@@ -1129,8 +1129,10 @@ void task::insertJob(const QString& aID, const QString& aState, const QString& a
     auto tm0 = QDateTime::currentDateTime();
     auto tm = tm0.toString(Qt::DateFormat::ISODate);
     auto tms = tm.split("T");
-    if (aName == "")
-        m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", aState));
+    if (aName == ""){
+        auto nm = m_jobs.value(aID).toObject().value("model").toString();  //infer partial pictures, the job is existed
+        m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", aState, "model", nm));
+    }
     else
         m_jobs.insert(aID, rea::Json("time", tms[0] + " " + tms[1], "state", aState, "model", aName));
 }
