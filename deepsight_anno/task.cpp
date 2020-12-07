@@ -347,7 +347,8 @@ void task::taskManagement(){
             aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected", rea::Json("tag", "task_manual"));
             aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
             //if (m_jobs.size() > 0 && m_jobs.begin().value().toObject().value("state") != "upload_finish")
-            aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
+            if (m_jobs.size() > 0 && m_jobs.value(m_jobs.keys().last()).toObject().value("state") != "upload_finish")
+                aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
             aInput->out<QJsonObject>(prepareImageListGUI(getImages(), getImageList()), "task_image_updateListView");
             aInput->out<QJsonObject>(rea::Json("count", 1), "scattertaskImageShow");
             aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
@@ -367,7 +368,7 @@ void task::taskManagement(){
             auto cache = rea::tryFind(&m_log_cache, job);
             for (auto i : dt)
                 cache->push_back(i);
-            if (job == m_jobs.begin().key()){
+            if (job == m_jobs.keys().last()){
                 aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
             }
         }));
