@@ -8,6 +8,11 @@
 
 class user : public model {
 private:
+#define saveUserStorage() \
+    aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson")
+#define saveProjectStorage() \
+    aInput->out<rea::stgJson>(rea::stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
+private:
     QJsonArray getProjects(const QJsonObject& aUserConfig) { return aUserConfig.value("projects").toArray(); }
   void setProjects(QJsonObject& aUserConfig, const QJsonArray &aProjects) {
       aUserConfig.insert("projects", aProjects);
@@ -159,7 +164,7 @@ public:
                   projs.erase(projs.begin() + i);
                 }
                 setProjects(*this, projs);
-                aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+                saveUserStorage();
 
                 if (dels.size() > 0) {
                   for (auto i : dels) {
@@ -167,7 +172,7 @@ public:
                     aInput->out<QString>("project/" + i + ".json", s3_bucket_name + "deletePath");
                     aInput->out<QString>("project/" + i, s3_bucket_name + "deletePath");
                   }
-                  aInput->out<rea::stgJson>(rea::stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
+                  saveProjectStorage();
                 }
 
                 aInput->out<QJsonObject>(prepareProjectListGUI(getProjects(*this)), "user_updateListView");
@@ -192,7 +197,7 @@ public:
                 }
             }
             if (sv){
-                aInput->out<rea::stgJson>(rea::stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
+                saveProjectStorage();
                 aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected", rea::Json("tag", "manual"));
             }
         }, rea::Json("tag", "shareProject"));
@@ -228,30 +233,30 @@ public:
         if (proj.contains("id")) {
             auto id = proj.value("id").toString();
             if (!m_projects.contains(id)) {
-              aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid id!"), "popMessage");
-              return;
+                popWarning("Invalid id!");
+                return;
             } else {
               for (auto i : projs)
                 if (i == id) {
-                  aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Existed project!"), "popMessage");
-                  return;
+                    popWarning("Existed project!");
+                    return;
                 }
               projs = addProject(id);
             }
         } else {
             auto nm = proj.value("name").toString();
             if (nm == "") {
-                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid name!"), "popMessage");
+                popWarning("Invalid name!");
                 return;
             } else if (proj.value("channel").toInt() <= 0) {
-                aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid channel count!"), "popMessage");
+                popWarning("Invalid channel count!");
                 return;
             } else
                 projs = addProject(insertProject(proj));
         }
         aInput->out<QJsonObject>(prepareProjectListGUI(projs), "user_updateListView");
-        aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
-        aInput->out<rea::stgJson>(rea::stgJson(m_projects, "project.json"), s3_bucket_name + "writeJson");
+        saveUserStorage();
+        saveProjectStorage()
         aInput->out<QJsonArray>(QJsonArray(), "user_listViewSelected", rea::Json("tag", "manual"));
     },  rea::Json("tag", "newProject"));
 
@@ -266,7 +271,7 @@ public:
                 m_project_owner = getProjectOwner(m_projects.value(id).toObject()) == rea::GetMachineFingerPrint();
                 aInput->out<QJsonObject>(rea::Json("id", id, "abstract", m_projects.value(id)), openProject);
                 if (setCurrentProject(id))
-                    aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+                    saveUserStorage();
             }
         }, rea::Json("tag", openProject));
 
@@ -302,7 +307,7 @@ public:
     rea::pipeline::find("openTask")
         ->nextF<IProjectInfo>([this](rea::stream<IProjectInfo>* aInput){
             if (setCurrentTask(aInput->data().value("id").toString()))
-                aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+                saveUserStorage();
     });
 
     // record current project and task
@@ -313,11 +318,11 @@ public:
                 if (m_title_state > 1){
                     bool sv = setCurrentProject("");
                     if (setCurrentTask("") || sv)
-                        aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+                        saveUserStorage();
                 }
             }else if (dt.size() == 2){
                 if (setCurrentTask(""))
-                    aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+                    saveUserStorage();
             }
             m_title_state = dt.size();
         }, rea::Json("tag", "manual"));
@@ -326,7 +331,7 @@ public:
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
         auto dt = aInput->data();
         if (setPageIndex(dt.value("type").toString(), dt.value("index").toInt()))
-            aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+            saveUserStorage();
     }, rea::Json("name", "pageIndexChanged"));
 
     //recover page index
@@ -358,7 +363,7 @@ public:
             auto dt = aInput->data();
             setDrawFreeRadius(prm, dt.value("radius").toInt());
             setDrawFreeParam(prm);
-            aInput->out<rea::stgJson>(rea::stgJson(*this, getStoragePath()), s3_bucket_name + "writeJson");
+            saveUserStorage();
             aInput->out<QJsonObject>(dt, "afterSetDrawFreeParam");
         }, rea::Json("tag", "setDrawFreeParam"));
   }

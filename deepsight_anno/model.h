@@ -35,6 +35,8 @@ public:
     virtual ~model(){}
 protected:
     QString getProjectName(const QJsonObject& aProject);
+#define popWarning(aContent) \
+    aInput->out<QJsonObject>(rea::Json("title", "warning", "text", aContent), "popMessage")
 };
 
 class shapeModel{

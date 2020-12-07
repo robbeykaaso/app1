@@ -1942,6 +1942,7 @@ void task::jobManagement(){
                        m_jobs.insert(m_current_job, job);
                    if (st == "upload_finish"){
                        m_current_image = "";
+                       aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
                        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"));
                    }
                    aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
