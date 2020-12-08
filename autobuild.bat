@@ -24,27 +24,18 @@ mkdir %buildApp%
 cmake -S %srcApp% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildApp%
 %msbuild% %buildApp%\ALL_BUILD.vcxproj /p:Configuration=Release
 
-set srcShp="..\dll"
-set buildShp="..\buildShp"
+::https://stackoverflow.com/questions/7005951/batch-file-find-if-substring-is-in-string-not-in-a-file
+for /f "delims=:" %%i in (.module) do (
+    echo.%%i | findstr /C:"dll">nul && (
+        if exist ..\build%%i (
+            rd /s /q ..\build%%i
+        )
+        mkdir ..\build%%i
 
-if exist %buildShp% (
-    rd /s /q %buildShp%
+        cmake -S ..\%%i -DCMAKE_BUILD_TYPE=Release -A x64 -B ..\build%%i -DMS=%buildApp%\Release\plugin
+        %msbuild% ..\build%%i\ALL_BUILD.vcxproj /p:Configuration=Release
+    )
 )
-mkdir %buildShp%
-
-cmake -S %srcShp% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildShp% -DMS=%buildApp%\Release\plugin
-%msbuild% %buildShp%\ALL_BUILD.vcxproj /p:Configuration=Release
-
-set srcImg="..\dll2"
-set buildImg="..\buildImg"
-
-if exist %buildImg% (
-    rd /s /q %buildImg%
-)
-mkdir %buildImg%
-
-cmake -S %srcImg% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildImg% -DMS=%buildApp%\Release\plugin
-%msbuild% %buildImg%\ALL_BUILD.vcxproj /p:Configuration=Release 
 
 set srcKey="..\key"
 set buildKey="..\buildKey"

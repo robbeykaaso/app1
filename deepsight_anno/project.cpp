@@ -666,12 +666,12 @@ private:
             }, rea::Json("tag", "project"));
 
         //get selected images
-#define extractSelectedImages() \
+#define extractSelectedImages(aTitle) \
         next(rea::local("project_image_listViewSelected")) \
             ->nextF<QJsonArray>([this](rea::stream<QJsonArray>* aInput){ \
                 auto dt = aInput->data(); \
                 auto imgs = getImageList(); \
-                aInput->out<QJsonObject>(rea::Json("title", importImage, "sum", dt.size() * getChannelCount()), "updateProgress"); \
+                aInput->out<QJsonObject>(rea::Json("title", aTitle, "sum", dt.size() * getChannelCount()), "updateProgress"); \
                 for (auto i : dt){ \
                     auto img = (imgs.begin() + i.toInt())->toString(); \
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image/" + img + ".json"), s3_bucket_name + "readJson", QJsonObject(), false)->cache<QString>(aInput->cacheData<QString>(0)); \
@@ -698,7 +698,7 @@ private:
                     return;
                 aInput->cache<QString>(aInput->data()[0].toString())->out();
             }, rea::Json("tag", "exportLabelme"))
-            ->extractSelectedImages()
+            ->extractSelectedImages("export labelme")
             ->nextF<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 auto dt = aInput->data();
                 auto imgs = aInput->cacheData<std::vector<stgCVMat>>(1);
@@ -718,7 +718,7 @@ private:
                    aInput->out<QJsonObject>(rea::Json("title", "warning", "text", "Invalid suffix!"), "popMessage");
                aInput->cache<QString>(aInput->data().value("suffix").toString())->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected");
                    }), rea::Json("tag", "applyTransform"))
-            ->extractSelectedImages()
+            ->extractSelectedImages("apply transform")
             ->nextF<stgCVMat>([this](rea::stream<stgCVMat>* aInput){
                 auto dt = aInput->data();
                 auto imgs = aInput->cacheData<std::vector<stgCVMat>>(1);

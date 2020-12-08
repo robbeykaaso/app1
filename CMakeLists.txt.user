@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.8.2, 2020-12-01T18:17:50. -->
+<!-- Written by QtCreator 4.8.2, 2020-12-08T11:37:10. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -112,6 +112,7 @@
      <value type="QString">CMAKE_CXX_COMPILER:STRING=%{Compiler:Executable:Cxx}</value>
      <value type="QString">CMAKE_C_COMPILER:STRING=%{Compiler:Executable:C}</value>
      <value type="QString">CMAKE_PREFIX_PATH:STRING=%{Qt:QT_INSTALL_PREFIX}</value>
+     <value type="QString">DeepInspectSDK_DIR:PATH=D:\rx_work\deepinspectapptemplate\deepinspectsdk_cpu_master_00a5904d\cpu\Debug\lib\cmake</value>
      <value type="QString">OpenCV_DIR:PATH=D:\rx_work\deepinspectapptemplate\deepinspectsdk_cpu_master_00a5904d\cpu\Debug\thirdparty\opencv</value>
      <value type="QString">QT_QMAKE_EXECUTABLE:STRING=%{Qt:qmakeExecutable}</value>
     </valuelist>

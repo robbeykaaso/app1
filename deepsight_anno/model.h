@@ -71,13 +71,13 @@ protected:
     QString m_current_image = "";
     int m_first_image_index = 0; //the first grid image channel
     QJsonObject m_selects_cache;
-private:
-    QJsonObject m_show_selects_cache;
-private:
     struct labelStatisticRec{
         int count = 0;
         QSet<QString> images;
     };
+    using groupStatisticRec = QHash<QString, labelStatisticRec>;
+private:
+    QJsonObject m_show_selects_cache;
 };
 
 class IProjectInfo : public QJsonObject{

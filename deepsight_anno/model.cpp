@@ -142,7 +142,6 @@ bool imageModel::modifyImage(const QJsonArray& aModification, QJsonObject& aImag
 }
 
 void imageModel::serviceLabelStatistics(const QString& aName){
-    using groupStatisticRec = QHash<QString, labelStatisticRec>;
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
         auto valid_lbls = std::make_shared<QHash<QString, QSet<QString>>>();
         auto grps = getLabels();

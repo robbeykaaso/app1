@@ -118,7 +118,7 @@ private:
     QJsonArray getLossList(const QJsonObject& aStatistics);
     QJsonObject getHistogramData(const QJsonObject& aStatistics);
     QJsonArray getPredictShapes(const QJsonObject& aImageResult);
-    QJsonArray updateResultObjects(const QJsonObject& aImageResult, int aIndex);
+    QJsonArray updateResultObjects(const QJsonObject& aImageResult, int aIndex, bool aForStatistics = false);
     QJsonObject getResultShow();
     QString getResultColor(const QJsonObject& aResultShow);
     void setResultShow(const QJsonObject& aResultShow);
@@ -134,7 +134,7 @@ private:
     int getIOUIndex(double aIOU);
     int getThresholdIndex(double aThreshold);
     int calcThresholdIndex();
-    QJsonObject getImagePredict(const QString& aImageID, const QJsonObject& aImageResult);
+    QJsonObject getImagePredict(const QJsonObject& aImageResult);
     void prepareTrainParam(QJsonObject& aParam);
     QJsonObject m_statistics;
     double m_min_threshold = 0.4, m_max_threshold = 0.6;

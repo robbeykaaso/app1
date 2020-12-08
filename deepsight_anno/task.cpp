@@ -571,7 +571,6 @@ bool task::isCurrentMode(const QString& aMode){
 
 void task::imageManagement(){
     //delete image
-    //delete image
     rea::pipeline::find("_makeSure")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                    m_task_id = "";
@@ -956,6 +955,78 @@ void task::imageManagement(){
             aInput->setData(rea::Json("images", imgs, "show", m_image_show))->out();
         }
     }, rea::Json("name", "getTaskCurrentImage"));
+
+    //calc predict label statistics
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        if (m_current_job == "")
+            return;
+
+        auto imgs = getImageAbstracts();
+        aInput->cache<int>(0)
+            ->cache<std::shared_ptr<QHash<QString, groupStatisticRec>>>(std::make_shared<QHash<QString, groupStatisticRec>>())
+            ->out<QJsonObject>(rea::Json("title", "statistics", "sum", imgs.size()), "updateProgress");
+        for (auto i : imgs.keys())
+            aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getImageResultJsonDir() + "/" + i + ".json"));
+    }, rea::Json("name", "calcPredictLabelStatistics"))
+        ->next(rea::local(s3_bucket_name + "readJson", rea::Json("thread", 10)))
+        ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
+            auto imgs = getImageAbstracts();
+
+            auto cnt = aInput->cacheData<int>(0);
+            ++cnt;
+            aInput->out<QJsonObject>(QJsonObject(), "updateProgress");
+            if (cnt == imgs.size()){
+                auto ret = aInput->cacheData<std::shared_ptr<QHash<QString, groupStatisticRec>>>(1);
+                QJsonArray data;
+                for (auto i : ret->keys()){
+                    auto recs = ret->value(i);
+                    for (auto j : recs.keys()){
+                        auto rec = recs.value(j);
+                        QJsonArray imgs;
+                        for (auto k : rec.images)
+                            imgs.push_back(k);
+                        data.push_back(rea::Json("entry", rea::JArray(i, j, rec.count, imgs)));
+                    }
+                }
+
+                aInput->out<QJsonObject>(rea::Json("title", rea::JArray("group", "label", "count"),
+                                                   "selects", data.size() > 0 ? rea::JArray(0) : QJsonArray(),
+                                                   "data", data,
+                                                   "tag", "filterPredictImages"), "showLabelStatistics");
+            }else{
+                aInput->cache<int>(cnt, 0);
+                auto ret = aInput->cacheData<std::shared_ptr<QHash<QString, groupStatisticRec>>>(1);
+                auto img_ret = aInput->data().getData();
+                auto pred = getImagePredict(img_ret).value("predict").toString().split("\n")[0].split(" ");
+                if (pred.size() > 1){
+                    auto rec = rea::tryFind(rea::tryFind(ret.get(), QString("image")), pred[1]);
+                    rec->count++;
+                    rec->images.insert(*(imgs.keys().begin() + cnt - 1));
+                }else{
+                    auto rec = rea::tryFind(rea::tryFind(ret.get(), QString("")), QString("no image"));
+                    rec->count++;
+                    rec->images.insert(*(imgs.keys().begin() + cnt - 1));
+                }
+                bool has_shape = false;
+                auto shps = updateResultObjects(img_ret, 0, true);
+                for (auto i : shps){
+                    auto mdy = i.toObject();
+                    if (mdy.value("type") == "add"){
+                        auto rec = rea::tryFind(rea::tryFind(ret.get(), QString("shape")), mdy.value("val").toObject().value("caption").toString());
+                        rec->count++;
+                        rec->images.insert(*(imgs.keys().begin() + cnt - 1));
+                        has_shape = true;
+                    }
+                }
+                if (!has_shape){
+                    auto rec = rea::tryFind(rea::tryFind(ret.get(), QString("")), QString("no shape"));
+                    rec->count++;
+                    rec->images.insert(*(imgs.keys().begin() + cnt - 1));
+                }
+            }
+        }))
+        ->next("showLabelStatistics")
+        ->next("filterTaskImages", rea::Json("tag", "filterPredictImages"));
 }
 
 void task::guiManagement(){
@@ -1207,7 +1278,7 @@ void task::setResultShow(const QJsonObject& aResultShow){
     insert("resultShow", aResultShow);
 }
 
-QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex){
+QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex, bool aForStatistics){
     QJsonArray ret;
     auto result_show = getResultShow();
     auto shps = getPredictShapes(m_image_result);
@@ -1276,7 +1347,8 @@ QJsonArray task::updateResultObjects(const QJsonObject& aImageResult, int aIndex
                         }
                     }
                     img = img.copy(bnd[0], bnd[1], bnd[2] - bnd[0], bnd[3] - bnd[1]).scaled((bnd[2] - bnd[0]) * rx, (bnd[3] - bnd[1]) * ry);
-                    rea::imagePool::cacheImage(nm, img);
+                    if (!aForStatistics)
+                        rea::imagePool::cacheImage(nm, img);
                     ret.push_back(rea::Json("key", rea::JArray("objects"),
                                             "type", "add",
                                             "tar", nm,
@@ -1372,7 +1444,7 @@ void task::updateStatisticsModel(const QJsonObject& aStatistics){
     }
 }
 
-QJsonObject task::getImagePredict(const QString& aImageID, const QJsonObject& aImageResult){
+QJsonObject task::getImagePredict(const QJsonObject& aImageResult){
     QString ret = "";
     auto result_show = getResultShow();
     if (m_show_result){
@@ -1663,7 +1735,7 @@ void task::jobManagement(){
         ->next(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
            for (int i = 0; i < m_show_count; ++i)
                rea::pipeline::run<QJsonArray>("updateQSGAttrs_taskimage_gridder" + QString::number(i), updateResultObjects(aInput->data().getData(), i));
-           auto img_predict = getImagePredict(m_current_image, m_image_result);
+           auto img_predict = getImagePredict(m_image_result);
            aInput->out<QJsonObject>(img_predict, "updateImagePredictGUI");
         }), rea::Json("tag", "updateImageResult"))
         ->nextB("updateImagePredictGUI")
