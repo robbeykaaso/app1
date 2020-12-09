@@ -710,6 +710,7 @@ void task::imageManagement(){
                 setImages(imgs);
                 aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
                 auto ret = prepareImageListGUI(getImages(), getImageList());
+                ret.remove("pageindex");
                 ret.remove("selects");
                 aInput->out<QJsonObject>(ret, "task_image_updateListView");
             }
@@ -876,6 +877,7 @@ void task::imageManagement(){
         if (mdy){
             setImages(imgs);
             auto ret = prepareImageListGUI(imgs, getImageList());
+            ret.remove("pageindex");
             ret.remove("selects");
             aInput->out<QJsonObject>(ret, "task_image_updateListView");
             aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
@@ -906,6 +908,7 @@ void task::imageManagement(){
             if (mdy){
                 setImages(imgs);
                 auto ret = prepareImageListGUI(imgs, getImageList());
+                ret.remove("pageindex");
                 ret.remove("selects");
                 aInput->out<QJsonObject>(ret, "task_image_updateListView");
                 aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");

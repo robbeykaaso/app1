@@ -2,6 +2,5 @@
     <qresource prefix="/">
         <file>main.cpp</file>
         <file>qtquickcontrols2.conf</file>
-        <file>resource/logo.png</file>
     </qresource>
 </RCC>

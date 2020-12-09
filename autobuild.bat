@@ -1,5 +1,6 @@
 @echo off
 
+set buildType=Release
 set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe"
 
 set srcRea="..\frm" 
@@ -10,8 +11,8 @@ if exist %buildRea% (
 )
 mkdir %buildRea%
 
-cmake -S %srcRea% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildRea% -DMS=ON
-%msbuild% %buildRea%\ALL_BUILD.vcxproj /p:Configuration=Release
+cmake -S %srcRea% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildRea% -DMS=ON
+%msbuild% %buildRea%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
 
 set srcApp="..\app"
 set buildApp="..\buildApp"
@@ -21,8 +22,8 @@ if exist %buildApp% (
 )
 mkdir %buildApp%
 
-cmake -S %srcApp% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildApp%
-%msbuild% %buildApp%\ALL_BUILD.vcxproj /p:Configuration=Release
+cmake -S %srcApp% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildApp%
+%msbuild% %buildApp%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
 
 ::https://stackoverflow.com/questions/7005951/batch-file-find-if-substring-is-in-string-not-in-a-file
 for /f "delims=:" %%i in (.module) do (
@@ -32,8 +33,8 @@ for /f "delims=:" %%i in (.module) do (
         )
         mkdir ..\build%%i
 
-        cmake -S ..\%%i -DCMAKE_BUILD_TYPE=Release -A x64 -B ..\build%%i -DMS=%buildApp%\Release\plugin
-        %msbuild% ..\build%%i\ALL_BUILD.vcxproj /p:Configuration=Release
+        cmake -S ..\%%i -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B ..\build%%i -DMS=%buildApp%\%buildType%\plugin
+        %msbuild% ..\build%%i\ALL_BUILD.vcxproj /p:Configuration=%buildType%
     )
 )
 
@@ -45,23 +46,23 @@ if exist %buildKey% (
 )
 mkdir %buildKey%
 
-cmake -S %srcKey% -DCMAKE_BUILD_TYPE=Release -A x64 -B %buildKey% -DMS=%buildApp%
-%msbuild% %buildKey%\ALL_BUILD.vcxproj /p:Configuration=Release
-copy "..\key\key.bat" %buildApp%\Release\key.bat
+cmake -S %srcKey% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildKey% -DMS=%buildApp%
+%msbuild% %buildKey%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
+copy "..\key\key.bat" %buildApp%\%buildType%\key.bat
 
-call recordVersion %buildApp%\Release\.version
+call recordVersion %buildApp%\%buildType%\.version
 
-xcopy %buildApp%\Release\plugin\Release\* %buildApp%\Release\plugin /e /y
-rd /s /q %buildApp%\Release\plugin\Release
+xcopy %buildApp%\%buildType%\plugin\%buildType%\* %buildApp%\%buildType%\plugin /e /y
+rd /s /q %buildApp%\%buildType%\plugin\%buildType%
 
-mkdir %buildApp%\Release\minIO
-xcopy .\minIO\* %buildApp%\Release\minIO /e /y
-mkdir %buildApp%\Release\qtinstall
+mkdir %buildApp%\%buildType%\minIO
+xcopy .\minIO\* %buildApp%\%buildType%\minIO /e /y
+mkdir %buildApp%\%buildType%\qtinstall
 xcopy .\qtinstall\* %buildApp%\qtinstall /e /y
 
-xcopy %buildApp%\Release\* %buildApp%\qtinstall\mypackages\content\data\ /e /y
+xcopy %buildApp%\%buildType%\* %buildApp%\qtinstall\mypackages\content\data\ /e /y
 ::xcopy .\pack\* %buildApp%\qtinstall\mypackages\content2\data\ /e /y
-xcopy %buildApp%\Release\* %buildApp%\qtinstall\mypackages\content3\data\ /e /y
+xcopy %buildApp%\%buildType%\* %buildApp%\qtinstall\mypackages\content3\data\ /e /y
 
 cd pack
 WINPACK.exe
@@ -73,4 +74,4 @@ xcopy ..\frm\install\* ..\frm-company\install /e /y
 xcopy ..\frm\include\* ..\frm-company\include /e /y
 xcopy ..\dll2\* ..\frm-company\plugin /e /y
 :: xcopy DeepInspectionV4.exe ..\frm-company /y
-:: "C:/Program Files/7-Zip/7z.exe" a -tzip DeepInspectionBinary.zip Release/*
+:: "C:/Program Files/7-Zip/7z.exe" a -tzip DeepInspectionBinary.zip %buildType%/*
