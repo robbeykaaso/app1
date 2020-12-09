@@ -87,6 +87,8 @@ private:
     QJsonObject m_images;
     QJsonObject m_image_filter;
     QString m_current_task;
+    int m_project_image_index;
+    int m_task_image_index;
     int m_last_state = 0;
 private:
     QJsonArray getImageList(){
@@ -120,7 +122,7 @@ private:
         return m_image_filter.value("operators").toArray();
     }
 
-    QJsonObject prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList){
+    QJsonObject prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList, int aProjectImageIndex = 0){
         QJsonArray data;
         int idx = 0;
         for (auto i : aImageList){
@@ -129,10 +131,12 @@ private:
                                                           ++idx,
                                                           getImageTime(img))));
         }
-        return rea::Json("title", rea::JArray("no", "time"),
-                         "entrycount", 30,
-                         "selects", aImageList.size() > 0 ? rea::JArray(0) : QJsonArray(),
-                         "data", data);
+        auto ret = rea::Json("title", rea::JArray("no", "time"),
+                             "entrycount", 30,
+                             "pageindex", std::floor(aProjectImageIndex / 30),
+                             "selects", aImageList.size() > 0 ? rea::JArray(aProjectImageIndex) : QJsonArray(),
+                             "data", data);
+        return ret;
     }
     QJsonObject prepareLabelListGUI(const QJsonObject& aLabels){
         QJsonArray data;
@@ -171,6 +175,8 @@ private:
                     m_project_id = dt.value("id").toString();
                     m_project_abstract = dt.value("abstract").toObject();
                     m_current_task = dt.value("current_task").toString();
+                    m_project_image_index = dt.value("project_image_index").toInt();
+                    m_task_image_index = dt.value("task_image_index").toInt();
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/task.json"));
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + "/image.json"));
                     aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), "project/" + m_project_id + ".json"));
@@ -207,7 +213,7 @@ private:
                     setLabels(value("labels").toObject());
 
                 aInput->out<QJsonObject>(prepareTaskListGUI(tsks), "project_task_updateListView");
-                aInput->out<QJsonObject>(prepareImageListGUI(m_images, imgs), "project_image_updateListView");
+                aInput->out<QJsonObject>(prepareImageListGUI(m_images, imgs, m_project_image_index), "project_image_updateListView");
                 aInput->out<QJsonObject>(prepareLabelListGUI(lbls), "project_label_updateListView");
                 //aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
                 aInput->out<QJsonArray>(QJsonArray(), "project_task_listViewSelected", rea::Json("tag", "manual"));
@@ -226,6 +232,7 @@ private:
                                                                                 "project_name", getProjectName(m_project_abstract),
                                                                                 "task_name", getTaskName(m_tasks.value(m_current_task).toObject()),
                                                                                 "imageshow", getImageShow(),
+                                                                                "task_image_index", m_task_image_index,
                                                                                 "type", getTaskType(m_tasks.value(m_current_task).toObject()))), openTask);
                     m_current_task = "";
                 }
@@ -549,6 +556,7 @@ private:
                            if (idx < imgs.size()){
                                auto nm = imgs[idx].toString();
                                if (nm != m_current_image){
+                                   aInput->out<QJsonObject>(rea::Json("type", "project", "index", idx), "imageIndexChanged");
                                    aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_projectimage_gridder0");
                                    m_current_image = nm;
                                    auto nms = getImageName(m_images.value(m_current_image).toObject());

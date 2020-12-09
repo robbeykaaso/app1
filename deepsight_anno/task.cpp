@@ -239,7 +239,7 @@ QJsonObject task::prepareLabelListGUI(const QJsonObject& aLabels){
                      "selects", m_project_labels.size() > 0 ? rea::JArray(0) : QJsonArray(),
                      "data", data);
 }
-QJsonObject task::prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList){
+QJsonObject task::prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList, int aTaskImageIndex){
     QJsonArray data;
     int idx = 0;
     for (auto i : aImageList){
@@ -253,7 +253,8 @@ QJsonObject task::prepareImageListGUI(const QJsonObject& aImageAbstract, const Q
     }
     return rea::Json("title", rea::JArray("no", "used", "important", "stage"),
                      "entrycount", 30,
-                     "selects", aImageList.size() > 0 ? rea::JArray(0) : QJsonArray(),
+                     "pageindex", std::floor(aTaskImageIndex / 30),
+                     "selects", aImageList.size() > 0 ? rea::JArray(aTaskImageIndex) : QJsonArray(),
                      "data", data);
 }
 QJsonObject task::prepareJobListGUI(const QString& aSelectedJob){
@@ -329,6 +330,7 @@ void task::taskManagement(){
                 m_image_show = dt.value("imageshow").toObject();
                 m_project_name = dt.value("project_name").toString();
                 m_task_name = dt.value("task_name").toString();
+                m_task_image_index = dt.value("task_image_index").toInt();
                 m_transform = QJsonArray();
                 aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getTaskJsonPath()));
                 aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getJobsJsonPath()));
@@ -349,7 +351,7 @@ void task::taskManagement(){
             //if (m_jobs.size() > 0 && m_jobs.begin().value().toObject().value("state") != "upload_finish")
             if (m_jobs.size() > 0 && m_jobs.value(m_jobs.keys().last()).toObject().value("state") != "upload_finish")
                 aInput->out<QJsonArray>(QJsonArray(), "task_job_listViewSelected", rea::Json("tag", "manual"));
-            aInput->out<QJsonObject>(prepareImageListGUI(getImages(), getImageList()), "task_image_updateListView");
+            aInput->out<QJsonObject>(prepareImageListGUI(getImages(), getImageList(), m_task_image_index), "task_image_updateListView");
             aInput->out<QJsonObject>(rea::Json("count", 1), "scattertaskImageShow");
             aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
             for (auto i : m_jobs.keys()){
@@ -615,6 +617,7 @@ void task::imageManagement(){
                    if (idx < lst.size()){
                        auto nm = lst[idx].toString();
                        if (nm != m_current_image){
+                           aInput->out<QJsonObject>(rea::Json("type", "task", "index", idx), "imageIndexChanged");
                            aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_taskimage_gridder0");
                            auto img_cfg = m_project_images->value(nm).toObject();
                            if (img_cfg.empty())
@@ -1447,7 +1450,7 @@ void task::updateStatisticsModel(const QJsonObject& aStatistics){
 QJsonObject task::getImagePredict(const QJsonObject& aImageResult){
     QString ret = "";
     auto result_show = getResultShow();
-    if (m_show_result){
+    if (m_show_result && !aImageResult.empty()){
        // if (aImageResult.value("stage") != "test"){
             if (m_statistics.value("image_table_type").toString().contains("binary")){
                 auto lbls = m_statistics.value("image_label_list").toArray();
@@ -1462,7 +1465,7 @@ QJsonObject task::getImagePredict(const QJsonObject& aImageResult){
                 };
             }else
                 ret = aImageResult.value("predict_label").toString();
-            if (ret != ""){
+            //if (ret != ""){
                 ret = "pred: " + ret + "\n" + "gt: " + aImageResult.value("label").toString() + "\n";
 
                 auto pred_lbls = aImageResult.value("predict_label_list").toArray();
@@ -1472,7 +1475,7 @@ QJsonObject task::getImagePredict(const QJsonObject& aImageResult){
                         ret += "; ";
                     ret += pred_lbls[i].toString() + ": " + i < pred_scrs.size() ? QString::number(pred_scrs[i].toDouble()) : "";
                 }
-            }
+            //}
        /* }
         else{
             if (m_images_statistics.contains(aImageID)){

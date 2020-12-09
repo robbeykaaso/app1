@@ -28,14 +28,29 @@ private:
   }
   bool setCurrentTask(const QString& aTask){
       auto ret = value("current_task") != aTask;
-      if (ret)
+      if (ret){
           insert("current_task", aTask);
+          setImageIndex("task", 0);
+      }
       return ret;
+  }
+  bool setImageIndex(const QString& aType, int aIndex){
+      auto key = aType + "_image_index";
+      auto ret = value(key) != aIndex;
+      if (ret)
+          insert(key, aIndex);
+      return ret;
+  }
+  int getImageIndex(const QString& aType){
+      auto key = aType + "_image_index";
+      return value(key).toInt();
   }
   bool setCurrentProject(const QString& aProject){
       auto ret = value("current_project") != aProject;
-      if (ret)
+      if (ret){
           insert("current_project", aProject);
+          setImageIndex("project", 0);
+      }
       return ret;
   }
   QString getStoragePath(){
@@ -361,7 +376,9 @@ public:
                 m_project_owner = getProjectOwner(m_projects.value(cur_proj).toObject()) == rea::GetMachineFingerPrint();
                 aInput->out<QJsonObject>(rea::Json("id", cur_proj,
                                                    "abstract", m_projects.value(cur_proj),
-                                                   "current_task", cur_task), openProject);
+                                                   "current_task", cur_task,
+                                                   "project_image_index", getImageIndex("project"),
+                                                   "task_image_index", getImageIndex("task")), openProject);
             }
             aInput->out<QJsonObject>(rea::Json("project", cur_proj == "" ? 0 : getPageIndex("project"),
                                                "task", cur_task == "" ? 0 : getPageIndex("task")), "recoverPageIndex");
@@ -397,6 +414,13 @@ public:
         if (setPageIndex(dt.value("type").toString(), dt.value("index").toInt()))
             saveUserStorage();
     }, rea::Json("name", "pageIndexChanged"));
+
+    //record image index
+    rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
+        auto dt = aInput->data();
+        if (setImageIndex(dt.value("type").toString(), dt.value("index").toInt()))
+            saveUserStorage();
+    }, rea::Json("name", "imageIndexChanged"));
 
     //recover page index
     rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){

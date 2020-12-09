@@ -4,7 +4,7 @@ project(DeepInspection LANGUAGES CXX)
 
 add_definitions( -DRX_USE_EXCEPTIONS=OFF )
 set(USEAWS ON)
-set(USEDeepInspect ON)
+set(USEDeepInspect OFF)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
@@ -76,7 +76,7 @@ if (${USEAWS} STREQUAL "ON")
     include_directories(${AWSSDK_INCLUDE_DIR})
 endif()
 
-if (${USEDeepInspect} STREQUAL "OFF")
+if (${USEDeepInspect} STREQUAL "ON")
     message("use deepinspect")
     find_package(DeepInspectSDK REQUIRED)
     find_package(RapidJSON REQUIRED)

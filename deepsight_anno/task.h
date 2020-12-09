@@ -72,9 +72,10 @@ private:
     QJsonArray getImageList();
     void setImageList(QJsonArray& aImageList);
     QJsonObject prepareLabelListGUI(const QJsonObject& aLabels);
-    QJsonObject prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList);
+    QJsonObject prepareImageListGUI(const QJsonObject& aImageAbstract, const QJsonArray& aImageList, int aTaskImageIndex = 0);
     QJsonObject prepareJobListGUI(const QString& aSelectedJob = "");
 private:
+    int m_task_image_index;
     QString m_task_id = "";
     QString m_task_type = "";
     QString m_task_name = "";
