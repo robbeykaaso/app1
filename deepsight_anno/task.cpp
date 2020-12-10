@@ -223,6 +223,7 @@ QJsonArray task::getImageList(){
         QJsonArray ret;
         for (auto i : m_project_images->keys())
             ret.push_back(i);
+        setImageList(ret);
         return ret;
     }
 }
