@@ -1,6 +1,10 @@
 @echo off
 
-set buildType=Release
+if "%1"=="" (
+    set buildType=Release
+) else (
+    set buildType=%1
+)
 set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe"
 
 set srcRea="..\frm" 
@@ -33,6 +37,7 @@ for /f "delims=:" %%i in (.module) do (
         )
         mkdir ..\build%%i
 
+        echo %buildApp%\%buildType%\plugin
         cmake -S ..\%%i -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B ..\build%%i -DMS=%buildApp%\%buildType%\plugin
         %msbuild% ..\build%%i\ALL_BUILD.vcxproj /p:Configuration=%buildType%
     )
