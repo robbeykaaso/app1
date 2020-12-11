@@ -1541,7 +1541,7 @@ void task::jobManagement(){
                                                  "job_id", job,
                                                  "s3_bucket_name", s3_bucket_name,
                                                  "data_type", "log",
-                                                 "data_root", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + m_current_job),
+                                                 "data_root", "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + job),
                                        "callServer");
               aInput->out<QJsonObject>(prepareJobListGUI(job), "task_job_updateListView");
               aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
