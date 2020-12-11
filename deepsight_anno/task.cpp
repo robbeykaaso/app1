@@ -359,10 +359,10 @@ void task::taskManagement(){
             aInput->out<QJsonObject>(rea::Json("count", 1), "scattertaskImageShow");
             aInput->out<QJsonObject>(getFilter(), "updateTaskImageFilterGUI");
             for (auto i : m_jobs.keys()){
-                auto job = m_jobs.value(i).toObject();
-                if (job.value("state") == "upload_finish"){
-                    aInput->out<rea::stgByteArray>(rea::stgByteArray(QByteArray(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + i + "/log.txt"));
-                }
+                //auto job = m_jobs.value(i).toObject();
+                //if (job.value("state") == "upload_finish"){
+                aInput->out<rea::stgByteArray>(rea::stgByteArray(QByteArray(), "project/" + m_project_id + "/task/" + m_task_id + "/jobs/" + i + "/log.txt"));
+                //}
             }
             aInput->out<QJsonObject>(QJsonObject(), "switchtaskFirstImageIndex");
         }))
