@@ -1918,7 +1918,7 @@ void task::jobManagement(){
                    }
                    aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
                }
-               std::this_thread::sleep_for(std::chrono::microseconds(500));
+               std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                aInput->out<QString>(id, "requestJobState");
         }, rea::Json("thread", 5)), rea::Json("tag", protocal_task_state))
         ->next("callServer")
