@@ -8,59 +8,6 @@
 #include <QQueue>
 #include <QFileInfo>
 
-namespace rea{
-
-template <typename T, typename F = pipeFunc<T>>
-class pipeThrottle2 : public pipe<T, F> {
-protected:
-    pipeThrottle2(const QString& aName, int aThreadNo = 0, bool aReplace = false) : pipe<T, F>(aName, aThreadNo, aReplace) {
-
-    }
-    ~pipeThrottle2() override{
-        if (m_timer >= 0)
-            KillTimer(m_timer);
-    }
-    bool event( QEvent* e) override{
-        if(e->type()== pipe0::streamEvent::type){
-            auto eve = reinterpret_cast<pipe0::streamEvent*>(e);
-            if (eve->getName() == pipe0::m_name){
-                auto stm = std::dynamic_pointer_cast<stream<T>>(eve->getStream());
-                stm->template cache<bool>(false);
-                if (m_cache)
-                    m_cache = stm;
-                else{
-                    doEvent(stm);
-                    if (stm->template cacheData<bool>(0)){
-                        m_cache = stm;
-                        m_timer = startTimer(5);
-                    }else
-                        pipe0::doNextEvent(pipe0::m_next, stm);
-                }
-            }
-        }else if (e->type() == QEvent::Timer){
-            auto tm_e = reinterpret_cast<QTimerEvent*>(e);
-            auto id = tm_e->timerId();
-            if (m_timer == id){
-                doEvent(m_cache);
-                if (m_cache->template cacheData<bool>(0)){
-                    killTimer(id);
-                    auto stm = m_cache;
-                    m_cache = nullptr;
-                    m_timer = - 1;
-                    pipe0::doNextEvent(pipe0::m_next, stm);
-                }
-            }
-        }
-        return true;
-    }
-private:
-    std::shared_ptr<stream<T>> m_cache = nullptr;
-    int m_timer = - 1;
-    friend pipeline;
-};
-
-};
-
 QJsonObject parseProjectV3Shapes(const QJsonObject& aShapes){
     QJsonObject ret;
     for (auto i : aShapes){
@@ -595,6 +542,12 @@ private:
 
         //select image
         rea::pipeline::find("project_image_listViewSelected")
+            ->next(rea::pipeline::add<QJsonArray, rea::pipeThrottle2>([this](rea::stream<QJsonArray>* aInput){
+                if (m_selecting)
+                    aInput->cache<bool>(true, 0);
+                else
+                    aInput->cache<bool>(false, 0);
+            }), rea::Json("tag", "manual"))
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                        auto dt = aInput->data();
                        if (dt.size() == 0){
@@ -630,7 +583,7 @@ private:
                                aInput->out<QJsonObject>(QJsonObject(), "updateProjectImageGUI");
                            }
                        }
-                   }), rea::Json("tag", "manual"))
+                   }))
             ->nextB(rea::pipeline::find(s3_bucket_name + "readJson")
                            ->nextB(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
                                        m_image = aInput->data().getData();
@@ -1102,7 +1055,7 @@ private:
                     aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson", rea::Json("tag", "updateProjectImages"));
                     auto imgs = getImageList();
                     aInput->out<QJsonObject>(prepareImageListGUI(m_images, imgs, imgs.size() - 1), "project_image_updateListView");
-                    aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+                    aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
                 }
             }));
 
@@ -1198,7 +1151,7 @@ private:
             setImageList(imgs);
             setFilter(dt);
             aInput->out<QJsonObject>(prepareImageListGUI(m_images, imgs), "project_image_updateListView");
-            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
             aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson");
         }, rea::Json("name", "filterProjectImages"));
 
@@ -1272,7 +1225,7 @@ private:
             m_current_image = "";
             if (dt.contains("page"))
                 m_show_page = dt.value("page").toInt();
-            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
             if (m_selects_cache.contains("shapes"))
                 aInput->out<QJsonObject>(rea::Json(m_selects_cache, "invisible", true), "updateQSGSelects_projectimage_gridder0");
         }, rea::Json("name", "refreshProjectImage"));
@@ -1281,7 +1234,7 @@ private:
         rea::pipeline::add<double>([this](rea::stream<double>* aInput){
             m_show_label = !m_show_label;
             m_current_image = "";
-            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
         }, rea::Json("name", "modifyProjectLabelShow"));
 
         //update channel count
@@ -1294,7 +1247,7 @@ private:
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                 if (aInput->data().size() == 2){
                     if (m_last_state == 3)
-                        aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+                        aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
                 }else{
                     if (aInput->data().size() == 1)
                         m_project_id = "";

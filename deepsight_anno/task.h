@@ -34,6 +34,7 @@ protected:
     void serviceShowImageStatus(const QString aName, const QString& aChannel, QImage aImage, const QString& aImagePath);
     bool getShowLabel();
     QJsonArray getTransfrom();
+    void setNotSelecting();
     task* m_task;
 private:
     QHash<QString, bool> m_paths;
@@ -98,6 +99,7 @@ private:
     bool m_show_result = true;
     bool m_show_label = true;
     const QJsonObject selectTaskImage = rea::Json("tag", "selectTaskImage");
+    bool m_selecting = false;
     void imageManagement();
     bool isCurrentMode(const QString& aMode);
 private:

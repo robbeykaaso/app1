@@ -91,6 +91,10 @@ QJsonArray ITaskFriend::getTransfrom(){
     return m_task->m_transform;
 }
 
+void ITaskFriend::setNotSelecting(){
+    m_task->m_selecting = false;
+}
+
 void taskMode::initialize(){
     rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
         //if (getImageID() == "")
@@ -119,6 +123,7 @@ void taskMode::initialize(){
             auto ch = aInput->cacheData<int>(0);
             auto add_show = showQSGModel(ch, dt);
             if (ch == getShowCount() - 1){
+                setNotSelecting();
                 if (add_show)
                     add_show();
                 rea::pipeline::run<rea::stgJson>(s3_bucket_name_() + "readJson", rea::stgJson(QJsonObject(), getImageResultJsonPath()), rea::Json("tag", "updateImageResult"));
@@ -492,7 +497,7 @@ void task::labelManagement(){
         aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
         aInput->out<QJsonArray>(QJsonArray(), "task_label_listViewSelected", rea::Json("tag", "task_manual"));
         m_current_image = "";
-        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"));
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
     });
 
     rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
@@ -586,10 +591,9 @@ void task::imageManagement(){
         if (!aInput->data().empty()){
             m_current_mode = aInput->data()[0].toObject().value("type").toString();
             m_current_image = "";
-            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
         };
-    }))
-    ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"));
+    }));
 
     //update project images
     rea::pipeline::find(s3_bucket_name + "writeJson")
@@ -604,6 +608,12 @@ void task::imageManagement(){
     //select image
     auto select_image =
         rea::pipeline::find("task_image_listViewSelected")
+            ->next(rea::pipeline::add<QJsonArray, rea::pipeThrottle2>([this](rea::stream<QJsonArray>* aInput){
+                       if (m_selecting)
+                           aInput->cache<bool>(true, 0);
+                       else
+                           aInput->cache<bool>(false, 0);
+                   }), rea::Json("tag", "manual"))
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                if (m_task_id == "")
                    return;
@@ -616,6 +626,7 @@ void task::imageManagement(){
                    if (idx < lst.size()){
                        auto nm = lst[idx].toString();
                        if (nm != m_current_image){
+                           m_selecting = true;
                            aInput->out<QJsonObject>(rea::Json("type", "task", "index", idx), "imageIndexChanged");
                            aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_taskimage_gridder0");
                            auto img_cfg = m_project_images->value(nm).toObject();
@@ -643,7 +654,7 @@ void task::imageManagement(){
                for (int i = 0; i < m_show_count; ++i)
                    rea::pipeline::run<QJsonObject>("updateQSGModel_taskimage_gridder" + QString::number(i), QJsonObject());
                aInput->out<QJsonObject>(QJsonObject(), "updateTaskImageGUI");
-           }), rea::Json("tag", "manual"))
+           }))
         ->nextB("updateQSGCtrl_taskimage_gridder0")
         ->nextB(rea::pipeline::find(s3_bucket_name + "readJson")
                        ->nextB(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
@@ -764,11 +775,10 @@ void task::imageManagement(){
             return;
         setFilter(dt);
         aInput->out<QJsonObject>(prepareImageListGUI(imgs, getImageList()), "task_image_updateListView");
-        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
         aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
     }, rea::Json("name", "filterTaskImages"))
         ->nextB("task_image_updateListView")
-        ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
         ->nextB(s3_bucket_name + "writeJson");
 
     //automatic set image stage
@@ -840,11 +850,10 @@ void task::imageManagement(){
         }
         setImages(imgs);
         aInput->out<QJsonObject>(prepareImageListGUI(imgs, getImageList()), "task_image_updateListView");
-        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", QJsonObject(), false);
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
         aInput->out<rea::stgJson>(rea::stgJson(*this, getTaskJsonPath()), s3_bucket_name + "writeJson");
     }))
     ->nextB("task_image_updateListView")
-    ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"))
     ->nextB(s3_bucket_name + "writeJson");
 
     //manual set image stage
@@ -1039,11 +1048,10 @@ void task::guiManagement(){
     rea::pipeline::find("title_updateNavigation")
         ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
             if (aInput->data().size() == 3)
-                aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
+                aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
             else
                 m_current_image = "";
-        }), rea::Json("tag", "manual"))
-        ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+        }), rea::Json("tag", "manual"));
 
     //switch scatter mode
     rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput){
@@ -1054,10 +1062,8 @@ void task::guiManagement(){
             m_show_count = m_show_count == m_channel_count ? 1 : m_channel_count;
         aInput->out<QJsonObject>(rea::Json("size", m_show_count), "taskimage_updateViewCount");
         m_current_image = "";
-        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-    }, rea::Json("name", "scattertaskImageShow"))
-        ->nextB("taskimage_updateViewCount")
-        ->next("task_image_listViewSelected", rea::Json("tag", "manual"));
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
+    }, rea::Json("name", "scattertaskImageShow"));
 
     //modify image show
     rea::pipeline::find("_newObject")
@@ -1506,9 +1512,8 @@ void task::jobManagement(){
     rea::pipeline::add<double>([this](rea::stream<double>* aInput){
         m_show_label = !m_show_label;
         m_current_image = "";
-        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected");
-    }, rea::Json("name", "modifyTaskLabelShow"))
-        ->nextB("task_image_listViewSelected", rea::Json("tag", "manual"));
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
+    }, rea::Json("name", "modifyTaskLabelShow"));
 
     //download result
     rea::pipeline::find("_selectFile")
@@ -1909,7 +1914,7 @@ void task::jobManagement(){
                    if (st == "upload_finish"){
                        m_current_image = "";
                        aInput->out<QJsonObject>(prepareJobListGUI(), "task_job_updateListView");
-                       aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"));
+                       aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
                    }
                    aInput->out<rea::stgJson>(rea::stgJson(m_jobs, getJobsJsonPath()), s3_bucket_name + "writeJson");
                }

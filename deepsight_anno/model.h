@@ -7,6 +7,62 @@
 
 extern QString s3_bucket_name;
 
+namespace rea{
+
+template <typename T, typename F = pipeFunc<T>>
+class pipeThrottle2 : public pipe<T, F> {
+protected:
+    pipeThrottle2(const QString& aName, int aThreadNo = 0, bool aReplace = false) : pipe<T, F>(aName, aThreadNo, aReplace) {
+
+    }
+    ~pipeThrottle2() override{
+        if (m_timer >= 0)
+            killTimer(m_timer);
+    }
+    bool event( QEvent* e) override{
+        if(e->type()== pipe0::streamEvent::type){
+            auto eve = reinterpret_cast<pipe0::streamEvent*>(e);
+            if (eve->getName() == pipe0::m_name){
+                auto stm = std::dynamic_pointer_cast<stream<T>>(eve->getStream());
+                if (m_cache)
+                    m_cache = stm;
+                else{
+                    doEvent(stm);
+                    if (stm->template cacheData<bool>(0)){
+                        m_cache = stm;
+                        m_timer = startTimer(5);
+                    }else{
+                        stm->template cache<bool>(false)->template out<T>(stm->data(), "", QJsonObject(), false);
+                        pipe0::doNextEvent(pipe0::m_next, stm);
+                    }
+                }
+            }
+        }else if (e->type() == QEvent::Timer){
+            auto tm_e = reinterpret_cast<QTimerEvent*>(e);
+            auto id = tm_e->timerId();
+            if (m_timer == id){
+                doEvent(m_cache);
+                if (!m_cache->template cacheData<bool>(0)){
+                    killTimer(id);
+                    auto stm = m_cache;
+                    m_cache = nullptr;
+                    m_timer = - 1;
+                    stm->template cache<bool>(false)->template out<T>(stm->data(), "", QJsonObject(), false);
+                    pipe0::doNextEvent(pipe0::m_next, stm);
+                }
+            }
+        }
+        return true;
+    }
+private:
+    std::shared_ptr<stream<T>> m_cache = nullptr;
+    int m_timer = - 1;
+    friend pipeline;
+};
+
+};
+
+
 class model : public QJsonObject{
 public:
 /*#define ABSTRACT(MODEL) \

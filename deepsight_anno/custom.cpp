@@ -103,20 +103,18 @@ void roiMode::initialize() {
       rea::Json("name", "roi_modifyRemoteModel"));
 
   // interface show
-  rea::pipeline::add<stgCVMat>(
-      [this](rea::stream<stgCVMat>* aInput) {
-        auto dt = aInput->data();
-        auto ch = aInput->cacheData<int>(0);
-        auto add_show = showQSGModel(ch, dt);
-        if (ch == getShowCount() - 1) {
+  rea::pipeline::add<stgCVMat>([this](rea::stream<stgCVMat>* aInput) {
+      auto dt = aInput->data();
+      auto ch = aInput->cacheData<int>(0);
+      auto add_show = showQSGModel(ch, dt);
+      if (ch == getShowCount() - 1) {
+          setNotSelecting();
           if (add_show) add_show();
-          aInput->out<rea::stgJson>(
-              rea::stgJson(QJsonObject(), getImageResultJsonPath()),
-              s3_bucket_name_() + "readJson",
-              rea::Json("tag", "updateImageResult"));
-        }
-      },
-      rea::Json("name", "roi_showQSGModel"));
+          aInput->out<rea::stgJson>(rea::stgJson(QJsonObject(), getImageResultJsonPath()),
+                                    s3_bucket_name_() + "readJson",
+                                    rea::Json("tag", "updateImageResult"));
+      }
+  }, rea::Json("name", "roi_showQSGModel"));
 
   // interface param
   rea::pipeline::find("startJob")
@@ -204,8 +202,7 @@ void roiMode::initialize() {
                                     s3_bucket_name_() + "writeJson");
         }
         updateCurrentImage();
-        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected",
-                                rea::Json("tag", "manual"));
+        aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
       },
       rea::Json("name", "updateROILocalMode"));
 
@@ -232,8 +229,7 @@ void roiMode::initialize() {
             aInput->out<rea::stgJson>(rea::stgJson(*m_task, getTaskJsonPath()),
                                       s3_bucket_name_() + "writeJson");
             updateCurrentImage();
-            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected",
-                                    rea::Json("tag", "manual"));
+            aInput->out<QJsonArray>(QJsonArray(), "task_image_listViewSelected", rea::Json("tag", "manual"), false);
           }));
 }
 
