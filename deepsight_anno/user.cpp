@@ -4,6 +4,7 @@
 #include "reactive2.h"
 #include "storage.h"
 #include "util.h"
+#include "server.h"
 #include <QDateTime>
 
 class user : public model {
@@ -112,12 +113,159 @@ private:
                                     "owner", rea::GetMachineFingerPrint()));
     return id;
   }
+  bool setLinkedServer(const QString& aLinkedServer){
+      auto ret = value("linked_server") != aLinkedServer;
+      if (ret)
+          insert("linked_server", aLinkedServer);
+      return ret;
+  }
+  QJsonObject getLinkedServer(){
+      auto ret = value("linked_server").toString().split(":");
+      if (ret.size() == 0)
+          return QJsonObject();
+      else
+          return rea::Json("ip", ret[0],
+                           "port", ret[1],
+                           "id", ret[2]);
+  }
   QJsonObject m_projects;
   bool m_project_owner;
   int m_title_state = 0;
 
+  void serverManagement(){
+      // save local server
+      rea::pipeline::find("clientBoardcast")
+          ->next(rea::pipeline::add<QJsonObject>([this](rea::stream<QJsonObject>* aInput) {
+              auto dt = aInput->data();
+              if (dt.value("value") == "socket is connected") {
+                  if (setLinkedServer(dt.value("detail").toString()))
+                      saveUserStorage();
+              }
+          }));
+
+      //initialize socket
+      rea::pipeline::find("tryLinkServer")
+          ->previous(rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson>* aInput){
+              auto dt = aInput->data();
+              if (dt.getData().value("test_server").toBool()){
+                  static rea::normalServer server(rea::Json("protocal", protocal));
+                  static QHash<QString, int> job_states;
+                  aInput->out<QJsonObject>(rea::Json("ip", "127.0.0.1",
+                                                     "port", "8081",
+                                                     "id", "hello"), "tryLinkServer");
+
+                  rea::pipeline::find("receiveFromClient")  //server end
+                      ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
+                                  auto dt = aInput->data();
+                                  auto ret = protocal.value(protocal_connect).toObject().value("res").toObject();
+                                  aInput->setData(ret)->out();
+                              })->nextB("callClient"),
+                              rea::Json("tag", protocal_connect))
+                      ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
+                                  auto dt = aInput->data();
+                                  auto ret = protocal.value(protocal_upload).toObject().value("res").toObject();
+                                  auto job = dt.value("job_id").toString();
+                                  aInput->setData(rea::Json(ret, "model_id", job, "upload_model_file_list", rea::JArray(job + ".zip")))->out();
+                              })->nextB("callClient"),
+                              rea::Json("tag", protocal_upload))
+                      ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
+                                  auto dt = aInput->data();
+                                  auto ret = protocal.value(protocal_stop_job).toObject().value("res").toObject();
+                                  job_states.insert(dt.value("stop_job_id").toString(), - 1);
+                                  aInput->setData(ret)->out();
+                              })->nextB("callClient"),
+                              rea::Json("tag", protocal_stop_job))
+                      ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
+                                  auto dt = aInput->data();
+                                  auto ret = protocal.value(protocal_training).toObject().value("res").toObject();
+
+                                  auto id = dt.value("params").toObject().value("train_from_model").toString();
+                                  if (id != ""){
+                                      ret.insert("job_id", id);
+                                  }else{
+                                      auto tm0 = QDateTime::currentDateTime();
+                                      id = rea::generateUUID();
+                                      ret.insert("job_id", QString::number(tm0.toTime_t()) + "_" + id);
+                                  }
+
+                                  aInput->setData(ret)->out();
+                              }, rea::Json("name", "startServerTraining"))->nextB("callClient"),
+                              rea::Json("tag", protocal_training))
+                      ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
+                                  auto dt = aInput->data();
+                                  auto ret = protocal.value(protocal_inference).toObject().value("res").toObject();
+                                  auto tm0 = QDateTime::currentDateTime();
+                                  auto id = rea::generateUUID();
+                                  ret.insert("type", "inference");
+                                  auto job_id = QString::number(tm0.toTime_t()) + "_" + id;
+                                  if (dt.contains("job_id"))
+                                      ret.insert("job_id", dt.value("job_id"));
+                                  else
+                                      ret.insert("job_id", job_id);
+                                  if (!dt.value("statistics").toBool())
+                                      ret.insert("model_id", dt.value("model_id"));
+                                  aInput->setData(ret)->out();
+                              })->nextB("callClient"),
+                              rea::Json("tag", "inference"))
+                      ->nextB(rea::pipeline::add<rea::clientMessage>([](rea::stream<rea::clientMessage>* aInput){
+                                  auto dt = aInput->data();
+                                  auto ret = protocal.value(protocal_task_state).toObject().value("res").toObject();
+                                  auto id = dt.value("id").toString();
+                                  ret.insert("id", id);
+                                  auto job_id = dt.value("job_id").toString();
+                                  auto cnt = job_states.value(job_id) + 1;
+                                  job_states.insert(job_id, cnt);
+                                  if (!cnt)
+                                      ret.insert("state", "fail");
+                                  else if (cnt == 1000)
+                                      ret.insert("state", "process_finish");
+                                  else if (cnt < 2000)
+                                      ret.insert("state", "running");
+                                  else
+                                      ret.insert("state", "upload_finish");
+                                  auto res = rea::clientMessage(ret);
+                                  res.client_socket = aInput->data().client_socket;
+                                  aInput->out<rea::clientMessage>(res, "callClient");
+
+                                  if (cnt){
+                                      res = rea::clientMessage(rea::Json(protocal.value(protocal_progress_push).toObject().value("res").toObject(),
+                                                                         "job_id", dt.value("job_id"),
+                                                                         "progress", cnt * 100.0 / 2000,
+                                                                         "progress_msg", "..."));
+                                      res.client_socket = aInput->data().client_socket;
+                                      aInput->out<rea::clientMessage>(res, "callClient");
+
+                                      res = rea::clientMessage(rea::Json(protocal.value(protocal_log_push).toObject().value("res").toObject(),
+                                                                         "job_id", dt.value("job_id"),
+                                                                         "log_level", cnt % 2 == 0 ? "info" : "warning",
+                                                                         "log_msg", "..."));
+                                      res.client_socket = aInput->data().client_socket;
+                                      aInput->out<rea::clientMessage>(res, "callClient");
+                                  }
+
+                              }, rea::Json("name", "pollingTrainingState"))->nextB("callClient"),
+                              rea::Json("tag", protocal_task_state));
+              }else
+                  aInput->out<QJsonObject>(getLinkedServer(), "tryLinkServer");
+          }))
+          ->previous(rea::local("readJson"))
+          ->execute(std::make_shared<rea::stream<rea::stgJson>>((rea::stgJson(QJsonObject(), "config_.json"))));
+
+      //manually link server
+      rea::pipeline::find("_newObject")
+          ->next(rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+                     auto dt = aInput->data();
+                     if (dt.value("auto").toBool())
+                         aInput->out<QJsonObject>(QJsonObject(), "tryLinkServer");
+                     else
+                         aInput->out<QJsonObject>(rea::Json("ip", dt.value("ip"),
+                                                            "port", dt.value("port"),
+                                                            "id", 0), "tryLinkServer");
+                 }), rea::Json("tag", "setServer"))
+          ->next("tryLinkServer");
+  }
 public:
-    user() {        
+    user() {
       // initialize storage
       rea::pipeline::add<rea::stgJson>([this](rea::stream<rea::stgJson> *aInput) {
           auto dt = aInput->data();
@@ -365,6 +513,8 @@ public:
             auto dt = aInput->data();
             m_projects = dt[0].getData();
             dt[1].getData().swap(*this);
+
+            serverManagement();
 
             aInput->outB<QJsonArray>(QJsonArray({rea::GetMachineFingerPrint()}), "title_updateNavigation", rea::Json("tag", "manual"))
                 ->outB<QJsonObject>(prepareProjectListGUI(getProjects(*this)), "user_updateListView")

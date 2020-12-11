@@ -567,7 +567,7 @@ private:
                                        if (i == 0)
                                            img_nm = nms[m_first_image_index].toString();
                                        auto img = "project/" + m_project_id + "/image/" + nm + "/" + img_nm;
-                                       aInput->out<stgCVMat>(stgCVMat(cv::Mat(), img));
+                                       aInput->out<stgCVMat>(stgCVMat(img));
                                    }
                                }
                                //aInput->out<QJsonObject>(m_images.value(nm).toObject(), "updateProjectImageGUI");
@@ -1044,7 +1044,8 @@ private:
                 if (aInput->data() == 1.0){
                     aInput->out<rea::stgJson>(rea::stgJson(m_images, "project/" + m_project_id + "/image.json"), s3_bucket_name + "writeJson");
                     aInput->out<rea::stgJson>(rea::stgJson(*this, "project/" + m_project_id + ".json"), s3_bucket_name + "writeJson", rea::Json("tag", "updateProjectImages"));
-                    aInput->out<QJsonObject>(prepareImageListGUI(m_images, getImageList()), "project_image_updateListView");
+                    auto imgs = getImageList();
+                    aInput->out<QJsonObject>(prepareImageListGUI(m_images, imgs, imgs.size() - 1), "project_image_updateListView");
                     aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
                 }
             }));

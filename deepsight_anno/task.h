@@ -104,7 +104,6 @@ private:
     void guiManagement();
 private:
     rea::normalClient m_client;
-    void serverManagement();
 private:
     QJsonObject m_jobs;
     QString m_current_job = "";
