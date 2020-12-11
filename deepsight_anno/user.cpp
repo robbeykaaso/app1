@@ -121,12 +121,13 @@ private:
   }
   QJsonObject getLinkedServer(){
       auto ret = value("linked_server").toString().split(":");
-      if (ret.size() == 0)
-          return QJsonObject();
-      else
+      std::cout << ret[0].toStdString() << std::endl;
+      if (ret.size() == 3)
           return rea::Json("ip", ret[0],
                            "port", ret[1],
                            "id", ret[2]);
+      else
+          return QJsonObject();
   }
   QJsonObject m_projects;
   bool m_project_owner;

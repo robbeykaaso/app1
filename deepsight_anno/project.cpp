@@ -8,6 +8,59 @@
 #include <QQueue>
 #include <QFileInfo>
 
+namespace rea{
+
+template <typename T, typename F = pipeFunc<T>>
+class pipeThrottle2 : public pipe<T, F> {
+protected:
+    pipeThrottle2(const QString& aName, int aThreadNo = 0, bool aReplace = false) : pipe<T, F>(aName, aThreadNo, aReplace) {
+
+    }
+    ~pipeThrottle2() override{
+        if (m_timer >= 0)
+            KillTimer(m_timer);
+    }
+    bool event( QEvent* e) override{
+        if(e->type()== pipe0::streamEvent::type){
+            auto eve = reinterpret_cast<pipe0::streamEvent*>(e);
+            if (eve->getName() == pipe0::m_name){
+                auto stm = std::dynamic_pointer_cast<stream<T>>(eve->getStream());
+                stm->template cache<bool>(false);
+                if (m_cache)
+                    m_cache = stm;
+                else{
+                    doEvent(stm);
+                    if (stm->template cacheData<bool>(0)){
+                        m_cache = stm;
+                        m_timer = startTimer(5);
+                    }else
+                        pipe0::doNextEvent(pipe0::m_next, stm);
+                }
+            }
+        }else if (e->type() == QEvent::Timer){
+            auto tm_e = reinterpret_cast<QTimerEvent*>(e);
+            auto id = tm_e->timerId();
+            if (m_timer == id){
+                doEvent(m_cache);
+                if (m_cache->template cacheData<bool>(0)){
+                    killTimer(id);
+                    auto stm = m_cache;
+                    m_cache = nullptr;
+                    m_timer = - 1;
+                    pipe0::doNextEvent(pipe0::m_next, stm);
+                }
+            }
+        }
+        return true;
+    }
+private:
+    std::shared_ptr<stream<T>> m_cache = nullptr;
+    int m_timer = - 1;
+    friend pipeline;
+};
+
+};
+
 QJsonObject parseProjectV3Shapes(const QJsonObject& aShapes){
     QJsonObject ret;
     for (auto i : aShapes){
@@ -530,6 +583,7 @@ protected:
     }
 private:
     const QJsonObject selectProjectImage = rea::Json("tag", "selectProjectImage");
+    bool m_selecting = false;
 
     void setImageShow(const QJsonObject& aImageShow){
         insert("imageShow", aImageShow);
@@ -556,6 +610,7 @@ private:
                            if (idx < imgs.size()){
                                auto nm = imgs[idx].toString();
                                if (nm != m_current_image){
+                                   m_selecting = true;
                                    aInput->out<QJsonObject>(rea::Json("type", "project", "index", idx), "imageIndexChanged");
                                    aInput->out<QJsonArray>(QJsonArray(), "updateQSGCtrl_projectimage_gridder0");
                                    m_current_image = nm;
@@ -671,6 +726,7 @@ private:
                     aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder" + ch);
                     serviceShowImageStatus("project", ch, img, pth);
                 }
+                m_selecting = false;
             }, rea::Json("tag", "project"));
 
         //get selected images
@@ -1257,7 +1313,7 @@ private:
                 m_show_count = m_show_count == ch ? 1 : ch;
             aInput->out<QJsonObject>(rea::Json("size", m_show_count), "projectimage_updateViewCount");
             m_current_image = "";
-            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"));
+            aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
         }, rea::Json("name", "scatterprojectImageShow"));
 
         //modify image show
