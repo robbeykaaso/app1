@@ -1246,8 +1246,10 @@ private:
         rea::pipeline::find("title_updateNavigation")
             ->next(rea::pipeline::add<QJsonArray>([this](rea::stream<QJsonArray>* aInput){
                 if (aInput->data().size() == 2){
-                    if (m_last_state == 3)
+                    if (m_last_state == 3){
+                        m_current_image = "";
                         aInput->out<QJsonArray>(QJsonArray(), "project_image_listViewSelected", rea::Json("tag", "manual"), false);
+                    }
                 }else{
                     if (aInput->data().size() == 1)
                         m_project_id = "";
