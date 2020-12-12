@@ -676,7 +676,8 @@ private:
                                                                                                                               ),
                                          "objects", objs);
                     auto ch = QString::number(i);
-                    aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder" + ch);
+                    rea::pipeline::run<QJsonObject>("updateQSGModel_projectimage_gridder" + ch, cfg);
+                    //aInput->out<QJsonObject>(cfg, "updateQSGModel_projectimage_gridder" + ch);
                     serviceShowImageStatus("project", ch, img, pth);
                 }
                 m_selecting = false;
