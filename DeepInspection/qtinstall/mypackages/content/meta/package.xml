@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>DeepInspection.exe</DisplayName>
+    <Description>A annotation tool, accessible through a start menu entry.</Description>
+    <Version>1.0.0-1</Version>
+    <ReleaseDate>2019-12-23</ReleaseDate>
+    <Default>true</Default>
+    <Script>installexe.qs</Script>
+    <UserInterfaces>
+        <UserInterface>mypage0.ui</UserInterface>
+    </UserInterfaces>
+</Package>

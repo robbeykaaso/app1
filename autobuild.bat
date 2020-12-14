@@ -5,6 +5,13 @@ if "%1"=="" (
 ) else (
     set buildType=%1
 )
+
+if "%2"=="" (
+    set packProject=DeepInspection
+) else (
+    set packProject=%2
+)
+
 set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe"
 
 set srcRea="..\frm" 
@@ -30,7 +37,7 @@ cmake -S %srcApp% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildApp%
 %msbuild% %buildApp%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
 
 ::https://stackoverflow.com/questions/7005951/batch-file-find-if-substring-is-in-string-not-in-a-file
-for /f "delims=:" %%i in (.module) do (
+for /f "delims=:" %%i in (%packProject%/.module) do (
     echo.%%i | findstr /C:"dll">nul && (
         if exist ..\build%%i (
             rd /s /q ..\build%%i
@@ -60,17 +67,15 @@ call recordVersion %buildApp%\%buildType%\.version
 xcopy %buildApp%\%buildType%\plugin\%buildType%\* %buildApp%\%buildType%\plugin /e /y
 rd /s /q %buildApp%\%buildType%\plugin\%buildType%
 
-mkdir %buildApp%\%buildType%\minIO
-xcopy .\minIO\* %buildApp%\%buildType%\minIO /e /y
 mkdir %buildApp%\%buildType%\qtinstall
-xcopy .\qtinstall\* %buildApp%\qtinstall /e /y
+xcopy .\%packProject%\qtinstall\* %buildApp%\qtinstall /e /y
 
 xcopy %buildApp%\%buildType%\* %buildApp%\qtinstall\mypackages\content\data\ /e /y
 ::xcopy .\pack\* %buildApp%\qtinstall\mypackages\content2\data\ /e /y
 xcopy %buildApp%\%buildType%\* %buildApp%\qtinstall\mypackages\content3\data\ /e /y
 
 cd pack
-WINPACK.exe
+WINPACK.exe ../%packProject%/config_.json
 cd ..
 
 D:\qt-installer\bin\binarycreator.exe -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages DeepInspectionV4.exe -v 

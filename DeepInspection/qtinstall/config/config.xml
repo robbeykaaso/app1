@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>DeepInspection</Name>
+    <Version>2.0.0</Version>
+    <Title>Installation</Title>
+    <Publisher>Robbey</Publisher>
+    <!-- Directory name is used in component.xml -->
+    <StartMenuDir>DeepInspection</StartMenuDir>
+    <TargetDir>@ApplicationsDirX64@\Deepsight</TargetDir>
+    <ControlScript>controller.qs</ControlScript>
+</Installer>

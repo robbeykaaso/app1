@@ -27,7 +27,7 @@ find_package(REA)
 
 set(my_Sources
     "main.cpp" #WIN32: to disable the console window
-    "resource/logo.rc"
+    "${PROJECT_NAME}/resource/logo.rc"
     )
 
 set(my_Libs

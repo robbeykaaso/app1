@@ -75,7 +75,7 @@ void packExe(const QJsonObject& aConfig){
     cmd = "windeployqt --qmldir " + aConfig.value("source").toString() + " " + app;
     system(cmd.toStdString().data());
 
-    cmd = aConfig.value("depends").toString() + " /c /ot:" + dir + "/depends" + " /f:1 /sm:15 \"" + app + "\"";
+    cmd = "\"" + aConfig.value("depends").toString() + "\"" + + " /c /ot:" + dir + "/depends" + " /f:1 /sm:15 \"" + app + "\"";
     system(cmd.toStdString().data());
     parseDependsAndCopy(dir.toStdString(), filters, white);
 
@@ -109,8 +109,9 @@ void packExe(const QJsonObject& aConfig){
 int main(int argc, char *argv[])
 {
     QDir dir;
-    if (dir.exists("config_.json")){
-        QFile fl("config_.json");
+    QString pth = "config_.json";
+    if (dir.exists(pth)){
+        QFile fl(pth);
         if (fl.open(QFile::ReadOnly)){
             QJsonDocument doc = QJsonDocument::fromJson(fl.readAll());
             packExe(doc.object());
