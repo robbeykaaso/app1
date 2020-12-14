@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>main.cpp</file>
         <file>qtquickcontrols2.conf</file>
     </qresource>
 </RCC>
