@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>NWLan.exe</DisplayName>
+    <Description>A new program language by graph.</Description>
+    <Version>1.0.0-1</Version>
+    <ReleaseDate>2020-12-31</ReleaseDate>
+    <Default>true</Default>
+</Package>
