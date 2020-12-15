@@ -3,6 +3,6 @@
     "app": "../../buildApp/qtinstall/mypackages/content/data/NWLan.exe",
     "depends": "depends.exe",
     "filter": ["windows"],
-    "qmladdition": ["../../frm", "../../dll", "../../app2"],
+    "qmladdition": ["../../frm", "../../dll", "../../dll3"],
     "addition": ["../../buildApp/qtinstall/mypackages/content/data/plugin"]
 }

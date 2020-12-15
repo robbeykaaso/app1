@@ -13,6 +13,7 @@ if "%2"=="" (
 )
 
 set msbuild="C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\MSBuild.exe"
+set installer="D:\qt-installer\bin\binarycreator.exe"
 
 set srcRea="..\frm" 
 set buildRea="..\buildRea"
@@ -51,18 +52,19 @@ for /f "delims=:" %%i in (%packProject%/.module) do (
 )
 
 set srcKey="..\key"
-set buildKey="..\buildKey"
+if exist %srcKey% (
+    set buildKey="..\buildKey"
 
-if exist %buildKey% (
-    rd /s /q %buildKey%
+    if exist %buildKey% rd /s /q %buildKey%
+    mkdir %buildKey%
+
+    cmake -S %srcKey% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildKey% -DMS=%buildApp%
+    %msbuild% %buildKey%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
+    copy "..\key\key.bat" %buildApp%\%buildType%\key.bat
 )
-mkdir %buildKey%
 
-cmake -S %srcKey% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildKey% -DMS=%buildApp%
-%msbuild% %buildKey%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
-copy "..\key\key.bat" %buildApp%\%buildType%\key.bat
 
-call recordVersion %buildApp%\%buildType%\.version
+call recordVersion %buildApp%\%buildType%\.version %packProject%
 
 xcopy %buildApp%\%buildType%\plugin\%buildType%\* %buildApp%\%buildType%\plugin /e /y
 rd /s /q %buildApp%\%buildType%\plugin\%buildType%
@@ -70,18 +72,14 @@ rd /s /q %buildApp%\%buildType%\plugin\%buildType%
 mkdir %buildApp%\%buildType%\qtinstall
 xcopy .\%packProject%\qtinstall\* %buildApp%\qtinstall /e /y
 
-xcopy %buildApp%\%buildType%\* %buildApp%\qtinstall\mypackages\content\data\ /e /y
-::xcopy .\pack\* %buildApp%\qtinstall\mypackages\content2\data\ /e /y
-xcopy %buildApp%\%buildType%\* %buildApp%\qtinstall\mypackages\content3\data\ /e /y
+call .\%packProject%\custombuild %buildApp% %buildType%
 
 cd pack
 WINPACK.exe ../%packProject%/config_.json
 cd ..
 
-D:\qt-installer\bin\binarycreator.exe -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages DeepInspectionV4.exe -v 
-
-xcopy ..\frm\install\* ..\frm-company\install /e /y
-xcopy ..\frm\include\* ..\frm-company\include /e /y
-xcopy ..\dll2\* ..\frm-company\plugin /e /y
+if exist %installer% ( 
+    %installer% -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages %packProject%V4.exe -v 
+)
 :: xcopy DeepInspectionV4.exe ..\frm-company /y
 :: "C:/Program Files/7-Zip/7z.exe" a -tzip DeepInspectionBinary.zip %buildType%/*
