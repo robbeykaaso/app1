@@ -28,14 +28,6 @@ int main(int argc, char *argv[])
 
     rea::pipeline::run<QQmlApplicationEngine*>("regQML", &engine);
 
-
-    /*QJsonObject lan;
-    dst::configObject::loadJsonFileConfig("lanInfo", lan);
-    QTranslator translator;
-    QString ln = lan.value("name").toString();
-        translator.load(ln);
-    QCoreApplication::installTranslator(&translator);*/
-
     QString mode;
     QHash<QString, QString> prm;
     for (auto i = 0; i < argc; i++){
