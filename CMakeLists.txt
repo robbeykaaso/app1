@@ -33,6 +33,7 @@ set(my_Sources
 set(my_Libs
     Qt5::Core Qt5::Quick Qt5::Widgets
     ${REA_LIBS}
+    dbghelp
     )
 
 add_executable(${PROJECT_NAME}
