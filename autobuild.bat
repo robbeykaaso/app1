@@ -34,7 +34,7 @@ if exist %buildApp% (
 )
 mkdir %buildApp%
 
-cmake -S %srcApp% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildApp%
+cmake -S %srcApp% -DCMAKE_BUILD_TYPE=%buildType% -DCMAKE_CUSTOM_PROJECT=%packProject% -A x64 -B %buildApp%
 %msbuild% %buildApp%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
 
 ::https://stackoverflow.com/questions/7005951/batch-file-find-if-substring-is-in-string-not-in-a-file
@@ -70,7 +70,7 @@ xcopy %buildApp%\%buildType%\plugin\%buildType%\* %buildApp%\%buildType%\plugin 
 rd /s /q %buildApp%\%buildType%\plugin\%buildType%
 
 mkdir %buildApp%\%buildType%\qtinstall
-xcopy .\%packProject%\qtinstall\* %buildApp%\qtinstall /e /y
+xcopy .\%packProject%\qtinstall\* %buildApp%\qtinstall\ /e /y
 
 call .\%packProject%\custombuild %buildApp% %buildType%
 
