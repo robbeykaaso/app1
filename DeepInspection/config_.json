@@ -3,6 +3,6 @@
     "app": "../../buildApp/qtinstall/mypackages/content3/data/DeepInspection.exe",
     "depends": "depends.exe",
     "filter": ["windows"],
-    "qmladdition": ["../../frm", "../../dll0", "../../dll", "../../dll2"],
+    "qmladdition": ["../../frm", "../../dll", "../../dll4"],
     "addition": ["../../buildApp/qtinstall/mypackages/content3/data/plugin"]
 }
