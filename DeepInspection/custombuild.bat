@@ -7,3 +7,5 @@ xcopy %buildApp%\%buildType%\* %buildApp%\qtinstall\mypackages\content3\data\ /e
 xcopy ..\frm\install\* ..\frm-company\install /e /y
 xcopy ..\frm\include\* ..\frm-company\include /e /y
 xcopy ..\dll2\* ..\frm-company\plugin-image\ /e /y
+xcopy ..\dll3\* ..\frm-company\plugin-test\ /e /y
+xcopy ..\dll4\* ..\frm-company\plugin-gui\ /e /y
