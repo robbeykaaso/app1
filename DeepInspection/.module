@@ -1,6 +1,7 @@
-frm:rea
-dll0:anno
-dll:rea-shape
+frm:rea2
+dll0:anno2
+dll:rea-shape2
 app:app1
-dll2:rea-image
-dll4:anno-gui
+dll3:rea-test
+dll2:rea-image2
+dll4:anno-gui2

@@ -23,9 +23,6 @@ if exist %buildRea% (
 )
 mkdir %buildRea%
 
-cmake -S %srcRea% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildRea% -DMS=ON
-%msbuild% %buildRea%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
-
 set srcApp="..\app"
 set buildApp="..\buildApp"
 
@@ -33,6 +30,9 @@ if exist %buildApp% (
     rd /s /q %buildApp%
 )
 mkdir %buildApp%
+
+cmake -S %srcRea% -DCMAKE_BUILD_TYPE=%buildType% -A x64 -B %buildRea% -DMS=%buildApp%\%buildType%\plugin
+%msbuild% %buildRea%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
 
 cmake -S %srcApp% -DCMAKE_BUILD_TYPE=%buildType% -DCMAKE_CUSTOM_PROJECT=%packProject% -A x64 -B %buildApp%
 %msbuild% %buildApp%\ALL_BUILD.vcxproj /p:Configuration=%buildType%
@@ -79,7 +79,7 @@ WINPACK.exe ../%packProject%/config_.json
 cd ..
 
 if exist %installer% ( 
-    %installer% -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages %packProject%V4.exe -v 
+    %installer% -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages %packProject%V4.1.exe -v 
 )
 :: xcopy DeepInspectionV4.exe ..\frm-company /y
 :: "C:/Program Files/7-Zip/7z.exe" a -tzip DeepInspectionBinary.zip %buildType%/*

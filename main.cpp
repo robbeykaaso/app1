@@ -6,7 +6,7 @@
 #include <QTranslator>
 #include <QIcon>
 #include <iostream>
-#include "reactive2.h"
+#include "reaC++.h"
 #include <Windows.h>
 #include <QWindow>
 #include <DbgHelp.h>
@@ -26,9 +26,26 @@ LONG ApplicationCrashHandler(EXCEPTION_POINTERS *pException)
         //写入Dump文件内容
         MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hDumpFile, MiniDumpNormal, &dumpInfo, NULL, NULL);
     }
-    rea::pipeline::run<double>("crashDump", 0);
+    rea::pipeline::run<double>("logTransaction", 1, "", false);
     return EXCEPTION_EXECUTE_HANDLER;
 }
+
+class transactionManager2 : public rea::transactionManager{
+public:
+    transactionManager2() : rea::transactionManager(){
+        rea::pipeline::add<rea::transaction*>([](rea::stream<rea::transaction*>* aInput){
+            auto rt = aInput->data();
+            if (rt->getName() != "updateQSGPos_projectimage_gridder0;")
+                aInput->out();
+        }, rea::Json("name", "filterUpdateQSGPosS", "before", "transactionStart"));
+
+        rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
+            auto dt = aInput->data();
+            if (dt.value("name") != "updateQSGPos_projectimage_gridder0;")
+                aInput->out();
+        }, rea::Json("name", "filterUpdateQSGPosE", "before", "transactionEnd"));
+    }
+};
 
 int main(int argc, char *argv[])
 {
@@ -47,7 +64,8 @@ int main(int argc, char *argv[])
     });
     engine.rootContext()->setContextProperty("applicationDirPath", QGuiApplication::applicationDirPath()); //https://recalll.co/ask/v/topic/qt-QML%3A-how-to-specify-image-file-path-relative-to-application-folder/55928bae7d3563c7088b7db1
 
-    rea::pipeline::run<QQmlApplicationEngine*>("regQML", &engine);
+    transactionManager2 mn;
+    rea::pipeline::run<QQmlApplicationEngine*>("regQML", &engine, "", false);
 
     QString mode;
     QHash<QString, QString> prm;
@@ -61,10 +79,8 @@ int main(int argc, char *argv[])
                 prm.insert(key, QString::fromStdString(argv[i]));
         }
     }
-    if (prm.value("-d") == "TRUE")
-        rea::pipeline::run<int>("unitTest", 0);
-    if (prm.value("-m") == "GUI")
-        rea::pipeline::run<QQmlApplicationEngine*>("loadGUIMain", &engine);
+    if (prm.value("-m") == "TEST")
+        rea::pipeline::run<QJsonObject>("unitTest", QJsonObject(), "", false);
     else{
         rea::pipeline::run<QQmlApplicationEngine*>("loadMain", &engine);
         if (prm.value("-md") == "TRUE"){
@@ -82,9 +98,6 @@ int main(int argc, char *argv[])
             w->setTransientParent(reinterpret_cast<QWindow*>(objs[objs.size() - 1]));
         }
     }
-    //dst::streamManager::instance()->emitSignal("setFocus", std::make_shared<dst::streamJson>(dst::Json("board", "panel0")));
 
-    //re::pipeManager::run("unitTest2");
-//    re2::testReactive2();
     return app.exec();
 }
