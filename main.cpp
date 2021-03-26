@@ -6,13 +6,15 @@
 #include <QTranslator>
 #include <QIcon>
 #include <iostream>
-#include "reaC++.h"
 #include <Windows.h>
 #include <QWindow>
 #include <DbgHelp.h>
+#include <cstdio>
+#include <TlHelp32.h>
+#include "reaC++.h"
 
 LONG ApplicationCrashHandler(EXCEPTION_POINTERS *pException)
-{
+{    
     //创建 Dump 文件
     HANDLE hDumpFile = CreateFile("crash.dmp", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hDumpFile != INVALID_HANDLE_VALUE)
@@ -30,28 +32,33 @@ LONG ApplicationCrashHandler(EXCEPTION_POINTERS *pException)
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-class transactionManager2 : public rea::transactionManager{
-public:
-    transactionManager2() : rea::transactionManager(){
-        rea::pipeline::add<rea::transaction*>([](rea::stream<rea::transaction*>* aInput){
-            auto rt = aInput->data();
-            if (rt->getName() != "updateQSGPos_projectimage_gridder0;")
-                aInput->out();
-        }, rea::Json("name", "filterUpdateQSGPosS", "before", "transactionStart"));
+/*int countOfSameProcess(const char *processName)
+{
+    int tick = 0;
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
 
-        rea::pipeline::add<QJsonObject>([](rea::stream<QJsonObject>* aInput){
-            auto dt = aInput->data();
-            if (dt.value("name") != "updateQSGPos_projectimage_gridder0;")
-                aInput->out();
-        }, rea::Json("name", "filterUpdateQSGPosE", "before", "transactionEnd"));
-    }
-};
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+
+    if (Process32First(snapshot, &entry))
+        while (Process32Next(snapshot, &entry))
+            if (!_stricmp(entry.szExeFile, processName))
+                ++tick;
+
+    CloseHandle(snapshot);
+    return tick;
+}*/
 
 int main(int argc, char *argv[])
 {
+    /* if (countOfSameProcess("DeepInspection.exe") > 1)
+        return 0; */
     SetUnhandledExceptionFilter(ApplicationCrashHandler);
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
     QApplication app(argc, argv);
+    //app.setApplicationName("DeepInspection");
+    //std::cout << QCoreApplication::applicationName().toStdString() << std::endl;
     app.setWindowIcon(QIcon(rea::getCWD("/favicon.png")));
     app.setOrganizationName("somename");
     app.setOrganizationDomain("somename");
@@ -64,7 +71,6 @@ int main(int argc, char *argv[])
     });
     engine.rootContext()->setContextProperty("applicationDirPath", QGuiApplication::applicationDirPath()); //https://recalll.co/ask/v/topic/qt-QML%3A-how-to-specify-image-file-path-relative-to-application-folder/55928bae7d3563c7088b7db1
 
-    transactionManager2 mn;
     rea::pipeline::run<QQmlApplicationEngine*>("regQML", &engine, "", false);
 
     QString mode;

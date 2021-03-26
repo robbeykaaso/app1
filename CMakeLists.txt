@@ -31,7 +31,7 @@ set(my_Sources
     )
 
 set(my_Libs
-    Qt5::Core Qt5::Quick Qt5::Widgets
+    Qt5::Core Qt5::Widgets Qt5::Quick
     ${REA_LIBS}
     dbghelp
     )
