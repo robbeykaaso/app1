@@ -78,8 +78,9 @@ cd pack
 WINPACK.exe ../%packProject%/config_.json
 cd ..
 
-if exist %installer% ( 
-    %installer% -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages %packProject%V4.1.exe -v 
-)
+@REM if exist %installer% ( 
+@REM     %installer% -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages %packProject%V4.1.exe -v 
+@REM )
+
 :: xcopy DeepInspectionV4.exe ..\frm-company /y
 :: "C:/Program Files/7-Zip/7z.exe" a -tzip DeepInspectionBinary.zip %buildType%/*
