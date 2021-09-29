@@ -74,13 +74,17 @@ xcopy .\%packProject%\qtinstall\* %buildApp%\qtinstall\ /e /y
 
 call .\%packProject%\custombuild %buildApp% %buildType%
 
+if "%3"=="true" (
+    type Nul >"..\buildApp\qtinstall\mypackages\content3\data\.internal"
+)
+
 cd pack
 WINPACK.exe ../%packProject%/config_.json
 cd ..
 
-@REM if exist %installer% ( 
-@REM     %installer% -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages %packProject%V4.1.exe -v 
-@REM )
+if exist %installer% ( 
+    %installer% -c %buildApp%\qtinstall\config\config.xml -p %buildApp%\qtinstall\mypackages %packProject%V4.1.exe -v 
+)
 
 :: xcopy DeepInspectionV4.exe ..\frm-company /y
 :: "C:/Program Files/7-Zip/7z.exe" a -tzip DeepInspectionBinary.zip %buildType%/*
